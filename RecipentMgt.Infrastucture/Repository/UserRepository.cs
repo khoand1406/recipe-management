@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.Json;
 using Microsoft.Extensions.Logging;
 using RecipeMgt.Domain.Entities;
 using RecipentMgt.Infrastucture.Persistence;
@@ -19,6 +20,13 @@ namespace RecipentMgt.Infrastucture.Repository
         {
             _context = context;
             _logger = logger;
+        }
+
+        public async Task<bool> checkDuplicateEmail(string email)
+        {
+            var user= await getUserByEmail(email);
+            Console.WriteLine(user);
+            return user != null;
         }
 
         public async Task<(bool Success, string Message, int CarriageId)> createUser(User user)
@@ -52,7 +60,13 @@ namespace RecipentMgt.Infrastucture.Repository
         public async Task<User> getUserByEmail(string email)
         {
             var user= await _context.Users.FirstOrDefaultAsync(x => x.Email.Equals(email));
-            return user ?? new User();
+            return user ?? null;
+        }
+
+        public async Task<User?> getUserByUsername(string username)
+        {
+            return await _context.Users
+        .FirstOrDefaultAsync(x => x.FullName == username);
         }
 
         public async Task<IEnumerable<User>> GetUsersAsync()

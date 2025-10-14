@@ -89,9 +89,55 @@ namespace RecipeMgt.Application.Services.Auth
             
         }
 
-        Task<RegisterResponse> IAuthServices.Register(RegisterRequest registerRequest)
+        public async Task<RegisterResponse> Register(RegisterRequest registerRequest)
         {
-            throw new NotImplementedException();
+            try
+            {
+                var userName= registerRequest.UserName.Trim();
+                var email= registerRequest.Email.Trim();
+                var password= registerRequest.Password.Trim();
+
+                var result = await checkDuplicateEmail(email);
+                if (result)
+                {
+                    return new RegisterResponse
+                    {
+                        Success=false,
+                        Message= "Email existed! Try again with another one"
+                    };
+                }
+
+                var found= await _userRepository.getUserByUsername(userName);
+                if(found!=null)
+                {
+                    return new RegisterResponse
+                    {
+                        Success = false,
+                        Message = "userName existed! Try again with another one"
+                    };
+                }
+                var payload = new User
+                {
+                    CreatedAt = DateTime.Now,
+                    Email = email,
+                    PasswordHash = UserUtils.HashPassword(password),
+                    FullName = userName,
+                    RoleId= 2
+                    
+                };
+                var register = await _userRepository.createUser(payload);
+                return new RegisterResponse { Success = true, Message = "Register successfully" };
+
+                
+            }catch(Exception ex)
+            {
+                _logger.LogError(ex, "Error during staff login for email {Email}", registerRequest.Email);
+                return new RegisterResponse
+                {
+                    Success= false,
+                    Message= "An error occurred during login"
+                };
+            }
         }
 
         private string GenerateJwtToken(User user)
@@ -121,6 +167,11 @@ namespace RecipeMgt.Application.Services.Auth
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
+        }
+
+        private async Task<bool> checkDuplicateEmail(string email)
+        {
+            return await _userRepository.checkDuplicateEmail(email);
         }
     }
 }

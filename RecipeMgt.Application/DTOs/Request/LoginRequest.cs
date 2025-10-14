@@ -10,8 +10,8 @@ namespace RecipeMgt.Application.DTOs.Request
     public class LoginRequest
     {
         
-        public string email;
+        public string email { get; set; } = string.Empty;
 
-        public string password;
+        public string password { get; set; } = string.Empty;
     }
 }

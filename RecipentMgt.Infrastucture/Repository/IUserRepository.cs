@@ -11,6 +11,8 @@ namespace RecipentMgt.Infrastucture.Repository
     {
         Task<User> getUserByEmail(string email);
 
+        Task<User?> getUserByUsername(string username);
+
         Task<IEnumerable<User>> GetUsersAsync();
 
         Task<User> getUserAsync(int userId);
@@ -19,8 +21,6 @@ namespace RecipentMgt.Infrastucture.Repository
         Task<(bool Success, string Message, int UserId)> updateUser(User user);
 
         Task<bool> deleteUser(int userId);
-
-
-
+        Task<bool> checkDuplicateEmail(string email);
     }
 }

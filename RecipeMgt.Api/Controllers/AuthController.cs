@@ -23,7 +23,7 @@ namespace RecipeMgt.Api.Controllers
             _logger = logger;
         }
 
-        [HttpPost("/login")]
+        [HttpPost("login")]
         public async Task<ActionResult<ApiResponse<LoginResponse>>> loginUser([FromBody] Application.DTOs.Request.LoginRequest loginRequest)
         {
             try
@@ -73,6 +73,83 @@ namespace RecipeMgt.Api.Controllers
                     Message = "An error occurred during login",
                     RequestId = HttpContext.TraceIdentifier
                 });
+            }
+        }
+
+        [HttpPost("register")]
+        public async Task<ActionResult<ApiResponse<RegisterResponse>>> Register([FromBody] Application.DTOs.Request.RegisterRequest request)
+        {
+            try
+            {
+
+                if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.UserName) || string.IsNullOrEmpty(request.Password))
+                {
+                    _logger.LogWarning("Missing required field while register");
+                    return BadRequest(new ApiResponse<RegisterResponse> { Success = false,Message= "Missing required field", RequestId = HttpContext.TraceIdentifier });
+                }
+                var result= await _authServices.Register(request);
+                if (result.Success)
+                {
+                    return Ok(new ApiResponse<Application.DTOs.Request.RegisterRequest>
+                    {
+                        Success= true,
+                        Message= result.Message,
+                        RequestId = HttpContext.TraceIdentifier
+                    });
+                }
+                else
+                {
+                    return BadRequest(new ApiResponse<Application.DTOs.Request.RegisterRequest>
+                    {
+                        Success = false,
+                        Message = result.Message,
+                        RequestId = HttpContext.TraceIdentifier
+                    });
+                }
+
+            }catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during user register with email: " + request.Email);
+                return StatusCode(500, new ApiResponse<RegisterResponse> { Success = false, Message= ex.Message, RequestId= HttpContext.TraceIdentifier });
+            }
+        }
+
+        [HttpPatch("change-password")]
+
+        public async Task<ActionResult<ApiResponse<ChangePasswordResponse>>> changePassword([FromBody]ChangePasswordRequest request)
+        {
+            try
+            {
+                if(string.IsNullOrEmpty(request.Email)|| string.IsNullOrEmpty(request.OldPassword) || string.IsNullOrEmpty(request.NewPassword))
+                {
+                    _logger.LogWarning("Missing required field while register");
+                    return BadRequest(new ApiResponse<RegisterResponse> { Success = false, Message = "Missing required field", RequestId = HttpContext.TraceIdentifier });
+                }
+
+                var result = await _authServices.changePassword(request);
+                if (result.Success)
+                {
+                    return new ApiResponse<ChangePasswordResponse>
+                    {
+                        Success = true,
+                        Message = result.Message,
+                    };
+                }
+                else
+                {
+                    return BadRequest(new ApiResponse<ChangePasswordResponse>
+                    {
+                        Success = false,
+                        Message = result.Message,
+                        RequestId = HttpContext.TraceIdentifier
+
+                    });
+                }
+
+            }catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during user register with email: " + request.Email);
+                return StatusCode(500, new ApiResponse<RegisterResponse> { Success = false, Message = ex.Message, RequestId = HttpContext.TraceIdentifier });
             }
         }
     }

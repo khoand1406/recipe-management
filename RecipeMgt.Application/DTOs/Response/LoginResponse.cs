@@ -26,4 +26,6 @@ namespace RecipeMgt.Application.DTOs.Response
         public DateTime CreatedAt { get; set; }
         
     }
+
+    
 }
