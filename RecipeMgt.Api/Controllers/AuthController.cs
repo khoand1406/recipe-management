@@ -4,8 +4,8 @@ using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using RecipeMgt.Application.DTOs;
-using RecipeMgt.Application.DTOs.Request;
-using RecipeMgt.Application.DTOs.Response;
+using RecipeMgt.Application.DTOs.Request.Auth;
+using RecipeMgt.Application.DTOs.Response.Auth;
 using RecipeMgt.Application.Services.Auth;
 
 namespace RecipeMgt.Api.Controllers
@@ -24,7 +24,7 @@ namespace RecipeMgt.Api.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult<ApiResponse<LoginResponse>>> loginUser([FromBody] Application.DTOs.Request.LoginRequest loginRequest)
+        public async Task<ActionResult<ApiResponse<LoginResponse>>> loginUser([FromBody] Application.DTOs.Request.Auth.LoginRequest loginRequest)
         {
             try
             {
@@ -77,7 +77,7 @@ namespace RecipeMgt.Api.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<ActionResult<ApiResponse<RegisterResponse>>> Register([FromBody] Application.DTOs.Request.RegisterRequest request)
+        public async Task<ActionResult<ApiResponse<RegisterResponse>>> Register([FromBody] Application.DTOs.Request.Auth.RegisterRequest request)
         {
             try
             {
@@ -90,7 +90,7 @@ namespace RecipeMgt.Api.Controllers
                 var result= await _authServices.Register(request);
                 if (result.Success)
                 {
-                    return Ok(new ApiResponse<Application.DTOs.Request.RegisterRequest>
+                    return Ok(new ApiResponse<Application.DTOs.Request.Auth.RegisterRequest>
                     {
                         Success= true,
                         Message= result.Message,
@@ -99,7 +99,7 @@ namespace RecipeMgt.Api.Controllers
                 }
                 else
                 {
-                    return BadRequest(new ApiResponse<Application.DTOs.Request.RegisterRequest>
+                    return BadRequest(new ApiResponse<Application.DTOs.Request.Auth.RegisterRequest>
                     {
                         Success = false,
                         Message = result.Message,

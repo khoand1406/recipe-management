@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RecipentMgt.Infrastucture.Repository
+namespace RecipentMgt.Infrastucture.Repository.Users
 {
     public interface IUserRepository
     {

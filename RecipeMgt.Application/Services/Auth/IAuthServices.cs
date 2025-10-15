@@ -1,5 +1,5 @@
-﻿using RecipeMgt.Application.DTOs.Request;
-using RecipeMgt.Application.DTOs.Response;
+﻿using RecipeMgt.Application.DTOs.Request.Auth;
+using RecipeMgt.Application.DTOs.Response.Auth;
 using System;
 using System.Collections.Generic;
 using System.Linq;

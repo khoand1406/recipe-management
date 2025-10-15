@@ -29,4 +29,9 @@
     <ProjectReference Include="..\RecipentMgt.Infrastucture\RecipentMgt.Infrastucture.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Middleware\" />
+    <Folder Include="ActionFIlter\" />
+  </ItemGroup>
+
 </Project>

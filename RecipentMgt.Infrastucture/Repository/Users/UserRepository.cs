@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RecipentMgt.Infrastucture.Repository
+namespace RecipentMgt.Infrastucture.Repository.Users
 {
     public class UserRepository : IUserRepository
     {
@@ -24,7 +24,7 @@ namespace RecipentMgt.Infrastucture.Repository
 
         public async Task<bool> checkDuplicateEmail(string email)
         {
-            var user= await getUserByEmail(email);
+            var user = await getUserByEmail(email);
             Console.WriteLine(user);
             return user != null;
         }
@@ -38,10 +38,10 @@ namespace RecipentMgt.Infrastucture.Repository
 
         public async Task<bool> deleteUser(int userId)
         {
-            var userFound= await _context.Users.FindAsync(userId);
+            var userFound = await _context.Users.FindAsync(userId);
             if (userFound != null)
             {
-                 _context.Users.Remove(userFound);
+                _context.Users.Remove(userFound);
                 await _context.SaveChangesAsync();
                 return true;
             }
@@ -53,13 +53,13 @@ namespace RecipentMgt.Infrastucture.Repository
 
         public async Task<User> getUserAsync(int userId)
         {
-            var userFound= await (_context.Users.FindAsync(userId));
+            var userFound = await _context.Users.FindAsync(userId);
             return userFound ?? new User();
         }
 
         public async Task<User> getUserByEmail(string email)
         {
-            var user= await _context.Users.FirstOrDefaultAsync(x => x.Email.Equals(email));
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.Email.Equals(email));
             return user ?? null;
         }
 

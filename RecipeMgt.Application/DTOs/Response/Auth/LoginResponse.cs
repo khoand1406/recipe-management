@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RecipeMgt.Application.DTOs.Response
+namespace RecipeMgt.Application.DTOs.Response.Auth
 {
     public class LoginResponse
     {
@@ -24,8 +24,8 @@ namespace RecipeMgt.Application.DTOs.Response
         public DateTime? DateOfBirth { get; set; }
         public string? Address { get; set; }
         public DateTime CreatedAt { get; set; }
-        
+
     }
 
-    
+
 }

@@ -3,7 +3,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using RecipeMgt.Domain.Entities;
 using RecipentMgt.Infrastucture.Persistence;
-using RecipentMgt.Infrastucture.Repository;
+using RecipentMgt.Infrastucture.Repository.Dishes;
+using RecipentMgt.Infrastucture.Repository.Users;
 
 namespace RecipentMgt.Infrastucture
 {
@@ -12,6 +13,7 @@ namespace RecipentMgt.Infrastucture
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration) {
             services.AddDbContext<RecipeManagementContext>(opt => opt.UseSqlServer(configuration.GetConnectionString("ConnectionString")));
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IDishRepository, DishRepository>();
             return services;
         }
     }

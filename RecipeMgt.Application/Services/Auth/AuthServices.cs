@@ -2,11 +2,11 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
-using RecipeMgt.Application.DTOs.Request;
-using RecipeMgt.Application.DTOs.Response;
+using RecipeMgt.Application.DTOs.Request.Auth;
+using RecipeMgt.Application.DTOs.Response.Auth;
 using RecipeMgt.Application.Utils;
 using RecipeMgt.Domain.Entities;
-using RecipentMgt.Infrastucture.Repository;
+using RecipentMgt.Infrastucture.Repository.Users;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
