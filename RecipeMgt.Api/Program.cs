@@ -3,6 +3,10 @@ using RecipeMgt.Application;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.AspNetCore.Mvc;
+using RecipeMgt.Api.Validator.Auth;
+using FluentValidation;
+
 internal class Program
 {
     private static void Main(string[] args)
@@ -11,11 +15,11 @@ internal class Program
         var configuration = builder.Configuration;
 
         // Add services to the container.
-
         builder.Services.AddControllers();
         builder.Services.AddApplication(builder.Configuration);
         builder.Services.AddInfrastructure(builder.Configuration);
-        // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+        
+        builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
 
         builder.Services.AddAuthentication(options =>
         {

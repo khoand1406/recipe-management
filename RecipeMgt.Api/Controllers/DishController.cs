@@ -47,7 +47,7 @@ namespace RecipeMgt.Api.Controllers
                 var result= await _dishService.CreateDish(request);
                 if (result.Success)
                 {
-                    return Ok(result.Data);
+                    return Ok(result);
                 }
                 return BadRequest(result.Message);
             }catch (Exception ex)

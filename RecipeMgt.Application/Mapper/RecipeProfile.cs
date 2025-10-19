@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using RecipeMgt.Application.DTOs.Request.Recipes;
 using RecipeMgt.Application.DTOs.Response.Recipe;
 using RecipeMgt.Domain.Entities;
 using System;
@@ -13,6 +14,12 @@ namespace RecipeMgt.Application.Mapper
     {
         public RecipeProfile() {
             CreateMap<Recipe, RecipeResponse>();
+            CreateMap<CreateRecipeRequest, Recipe>();
+
+            CreateMap<UpdateRecipeRequest, Recipe>();
+
+            CreateMap<IngredientDto, Ingredient>();
+            CreateMap<StepDto, Step>();
         }
     }
 }

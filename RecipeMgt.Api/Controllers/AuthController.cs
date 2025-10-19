@@ -1,4 +1,5 @@
 ﻿using Azure.Core;
+using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
@@ -16,11 +17,22 @@ namespace RecipeMgt.Api.Controllers
     {
         private readonly IAuthServices _authServices;
         private ILogger<AuthController> _logger;
+        private readonly IValidator<Application.DTOs.Request.Auth.LoginRequest> _loginValidator;
+        private readonly IValidator<Application.DTOs.Request.Auth.RegisterRequest> _registerValidator;
+        private readonly IValidator<ChangePasswordRequest> _changePasswordValidator;
 
-        public AuthController(IAuthServices authServices, ILogger<AuthController> logger)
+        public AuthController(
+           IAuthServices authServices,
+           ILogger<AuthController> logger,
+           IValidator<Application.DTOs.Request.Auth.LoginRequest> loginValidator,
+           IValidator<Application.DTOs.Request.Auth.RegisterRequest> registerValidator,
+           IValidator<ChangePasswordRequest> changePasswordValidator)
         {
             _authServices = authServices;
             _logger = logger;
+            _loginValidator = loginValidator;
+            _registerValidator = registerValidator;
+            _changePasswordValidator = changePasswordValidator;
         }
 
         [HttpPost("login")]
@@ -28,18 +40,16 @@ namespace RecipeMgt.Api.Controllers
         {
             try
             {
-                if(string.IsNullOrWhiteSpace(loginRequest.email) || string.IsNullOrWhiteSpace(loginRequest.password))
+                var validation= await _loginValidator.ValidateAsync(loginRequest);
+                if(!validation.IsValid)
                 {
-                    _logger.LogError("Email or password can not be empty");
-
                     return BadRequest(new ApiResponse<LoginResponse>
                     {
                         Success = false,
-                        Message = "Email and password are required",
+                        Message = "Validation failed",
+                        Errors = (List<string>)validation.Errors.Select(e => new { e.PropertyName, e.ErrorMessage }),
                         RequestId = HttpContext.TraceIdentifier
                     });
-
-                    
                 }
                 var result = await _authServices.Login(loginRequest);
 
@@ -81,7 +91,17 @@ namespace RecipeMgt.Api.Controllers
         {
             try
             {
-
+                var validation= await _registerValidator.ValidateAsync(request);
+                if(!validation.IsValid)
+                {
+                    return BadRequest(new ApiResponse<RegisterResponse>
+                    {
+                        Success = false,
+                        Message = "Validation failed",
+                        Errors = (List<string>)validation.Errors.Select(e => new { e.PropertyName, e.ErrorMessage }),
+                        RequestId = HttpContext.TraceIdentifier
+                    });
+                }
                 if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.UserName) || string.IsNullOrEmpty(request.Password))
                 {
                     _logger.LogWarning("Missing required field while register");
@@ -120,7 +140,18 @@ namespace RecipeMgt.Api.Controllers
         {
             try
             {
-                if(string.IsNullOrEmpty(request.Email)|| string.IsNullOrEmpty(request.OldPassword) || string.IsNullOrEmpty(request.NewPassword))
+                var validation = await _changePasswordValidator.ValidateAsync(request);
+                if (!validation.IsValid)
+                {
+                    return BadRequest(new ApiResponse<ChangePasswordResponse>
+                    {
+                        Success = false,
+                        Message = "Validation failed",
+                        Errors = (List<string>)validation.Errors.Select(e => new { e.PropertyName, e.ErrorMessage }),
+                        RequestId = HttpContext.TraceIdentifier
+                    });
+                }
+                if(string.IsNullOrEmpty(request.Email)|| string.IsNullOrEmpty(request.OldPassword) || string.IsNullOrEmpty(request.NewPassword) )
                 {
                     _logger.LogWarning("Missing required field while register");
                     return BadRequest(new ApiResponse<RegisterResponse> { Success = false, Message = "Missing required field", RequestId = HttpContext.TraceIdentifier });
