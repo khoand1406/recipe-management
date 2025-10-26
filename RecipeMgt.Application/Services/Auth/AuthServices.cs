@@ -143,9 +143,9 @@ namespace RecipeMgt.Application.Services.Auth
         private string GenerateJwtToken(User user)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"] ?? "ChapTatCaTheLoaiBug");
-            var issuer = _configuration["Jwt:Issuer"] ?? "FastRailSystem";
-            var audience = _configuration["Jwt:Audience"] ?? "FastRailStaff";
+            var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]??"");
+            var issuer = _configuration["Jwt:Issuer"];
+            var audience = _configuration["Jwt:Audience"];
 
 
             var claims = new List<Claim>

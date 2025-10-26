@@ -14,10 +14,11 @@ namespace RecipeMgt.Application.Mapper
     {
         public RecipeProfile() {
             CreateMap<Recipe, RecipeResponse>();
+            CreateMap<Recipe, RecipeWithUserInfo>()
+            .ForMember(dest => dest.Author, opt => opt.MapFrom(src => src.Author));
+
             CreateMap<CreateRecipeRequest, Recipe>();
-
             CreateMap<UpdateRecipeRequest, Recipe>();
-
             CreateMap<IngredientDto, Ingredient>();
             CreateMap<StepDto, Step>();
         }

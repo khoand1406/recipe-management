@@ -27,18 +27,18 @@ namespace RecipentMgt.Infrastucture.Repository.Recipes
             try
             {
                 request.CreatedAt = DateTime.Now;
-                request.UpdatedAt= DateTime.Now;
+                request.UpdatedAt = DateTime.Now;
                 await _context.Recipes.AddAsync(request);
                 await _context.SaveChangesAsync();
 
-                foreach(var ingredient in ingredients)
+                foreach (var ingredient in ingredients)
                 {
-                    ingredient.RecipeId= request.RecipeId;
+                    ingredient.RecipeId = request.RecipeId;
                 }
 
                 foreach (var step in steps)
                 {
-                    step.RecipeId= request.RecipeId;
+                    step.RecipeId = request.RecipeId;
                 }
                 await _context.Ingredients.AddRangeAsync(ingredients);
                 await _context.Steps.AddRangeAsync(steps);
@@ -60,19 +60,20 @@ namespace RecipentMgt.Infrastucture.Repository.Recipes
 
         public async Task<bool> deleteRecipes(int id)
         {
-            using var transaction= await _context.Database.BeginTransactionAsync();
+            using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                var found= await _context.Recipes.FindAsync(id);
+                var found = await _context.Recipes.FindAsync(id);
                 if (found != null)
                 {
-                     _context.Recipes.Remove(found);
+                    _context.Recipes.Remove(found);
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
                     return true;
                 }
                 return false;
-            }catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
                 _logger.LogError($"Error occurs while creating recipe: {ex.Message}");
@@ -92,7 +93,7 @@ namespace RecipentMgt.Infrastucture.Repository.Recipes
 
         public async Task<IEnumerable<Recipe>> GetRecipes(int dishId)
         {
-            return await _context.Recipes.Where(x=> x.DishId==dishId).ToListAsync();
+            return await _context.Recipes.Where(x => x.DishId == dishId).ToListAsync();
         }
 
         public Task<IEnumerable<Recipe>> getRecipesByFilter()
@@ -100,9 +101,11 @@ namespace RecipentMgt.Infrastucture.Repository.Recipes
             throw new NotImplementedException();
         }
 
-        public Task<IEnumerable<Recipe>> GetRecipesByUser(int userId)
+        public async Task<IEnumerable<Recipe>> GetRecipesByUser(int userId)
         {
-            throw new NotImplementedException();
+            return await _context.Recipes
+                                        .Where(x => x.AuthorId == userId).Include(x=> x.Author)
+                                        .ToListAsync();
         }
 
         public Task<IEnumerable<Recipe>> GetRelatedRecipes(int id)
@@ -162,7 +165,7 @@ namespace RecipentMgt.Infrastucture.Repository.Recipes
 
                 return (true, "Update successfully", request.RecipeId);
             }
-                
+
 
             catch (Exception ex)
             {
@@ -171,6 +174,6 @@ namespace RecipentMgt.Infrastucture.Repository.Recipes
                 return (false, ex.Message, 0);
             }
         }
-        }
     }
+}
 

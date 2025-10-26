@@ -24,8 +24,8 @@ namespace RecipeMgt.Application.DTOs.Request.Recipes
 
         public string DifficultyLevel { get; set; } = "Medium";
 
-        public List<IngredientDto> Ingredients { get; set; } = new();
-        public List<StepDto> Steps { get; set; } = new();
+        public List<IngredientDto> Ingredients { get; set; }
+        public List<StepDto> Steps { get; set; }
 
     }
 

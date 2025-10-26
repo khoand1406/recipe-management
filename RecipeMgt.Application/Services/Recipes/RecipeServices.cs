@@ -118,10 +118,10 @@ namespace RecipeMgt.Application.Services.Recipes
             return result;
         }
 
-        public async Task<IEnumerable<RecipeResponse>> GetRecipesByUser(int userId)
+        public async Task<IEnumerable<RecipeWithUserInfo>> GetRecipesByUser(int userId)
         {
             var listRecipes = await _repository.GetRecipesByUser(userId);
-            var result = _mapper.Map<IEnumerable<RecipeResponse>>(listRecipes);
+            var result = _mapper.Map<IEnumerable<RecipeWithUserInfo>>(listRecipes);
             return result;
         }
 

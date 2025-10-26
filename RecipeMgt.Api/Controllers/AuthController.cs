@@ -8,6 +8,7 @@ using RecipeMgt.Application.DTOs;
 using RecipeMgt.Application.DTOs.Request.Auth;
 using RecipeMgt.Application.DTOs.Response.Auth;
 using RecipeMgt.Application.Services.Auth;
+using System.ComponentModel.DataAnnotations;
 
 namespace RecipeMgt.Api.Controllers
 {
@@ -47,7 +48,9 @@ namespace RecipeMgt.Api.Controllers
                     {
                         Success = false,
                         Message = "Validation failed",
-                        Errors = (List<string>)validation.Errors.Select(e => new { e.PropertyName, e.ErrorMessage }),
+                        Errors = validation.Errors
+                                            .Select(e => $"{e.PropertyName}: {e.ErrorMessage}")
+                                            .ToList(),
                         RequestId = HttpContext.TraceIdentifier
                     });
                 }
@@ -98,15 +101,13 @@ namespace RecipeMgt.Api.Controllers
                     {
                         Success = false,
                         Message = "Validation failed",
-                        Errors = (List<string>)validation.Errors.Select(e => new { e.PropertyName, e.ErrorMessage }),
+                        Errors = validation.Errors
+                                            .Select(e => $"{e.PropertyName}: {e.ErrorMessage}")
+                                            .ToList(),
                         RequestId = HttpContext.TraceIdentifier
                     });
                 }
-                if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.UserName) || string.IsNullOrEmpty(request.Password))
-                {
-                    _logger.LogWarning("Missing required field while register");
-                    return BadRequest(new ApiResponse<RegisterResponse> { Success = false,Message= "Missing required field", RequestId = HttpContext.TraceIdentifier });
-                }
+                
                 var result= await _authServices.Register(request);
                 if (result.Success)
                 {
@@ -147,15 +148,13 @@ namespace RecipeMgt.Api.Controllers
                     {
                         Success = false,
                         Message = "Validation failed",
-                        Errors = (List<string>)validation.Errors.Select(e => new { e.PropertyName, e.ErrorMessage }),
+                        Errors = validation.Errors
+                                            .Select(e => $"{e.PropertyName}: {e.ErrorMessage}")
+                                            .ToList(),
                         RequestId = HttpContext.TraceIdentifier
                     });
                 }
-                if(string.IsNullOrEmpty(request.Email)|| string.IsNullOrEmpty(request.OldPassword) || string.IsNullOrEmpty(request.NewPassword) )
-                {
-                    _logger.LogWarning("Missing required field while register");
-                    return BadRequest(new ApiResponse<RegisterResponse> { Success = false, Message = "Missing required field", RequestId = HttpContext.TraceIdentifier });
-                }
+                
 
                 var result = await _authServices.changePassword(request);
                 if (result.Success)

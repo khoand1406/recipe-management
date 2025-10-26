@@ -1,4 +1,6 @@
 ﻿using FluentValidation;
+using FluentValidation.Results;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using RecipeMgt.Application.DTOs;
@@ -7,6 +9,7 @@ using RecipeMgt.Application.DTOs.Response.Recipe;
 using RecipeMgt.Application.Services.Recipes;
 using System.ComponentModel.DataAnnotations;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Model;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace RecipeMgt.Api.Controllers
 {
@@ -26,6 +29,7 @@ namespace RecipeMgt.Api.Controllers
             _createRecipeValidator = validator;
             _updateRecipeValidator = updateValidator;
         }
+
         [HttpGet("dish/{id}")]
         public async Task<IActionResult> getRecipes(int id)
         {
@@ -33,18 +37,26 @@ namespace RecipeMgt.Api.Controllers
             {
                 var result = await _services.GetRecipesByDish(id);
                 return Ok(result);
-            }catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
 
         }
 
+        [Authorize]
         [HttpGet("")]
 
         public async Task<IActionResult> getRecipesByUser()
         {
-            var result = await _services.GetRecipesByUser(0);
+            var userId = HttpContext.Items["UserId"] as int?;
+            if (userId == null)
+            {
+                return Unauthorized(new { message = "User not found" });
+            }
+            var result = await _services.GetRecipesByUser((int)userId);
+
             return Ok(result);
         }
 
@@ -62,36 +74,50 @@ namespace RecipeMgt.Api.Controllers
             });
         }
 
+        [Authorize]
         [HttpPost("create")]
 
         public async Task<ActionResult<ApiResponse<CreateRecipeResponse>>> CreateRecipe([FromBody] CreateRecipeRequest request)
         {
             try
             {
-                var validator= await _createRecipeValidator.ValidateAsync(request);
+                var userId = HttpContext.Items["UserId"] as int?;
+                Console.WriteLine(userId);
+                if (userId == null)
+                {
+                    return Unauthorized(new { message = "User not found" });
+                }
+
+                var validator = await _createRecipeValidator.ValidateAsync(request);
                 if (!validator.IsValid)
                 {
                     return BadRequest(new ApiResponse<CreateRecipeResponse>
                     {
                         Success = false,
                         Message = "Validaton Failed",
-                        Errors = (List<string>)validator.Errors.Select(e => new { e.PropertyName, e.ErrorMessage }),
+                        Errors = validator.Errors
+                                            .Select(e => $"{e.PropertyName}: {e.ErrorMessage}")
+                                            .ToList(),
                         RequestId = HttpContext.TraceIdentifier
                     });
-                    
+
                 }
-                var result= await _services.CreateRecipe(request);
-                if(result.Success)
+
+                request.AuthorId = userId ?? 0;
+
+                var result = await _services.CreateRecipe(request);
+                if (result.Success)
                 {
                     return new ApiResponse<CreateRecipeResponse>
                     {
                         Success = true,
-                        
+
                         RequestId = HttpContext.TraceIdentifier
                     };
                 }
                 return Ok();
-            }catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return new ApiResponse<CreateRecipeResponse>
                 {
@@ -102,38 +128,55 @@ namespace RecipeMgt.Api.Controllers
             }
         }
 
+        [Authorize]
         [HttpPut("update")]
         public async Task<ActionResult<ApiResponse<UpdateRecipeResponse>>> updateRecipe([FromBody] UpdateRecipeRequest request)
         {
             try
             {
-                var validation= await _updateRecipeValidator.ValidateAsync(request);
+                var userId = HttpContext.Items["UserId"] as int?;
+                if (userId == null)
+                {
+                    return Unauthorized(new { message = "User not found" });
+                }
+
+                var validation = await _updateRecipeValidator.ValidateAsync(request);
                 if (!validation.IsValid)
                 {
                     return BadRequest(new ApiResponse<UpdateRecipeResponse>
                     {
                         Success = false,
-                        
+
                         Message = "Validaton Failed",
-                        Errors = (List<string>)validation.Errors.Select(e => new { e.PropertyName, e.ErrorMessage }),
+                        Errors = validation.Errors
+                                            .Select(e => $"{e.PropertyName}: {e.ErrorMessage}")
+                                            .ToList(),
                         RequestId = HttpContext.TraceIdentifier
                     });
                 }
-                var result= await _services.UpdateRecipe(request);
+                var userId_parsed = userId.Value;
+                request.AuthorId = userId_parsed;
+                if (userId_parsed != request.AuthorId)
+                {
+                    return Forbid("Can't update other user's recipes");
+                }
+                var result = await _services.UpdateRecipe(request);
                 if (result.Success)
                 {
                     return new ApiResponse<UpdateRecipeResponse>
                     {
                         Success = true,
-                        
+
                         RequestId = HttpContext.TraceIdentifier
 
                     };
                 }
-                return new ApiResponse<UpdateRecipeResponse> {
+                return new ApiResponse<UpdateRecipeResponse>
+                {
                     Success = false,
                 };
-            }catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 _logger.LogError("Error while updating recipe: " + ex.Message);
                 return BadRequest(new ApiResponse<UpdateRecipeResponse>
@@ -145,12 +188,13 @@ namespace RecipeMgt.Api.Controllers
             }
         }
 
+        [Authorize]
         [HttpDelete("delete/{id}")]
         public async Task<ActionResult<ApiResponse<DeleteRecipeResponse>>> DeleteRecipe(int id)
         {
             try
             {
-                var result= await _services.DeleteRecipe(id);
+                var result = await _services.DeleteRecipe(id);
                 if (result.Success)
                 {
                     return new ApiResponse<DeleteRecipeResponse>

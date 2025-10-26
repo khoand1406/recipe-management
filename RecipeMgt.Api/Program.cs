@@ -6,6 +6,9 @@ using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using RecipeMgt.Api.Validator.Auth;
 using FluentValidation;
+using RecipeMgt.Api.Middleware;
+using RecipeMgt.Application.DTOs.Request.Dishes;
+using RecipeMgt.Application.DTOs.Request.Recipes;
 
 internal class Program
 {
@@ -16,10 +19,45 @@ internal class Program
 
         // Add services to the container.
         builder.Services.AddControllers();
+        builder.Services.AddSwaggerGen(c =>
+        {
+            c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "FastRail API", Version = "v1" });
+
+            // Add JWT authentication support
+            c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+                Name = "Authorization",
+                In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+                Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
+                Scheme = "Bearer"
+            });
+
+            c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+        });
         builder.Services.AddApplication(builder.Configuration);
         builder.Services.AddInfrastructure(builder.Configuration);
         
         builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
+        builder.Services.AddValidatorsFromAssemblyContaining<RegistetRequestValidator>();
+        builder.Services.AddValidatorsFromAssemblyContaining<ChangePasswordRequestValidator>();
+        builder.Services.AddValidatorsFromAssemblyContaining<CreateDishRequest>();
+        builder.Services.AddValidatorsFromAssemblyContaining<UpdateDishRequest>();
+        builder.Services.AddValidatorsFromAssemblyContaining<CreateRecipeRequest>();
+        builder.Services.AddValidatorsFromAssemblyContaining<UpdateRecipeRequest>();
 
         builder.Services.AddAuthentication(options =>
         {
@@ -58,6 +96,8 @@ internal class Program
 
         app.UseHttpsRedirection();
 
+        app.UseAuthentication();
+        app.UseMiddleware<UserContextMiddleware>();
         app.UseAuthorization();
 
         app.MapControllers();

@@ -14,7 +14,7 @@ namespace RecipeMgt.Application.Services.Recipes
 
         public Task<IEnumerable<RecipeResponse>> GetRecipesByDish(int id);
 
-        public Task<IEnumerable<RecipeResponse>> GetRecipesByUser(int userId);
+        public Task<IEnumerable<RecipeWithUserInfo>> GetRecipesByUser(int userId);
 
         public Task<IEnumerable<RecipeResponse>> GetRelatedRecipes(int id);
 
