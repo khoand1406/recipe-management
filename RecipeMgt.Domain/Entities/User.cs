@@ -23,5 +23,8 @@ public partial class User
     [JsonIgnore]
     public virtual ICollection<Recipe> Recipes { get; set; } = new List<Recipe>();
 
+    public virtual ICollection<Bookmark> Bookmarks { get; set; } = new List<Bookmark>();
+
+    public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
     public virtual Role Role { get; set; }
 }

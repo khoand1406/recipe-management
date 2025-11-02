@@ -6,7 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 using RecipeMgt.Application.DTOs;
 using RecipeMgt.Application.DTOs.Request.Recipes;
 using RecipeMgt.Application.DTOs.Response.Recipe;
+using RecipeMgt.Application.Services.Bookmarks;
 using RecipeMgt.Application.Services.Cloudiary;
+using RecipeMgt.Application.Services.Comments;
 using RecipeMgt.Application.Services.Recipes;
 using RecipeMgt.Domain.Entities;
 using RecipeMgt.Domain.RequestEntity;
@@ -22,18 +24,22 @@ namespace RecipeMgt.Api.Controllers
     public class RecipeController : ControllerBase
     {
         private readonly IRecipeServices _services;
+        private readonly ICommentServices _commentServices;
+        private readonly IBookmarkService _bookmarkService;
         private readonly ICloudinaryService _cloudinaryService;
         private readonly ILogger<RecipeController> _logger;
         private IValidator<CreateRecipeRequest> _createRecipeValidator;
         private readonly IValidator<UpdateRecipeRequest> _updateRecipeValidator;
 
-        public RecipeController(IRecipeServices services, ILogger<RecipeController> logger, IValidator<CreateRecipeRequest> validator, IValidator<UpdateRecipeRequest> updateValidator, ICloudinaryService cloudinaryService)
+        public RecipeController(IRecipeServices services, ILogger<RecipeController> logger, IValidator<CreateRecipeRequest> validator, IValidator<UpdateRecipeRequest> updateValidator, ICloudinaryService cloudinaryService, ICommentServices commentServices, IBookmarkService bookmarkService)
         {
             _services = services;
             _logger = logger;
             _cloudinaryService = cloudinaryService;
             _createRecipeValidator = validator;
             _updateRecipeValidator = updateValidator;
+            _bookmarkService = bookmarkService;
+            _commentServices= commentServices;
         }
 
         [HttpGet("dish/{id}")]
@@ -306,6 +312,32 @@ namespace RecipeMgt.Api.Controllers
                     Message = ex.Message,
                 });
             }
+        }
+
+        [Authorize]
+        [HttpPost("{recipeId}/comment")]
+        public async Task<IActionResult> AddComment(int recipeId, [FromBody] string content)
+        {
+            var userId = int.Parse(User.FindFirst("nameid")?.Value!);
+            await _commentServices.AddCommentAsync(userId, recipeId, content);
+            return Ok(new { message = "Comment added!" });
+        }
+
+        [Authorize]
+        [HttpPost("{recipeId}/bookmark")]
+        public async Task<IActionResult> AddBookmark(int recipeId)
+        {
+            var userId = int.Parse(User.FindFirst("nameid")?.Value!);
+            var added = await _bookmarkService.AddBookmarkAsync(userId, recipeId);
+            if (!added) return BadRequest(new { message = "Already bookmarked" });
+            return Ok(new { message = "Bookmarked!" });
+        }
+
+        [HttpGet("{recipeId}/comments")]
+        public async Task<IActionResult> GetComments(int recipeId)
+        {
+            var comments = await _commentServices.GetCommentsAsync(recipeId);
+            return Ok(comments);
         }
     }
 }

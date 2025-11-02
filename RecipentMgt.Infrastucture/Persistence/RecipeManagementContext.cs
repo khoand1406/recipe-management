@@ -27,6 +27,10 @@ namespace RecipentMgt.Infrastucture.Persistence
 
         public virtual DbSet<Ingredient> Ingredients { get; set; }
 
+        public virtual DbSet<Comment> Comments { get; set; }
+
+        public virtual DbSet<Bookmark> Bookmarks { get; set; }
+
         public virtual DbSet<Rating> Ratings { get; set; }
 
         public virtual DbSet<Recipe> Recipes { get; set; }
@@ -89,6 +93,27 @@ namespace RecipentMgt.Infrastucture.Persistence
         .HasForeignKey(i => i.EntityId)
         .HasPrincipalKey(r => r.RecipeId)
         .OnDelete(DeleteBehavior.Cascade);
+
+
+            modelBuilder.Entity<Bookmark>()
+                .HasOne(b => b.User)
+                .WithMany(u => u.Bookmarks)
+                .HasForeignKey(b => b.UserId).OnDelete(DeleteBehavior.Cascade); 
+
+            modelBuilder.Entity<Bookmark>()
+                .HasOne(b => b.Recipe)
+                .WithMany(r => r.Bookmarks)
+                .HasForeignKey(b => b.RecipeId);
+
+            modelBuilder.Entity<Comment>()
+                .HasOne(c => c.User)
+                .WithMany(u => u.Comments)
+                .HasForeignKey(c => c.UserId);
+
+            modelBuilder.Entity<Comment>()
+                .HasOne(c => c.Recipe)
+                .WithMany(r => r.Comments)
+                .HasForeignKey(c => c.RecipeId).OnDelete(DeleteBehavior.Cascade); 
 
             modelBuilder.Entity<Ingredient>(entity =>
             {
