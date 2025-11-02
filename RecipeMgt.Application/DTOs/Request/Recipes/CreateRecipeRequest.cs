@@ -1,8 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json;
 
 namespace RecipeMgt.Application.DTOs.Request.Recipes
 {
@@ -24,9 +23,24 @@ namespace RecipeMgt.Application.DTOs.Request.Recipes
 
         public string DifficultyLevel { get; set; } = "Medium";
 
-        public List<IngredientDto> Ingredients { get; set; }
-        public List<StepDto> Steps { get; set; }
+        public List<IFormFile>? Images { get; set; }
 
+        public List<string>? ImageUrls
+        {
+            get; set;
+        }
+
+        [FromForm]
+        public string IngredientsJson { get; set; } = string.Empty;
+
+        [FromForm]
+        public string StepsJson { get; set; } = string.Empty;
+
+        [NotMapped]
+        public List<IngredientDto> Ingredients { get; set; } = new();
+
+        [NotMapped]
+        public List<StepDto> Steps { get; set; } = new();
     }
 
     public class IngredientDto

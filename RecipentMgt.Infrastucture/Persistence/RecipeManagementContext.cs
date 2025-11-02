@@ -83,6 +83,13 @@ namespace RecipentMgt.Infrastucture.Persistence
                     .HasColumnType("datetime");
             });
 
+            modelBuilder.Entity<Image>()
+        .HasOne(i => i.Recipe)
+        .WithMany(r => r.Images)
+        .HasForeignKey(i => i.EntityId)
+        .HasPrincipalKey(r => r.RecipeId)
+        .OnDelete(DeleteBehavior.Cascade);
+
             modelBuilder.Entity<Ingredient>(entity =>
             {
                 entity.HasKey(e => e.IngredientId).HasName("PK__Ingredie__BEAEB25AF862F5EC");

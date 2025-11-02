@@ -9,6 +9,8 @@ using FluentValidation;
 using RecipeMgt.Api.Middleware;
 using RecipeMgt.Application.DTOs.Request.Dishes;
 using RecipeMgt.Application.DTOs.Request.Recipes;
+using CloudinaryDotNet;
+using dotenv.net;
 
 internal class Program
 {
@@ -21,7 +23,7 @@ internal class Program
         builder.Services.AddControllers();
         builder.Services.AddSwaggerGen(c =>
         {
-            c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "FastRail API", Version = "v1" });
+            c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "OpenRecipe API", Version = "v1" });
 
             // Add JWT authentication support
             c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
@@ -80,6 +82,9 @@ internal class Program
             Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!))
     };
 });
+
+        DotEnv.Load(options: new DotEnvOptions(probeForEnv: true));
+        
         builder.Services.AddAuthorization();
         builder.Services.AddLogging();
         builder.Services.AddEndpointsApiExplorer();

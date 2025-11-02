@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace RecipeMgt.Domain.Entities;
 
@@ -16,4 +17,7 @@ public partial class Image
     public string Caption { get; set; }
 
     public DateTime? UploadedAt { get; set; }
+
+    [JsonIgnore]
+    public virtual Recipe? Recipe { get; set; }
 }

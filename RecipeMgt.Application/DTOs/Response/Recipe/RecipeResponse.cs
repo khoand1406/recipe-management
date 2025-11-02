@@ -29,6 +29,8 @@ namespace RecipeMgt.Application.DTOs.Response.Recipe
         public DateTime? UpdatedAt { get; set; }
 
         public virtual User Author { get; set; } = new User();
+
+        public ICollection<Image> Images { get; set; }= new List<Image>();
     }
 
     public class CreateRecipeResponse

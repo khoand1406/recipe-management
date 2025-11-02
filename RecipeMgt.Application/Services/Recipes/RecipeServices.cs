@@ -2,9 +2,11 @@
 using Microsoft.Extensions.Logging;
 using RecipeMgt.Application.DTOs.Request.Recipes;
 using RecipeMgt.Application.DTOs.Response.Recipe;
+using RecipeMgt.Application.Services.Cloudiary;
 using RecipeMgt.Domain.Entities;
 using RecipentMgt.Infrastucture.Repository.Dishes;
 using RecipentMgt.Infrastucture.Repository.Recipes;
+using RecipentMgt.Infrastucture.Repository.Users;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,15 +19,19 @@ namespace RecipeMgt.Application.Services.Recipes
     {
         private readonly IRecipeRepository _repository;
         private readonly IDishRepository _dishrepository;
+        private readonly IUserRepository _userRepository;
+        private readonly ICloudinaryService _cloudinaryservice;
         private readonly IMapper _mapper;
         private readonly ILogger<RecipeServices> _logger;
 
-        public RecipeServices(IRecipeRepository repository, IMapper mapper, ILogger<RecipeServices> logger, IDishRepository dishRepository)
+        public RecipeServices(IRecipeRepository repository, IMapper mapper, ILogger<RecipeServices> logger, IDishRepository dishRepository, ICloudinaryService service, IUserRepository userRepository)
         {
             _repository = repository;
             _mapper = mapper;
+            _cloudinaryservice = service;
             _logger = logger;
             _dishrepository = dishRepository;
+            _userRepository= userRepository;
         }
 
         public async Task<CreateRecipeResponse> CreateRecipe(CreateRecipeRequest request)
@@ -51,8 +57,25 @@ namespace RecipeMgt.Application.Services.Recipes
                     ? _mapper.Map<List<Step>>(request.Steps)
                     : new List<Step>();
 
+                var images = new List<Image>();
+                if (request.Images != null && request.Images.Any())
+                {
+                    foreach (var img in request.Images)
+                    {
+                        var uploadResult = await _cloudinaryservice.UploadImageAsync(img);
+                        images.Add(new Image
+                        {
+                            EntityType = "Recipe",
+                            ImageUrl = uploadResult,
+                            Caption = Path.GetFileNameWithoutExtension(img.FileName),
+                            UploadedAt = DateTime.Now
+                        });
+                    }
+                }
 
-                var result = await _repository.createRecipes(recipe, ingredients, steps);
+
+                var result = await _repository.createRecipes(recipe, ingredients, steps, images);
+                var authorInfo = await _userRepository.getUserAsync(request.AuthorId);
 
                 return new CreateRecipeResponse 
                 { 
@@ -67,7 +90,10 @@ namespace RecipeMgt.Application.Services.Recipes
                         DifficultyLevel = recipe.DifficultyLevel, 
                         Servings = recipe.Servings, 
                         CreatedAt = recipe.CreatedAt, 
-                        UpdatedAt = recipe.UpdatedAt 
+                        UpdatedAt = recipe.UpdatedAt,
+                        Images= recipe.Images,
+                        Author= authorInfo,
+                        
                     } 
                 };
 
@@ -132,16 +158,16 @@ namespace RecipeMgt.Application.Services.Recipes
             return result;
         }
 
+        public async Task<Domain.RequestEntity.PagedResponse<Recipe>> GetSearchResult(Domain.RequestEntity.SearchRecipeRequest request)
+        {
+            return await _repository.GetSearchedResult(request);
+        }
+
         public async Task<UpdateRecipeResponse> UpdateRecipe(UpdateRecipeRequest request)
         {
             try
             {
-                var dish = await _dishrepository.GetById(request.DishId);
-                if (dish == null)
-                {
-                    _logger.LogError($"Error occurs when create recipe: Dish with id {request.DishId} not found");
-                    return new UpdateRecipeResponse { Success = false, Message = "Create Recipe Failed! Not found dish with Id: " + request.DishId };
-                }
+                
                 var recipeUpdate = _mapper.Map<Recipe>(request);
                 recipeUpdate.UpdatedAt = DateTime.Now;
                 var ingredients = request.Ingredients != null && request.Ingredients.Any()
@@ -151,7 +177,23 @@ namespace RecipeMgt.Application.Services.Recipes
                 var steps = request.Steps != null && request.Steps.Any()
                     ? _mapper.Map<List<Step>>(request.Steps)
                     : new List<Step>();
-                var result= await _repository.updateRecipes(recipeUpdate, ingredients, steps);
+
+                var images = new List<Image>();
+                if (request.Images != null && request.Images.Any())
+                {
+                    foreach (var img in request.Images)
+                    {
+                        var uploadResult = await _cloudinaryservice.UploadImageAsync(img);
+                        images.Add(new Image
+                        {
+                            EntityType = "Recipe",
+                            ImageUrl = uploadResult,
+                            Caption = Path.GetFileNameWithoutExtension(img.FileName),
+                            UploadedAt = DateTime.Now
+                        });
+                    }
+                }
+                var result= await _repository.updateRecipes(recipeUpdate, ingredients, steps, images);
                 if (result.Success)
                 {
                     _logger.LogInformation("Successfully update recipe with id: " + request.RecipeId);

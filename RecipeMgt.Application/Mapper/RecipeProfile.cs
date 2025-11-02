@@ -17,8 +17,9 @@ namespace RecipeMgt.Application.Mapper
             CreateMap<Recipe, RecipeWithUserInfo>()
             .ForMember(dest => dest.Author, opt => opt.MapFrom(src => src.Author));
 
-            CreateMap<CreateRecipeRequest, Recipe>();
-            CreateMap<UpdateRecipeRequest, Recipe>();
+            CreateMap<CreateRecipeRequest, Recipe>()
+    .ForMember(dest => dest.Images, opt => opt.Ignore());
+            CreateMap<UpdateRecipeRequest, Recipe>().ForMember(dest=> dest.Images, opt=> opt.Ignore());
             CreateMap<IngredientDto, Ingredient>();
             CreateMap<StepDto, Step>();
         }

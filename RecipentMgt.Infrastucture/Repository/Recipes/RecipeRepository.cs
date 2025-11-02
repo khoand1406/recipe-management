@@ -1,6 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Azure.Core;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using RecipeMgt.Domain.Entities;
+using RecipeMgt.Domain.RequestEntity;
 using RecipentMgt.Infrastucture.Persistence;
 using System;
 using System.Collections.Generic;
@@ -21,7 +23,7 @@ namespace RecipentMgt.Infrastucture.Repository.Recipes
             _logger = logger;
         }
 
-        public async Task<(bool Success, string Message, int Traceid)> createRecipes(Recipe request, List<Ingredient> ingredients, List<Step> steps)
+        public async Task<(bool Success, string Message, int Traceid)> createRecipes(Recipe request, List<Ingredient> ingredients, List<Step> steps, List<Image> images)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
@@ -40,8 +42,17 @@ namespace RecipentMgt.Infrastucture.Repository.Recipes
                 {
                     step.RecipeId = request.RecipeId;
                 }
+
+                foreach (var image in images)
+                {
+                    image.EntityType = "Recipe";
+                    image.EntityId = request.RecipeId;
+                    
+                    image.UploadedAt = DateTime.Now;
+                }
                 await _context.Ingredients.AddRangeAsync(ingredients);
                 await _context.Steps.AddRangeAsync(steps);
+                await _context.Images.AddRangeAsync(images);
                 await _context.SaveChangesAsync();
 
                 await transaction.CommitAsync();
@@ -113,7 +124,49 @@ namespace RecipentMgt.Infrastucture.Repository.Recipes
             throw new NotImplementedException();
         }
 
-        public async Task<(bool Success, string Message, int Traceid)> updateRecipes(Recipe request, List<Ingredient> ingredients, List<Step> steps)
+        public async Task<PagedResponse<Recipe>> GetSearchedResult(SearchRecipeRequest request)
+        {
+            var query = _context.Recipes.Include(r=> r.Author).Include(r=> r.Ingredients).AsQueryable();
+            if (!string.IsNullOrEmpty(request.Title))
+                query = query.Where(r => r.Title.Contains(request.Title));
+
+            if (!string.IsNullOrEmpty(request.Difficulty))
+                query = query.Where(r => r.DifficultyLevel == request.Difficulty);
+
+            if (request.MaxCookingTime.HasValue)
+                query = query.Where(r => r.CookingTime <= request.MaxCookingTime.Value);
+
+            if (!string.IsNullOrEmpty(request.CreatorName))
+                query = query.Where(r => r.Author.FullName.Contains(request.CreatorName));
+
+            if (!string.IsNullOrEmpty(request.Ingredient))
+                query = query.Where(r => r.Ingredients.Any(i => i.Name.Contains(request.Ingredient)));
+
+            var totalCounts = await query.CountAsync();
+
+            query = request.SortBy?.ToLower() switch
+            {
+                "title" => request.SortOrder == "asc" ? query.OrderBy(r => r.Title) : query.OrderByDescending(r => r.Title),
+                "cookingtime" => request.SortOrder == "asc" ? query.OrderBy(r => r.CookingTime) : query.OrderByDescending(r => r.CookingTime),
+                "difficulty" => request.SortOrder == "asc" ? query.OrderBy(r => r.DifficultyLevel) : query.OrderByDescending(r => r.DifficultyLevel),
+                "creator" => request.SortOrder == "asc" ? query.OrderBy(r => r.Author.FullName) : query.OrderByDescending(r => r.Author.FullName),
+                _ => request.SortOrder == "asc" ? query.OrderBy(r => r.RecipeId) : query.OrderByDescending(r => r.RecipeId)
+            };
+
+            var skip = (request.Page - 1) * request.PageSize;
+            var items = await query.Skip(skip).Take(request.PageSize).ToListAsync();
+
+            return new PagedResponse<Recipe>
+            {
+                Items = items,
+                Page = request.Page,
+                PageSize = request.PageSize,
+                TotalItems = totalCounts,
+                TotalPages = (int)Math.Ceiling(totalCounts / (double)request.PageSize)
+            };
+        }
+
+        public async Task<(bool Success, string Message, int Traceid)> updateRecipes(Recipe request, List<Ingredient> ingredients, List<Step> steps, List<Image> images)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
@@ -160,6 +213,19 @@ namespace RecipentMgt.Infrastucture.Repository.Recipes
                     else
                         _context.Steps.Update(step);
                 }
+
+                var existingImages = await _context.Images.Where(s => s.EntityId == request.RecipeId && s.EntityType.Contains("Recipe")).ToListAsync();
+
+                _context.Images.RemoveRange(existingImages);
+
+                foreach (var image in images)
+                {
+                    image.EntityId = request.RecipeId;
+                    image.EntityType = "Recipe";
+                    image.UploadedAt = DateTime.Now;
+                    await _context.Images.AddAsync(image);
+                }
+
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 

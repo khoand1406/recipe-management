@@ -1,4 +1,5 @@
 ﻿using RecipeMgt.Domain.Entities;
+using RecipeMgt.Domain.RequestEntity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,9 +22,11 @@ namespace RecipentMgt.Infrastucture.Repository.Recipes
 
         Task<Recipe?> getRecipeById(int id);
 
-        Task<(bool Success, string Message, int Traceid)> createRecipes(Recipe request, List<Ingredient> ingredients, List<Step> steps);
+        public Task<PagedResponse<Recipe>> GetSearchedResult(SearchRecipeRequest search);
 
-        Task<(bool Success, string Message, int Traceid)> updateRecipes(Recipe request, List<Ingredient> ingredients, List<Step> steps);
+        Task<(bool Success, string Message, int Traceid)> createRecipes(Recipe request, List<Ingredient> ingredients, List<Step> steps, List<Image> images);
+
+        Task<(bool Success, string Message, int Traceid)> updateRecipes(Recipe request, List<Ingredient> ingredients, List<Step> steps, List<Image> images);
         Task<bool> deleteRecipes(int id);
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace RecipeMgt.Domain.Entities;
 
@@ -19,6 +20,7 @@ public partial class User
 
     public virtual ICollection<Rating> Ratings { get; set; } = new List<Rating>();
 
+    [JsonIgnore]
     public virtual ICollection<Recipe> Recipes { get; set; } = new List<Recipe>();
 
     public virtual Role Role { get; set; }
