@@ -13,5 +13,7 @@ namespace RecipentMgt.Infrastucture.Repository.Bookmarks
         Task<bool> IsBookmarkedAsync(int userId, int recipeId);
 
         Task<List<Bookmark>> GetBookmarksByUserAsync(int userId);
+
+        Task<bool> RemoveAsync(int userId, int recipeId);
     }
 }

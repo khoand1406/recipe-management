@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RecipentMgt.Infrastucture.Persistence;
 
@@ -11,9 +12,11 @@ using RecipentMgt.Infrastucture.Persistence;
 namespace RecipentMgt.Infrastucture.Migrations
 {
     [DbContext(typeof(RecipeManagementContext))]
-    partial class RecipeManagementContextModelSnapshot : ModelSnapshot
+    [Migration("20251103062515_AddFollowing")]
+    partial class AddFollowing
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -134,32 +137,6 @@ namespace RecipentMgt.Infrastucture.Migrations
                     b.HasIndex("CategoryId");
 
                     b.ToTable("Dishes");
-                });
-
-            modelBuilder.Entity("RecipeMgt.Domain.Entities.Following", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("FollowerId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("FollowingId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("FollowerId");
-
-                    b.HasIndex("FollowingId");
-
-                    b.ToTable("Following");
                 });
 
             modelBuilder.Entity("RecipeMgt.Domain.Entities.Image", b =>
@@ -489,25 +466,6 @@ namespace RecipentMgt.Infrastucture.Migrations
                     b.Navigation("Category");
                 });
 
-            modelBuilder.Entity("RecipeMgt.Domain.Entities.Following", b =>
-                {
-                    b.HasOne("RecipeMgt.Domain.Entities.User", "Follower")
-                        .WithMany("FollowingUsers")
-                        .HasForeignKey("FollowerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("RecipeMgt.Domain.Entities.User", "FollowingUser")
-                        .WithMany("Followers")
-                        .HasForeignKey("FollowingId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Follower");
-
-                    b.Navigation("FollowingUser");
-                });
-
             modelBuilder.Entity("RecipeMgt.Domain.Entities.Image", b =>
                 {
                     b.HasOne("RecipeMgt.Domain.Entities.Recipe", "Recipe")
@@ -653,10 +611,6 @@ namespace RecipentMgt.Infrastucture.Migrations
                     b.Navigation("Bookmarks");
 
                     b.Navigation("Comments");
-
-                    b.Navigation("Followers");
-
-                    b.Navigation("FollowingUsers");
 
                     b.Navigation("Ratings");
 

@@ -11,6 +11,7 @@ using RecipeMgt.Application.DTOs.Request.Dishes;
 using RecipeMgt.Application.DTOs.Request.Recipes;
 using CloudinaryDotNet;
 using dotenv.net;
+using RecipeMgt.Api.Validator.Rating;
 
 internal class Program
 {
@@ -60,6 +61,7 @@ internal class Program
         builder.Services.AddValidatorsFromAssemblyContaining<UpdateDishRequest>();
         builder.Services.AddValidatorsFromAssemblyContaining<CreateRecipeRequest>();
         builder.Services.AddValidatorsFromAssemblyContaining<UpdateRecipeRequest>();
+        builder.Services.AddValidatorsFromAssemblyContaining<AddRatingValidation>();
 
         builder.Services.AddAuthentication(options =>
         {

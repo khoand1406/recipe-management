@@ -23,9 +23,32 @@ namespace RecipentMgt.Infrastucture.Repository.Bookmarks
 
         }
 
+        public async Task<List<Bookmark>> GetBookmarksByUserAsync(int userId)
+        {
+            {
+                return await _context.Bookmark
+                    .Include(b => b.Recipe)
+                    .Where(b => b.UserId == userId)
+                    .OrderByDescending(b => b.CreatedAt)
+                    .ToListAsync();
+            }
+        }
+
         public async Task<bool> IsBookmarkedAsync(int userId, int recipeId)
         {
-            return await _context.Bookmarks.AnyAsync(b => b.UserId == userId && b.RecipeId == recipeId);
+            return await _context.Bookmark.AnyAsync(b => b.UserId == userId && b.RecipeId == recipeId);
+        }
+
+        public async Task<bool> RemoveAsync(int userId, int recipeId)
+        {
+            var bookmark = await _context.Bookmark
+            .FirstOrDefaultAsync(b => b.UserId == userId && b.RecipeId == recipeId);
+
+            if (bookmark == null) return false;
+
+            _context.Bookmark.Remove(bookmark);
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }

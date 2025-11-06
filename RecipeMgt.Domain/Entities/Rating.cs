@@ -13,11 +13,11 @@ public partial class Rating
 
     public int? Score { get; set; }
 
-    public string Comment { get; set; }
+    public string? Comment { get; set; }
 
     public DateTime? CreatedAt { get; set; }
 
-    public virtual Recipe Recipe { get; set; }
+    public virtual Recipe Recipe { get; set; }= new Recipe();
 
-    public virtual User User { get; set; }
+    public virtual User User { get; set; } = new User();
 }

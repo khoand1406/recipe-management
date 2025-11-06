@@ -10,6 +10,8 @@ using RecipeMgt.Application.Services.Recipes;
 using RecipentMgt.Infrastucture.Repository.Recipes;
 using RecipeMgt.Application.Services.Comments;
 using RecipeMgt.Application.Services.Bookmarks;
+using RecipeMgt.Application.Services.Ratings;
+using RecipeMgt.Application.Services.Followings;
 
 namespace RecipeMgt.Application
 {
@@ -24,7 +26,9 @@ namespace RecipeMgt.Application
             services.AddScoped<IRecipeServices, RecipeServices>();
             services.AddScoped<ICommentServices, CommentServices>();
             services.AddScoped<IBookmarkService, BookmarkService>();
+            services.AddScoped<IRatingService, RatingService>();    
             services.AddScoped<ICloudinaryService, CloudinaryService>();
+            services.AddScoped<IFollowingService,  FollowingService>();
             
             services.AddAutoMapper(cfg => cfg.LicenseKey = configuration["AutoMapper:Key"], typeof(DishProfile));
             services.AddAutoMapper(cfg => cfg.LicenseKey = configuration["AutoMapper:Key"], typeof(RecipeProfile));

@@ -19,13 +19,13 @@ namespace RecipentMgt.Infrastucture.Repository.Comments
         }
         public async Task AddCommentAsync(Comment comment)
         {
-            _recipeManagementContext.Comments.Add(comment);
+            _recipeManagementContext.Comment.Add(comment);
             await _recipeManagementContext.SaveChangesAsync();
         }
 
         public async Task<List<Comment>> GetCommentsByRecipeIdAsync(int recipeId)
         {
-            return await _recipeManagementContext.Comments
+            return await _recipeManagementContext.Comment
             .Where(c => c.RecipeId == recipeId)
             .Include(c => c.User)
             .ToListAsync();

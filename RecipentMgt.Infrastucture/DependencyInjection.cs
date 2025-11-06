@@ -6,6 +6,8 @@ using RecipentMgt.Infrastucture.Persistence;
 using RecipentMgt.Infrastucture.Repository.Bookmarks;
 using RecipentMgt.Infrastucture.Repository.Comments;
 using RecipentMgt.Infrastucture.Repository.Dishes;
+using RecipentMgt.Infrastucture.Repository.Following;
+using RecipentMgt.Infrastucture.Repository.Ratings;
 using RecipentMgt.Infrastucture.Repository.Users;
 
 namespace RecipentMgt.Infrastucture
@@ -18,6 +20,10 @@ namespace RecipentMgt.Infrastucture
             services.AddScoped<IDishRepository, DishRepository>();
             services.AddScoped<ICommentRepository, CommentRepository>();
             services.AddScoped<IBookmarkRepository, BookmarkRepository>();
+            services.AddScoped<IFollowingRepository, FollowingRepository>();
+            services.AddScoped<IRatingRepository, RatingRepository>();
+            
+
             return services;
         }
     }

@@ -44,5 +44,10 @@ namespace RecipeMgt.Application.Services.Comments
                 CreatedAt = c.CreatedAt
             }).ToList();
         }
+
+        public Task<bool> RemoveAsync(int userId, int recipeId)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

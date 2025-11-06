@@ -12,5 +12,7 @@ namespace RecipeMgt.Application.Services.Comments
     {
         Task AddCommentAsync(int userId, int recipeId, string content);
         Task<List<CommentResposneDTO>> GetCommentsAsync(int recipeId);
+
+        Task<bool> RemoveAsync(int userId, int recipeId);
     }
 }

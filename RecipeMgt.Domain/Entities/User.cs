@@ -26,5 +26,10 @@ public partial class User
     public virtual ICollection<Bookmark> Bookmarks { get; set; } = new List<Bookmark>();
 
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
+
+    public ICollection<Following> Followers { get; set; } = new List<Following>();     
+    public ICollection<Following> FollowingUsers { get; set; } = new List<Following>();
+
+
     public virtual Role Role { get; set; }
 }

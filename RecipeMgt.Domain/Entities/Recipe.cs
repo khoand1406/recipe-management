@@ -35,6 +35,9 @@ public partial class Recipe
 
     public virtual ICollection<Rating> Ratings { get; set; } = new List<Rating>();
 
+    public virtual ICollection<Bookmark> Bookmarks { get; set; }=new List<Bookmark>();
+    public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
+
     public virtual ICollection<RelatedRecipe> RelatedRecipeRecipes { get; set; } = new List<RelatedRecipe>();
 
     public virtual ICollection<RelatedRecipe> RelatedRecipeRelatedRecipeNavigations { get; set; } = new List<RelatedRecipe>();

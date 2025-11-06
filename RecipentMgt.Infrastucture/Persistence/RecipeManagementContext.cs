@@ -27,9 +27,11 @@ namespace RecipentMgt.Infrastucture.Persistence
 
         public virtual DbSet<Ingredient> Ingredients { get; set; }
 
-        public virtual DbSet<Comment> Comments { get; set; }
+        public virtual DbSet<Comment> Comment { get; set; }
 
-        public virtual DbSet<Bookmark> Bookmarks { get; set; }
+        public virtual DbSet<Bookmark> Bookmark { get; set; }
+
+        public virtual DbSet<Following> Following { get; set; }
 
         public virtual DbSet<Rating> Ratings { get; set; }
 
@@ -113,7 +115,19 @@ namespace RecipentMgt.Infrastucture.Persistence
             modelBuilder.Entity<Comment>()
                 .HasOne(c => c.Recipe)
                 .WithMany(r => r.Comments)
-                .HasForeignKey(c => c.RecipeId).OnDelete(DeleteBehavior.Cascade); 
+                .HasForeignKey(c => c.RecipeId).OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Following>()
+        .HasOne(f => f.Follower)
+        .WithMany(u => u.FollowingUsers)
+        .HasForeignKey(f => f.FollowerId)
+        .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Following>()
+                .HasOne(f => f.FollowingUser)
+                .WithMany(u => u.Followers)
+                .HasForeignKey(f => f.FollowingId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Ingredient>(entity =>
             {
