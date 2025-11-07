@@ -18,6 +18,4 @@ public partial class Image
 
     public DateTime? UploadedAt { get; set; }
 
-    [JsonIgnore]
-    public virtual Recipe? Recipe { get; set; }
 }

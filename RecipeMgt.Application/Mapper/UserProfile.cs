@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using RecipeMgt.Application.DTOs.Response.Recipe;
+using RecipeMgt.Application.DTOs.Response.User;
 using RecipeMgt.Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -15,6 +16,7 @@ namespace RecipeMgt.Application.Mapper
             CreateMap<User, UserBasicResponse>().ForMember(dest => dest.AuthorId, opt => opt.MapFrom(src => src.UserId))
             .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.FullName))
             .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email));
+            CreateMap<User, UserResponseDTO>();
         }
     }
 }

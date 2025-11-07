@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RecipentMgt.Infrastucture.Persistence;
 
@@ -11,9 +12,11 @@ using RecipentMgt.Infrastucture.Persistence;
 namespace RecipentMgt.Infrastucture.Migrations
 {
     [DbContext(typeof(RecipeManagementContext))]
-    partial class RecipeManagementContextModelSnapshot : ModelSnapshot
+    [Migration("20251107140018_UpdateImageLinkk")]
+    partial class UpdateImageLinkk
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -515,11 +518,19 @@ namespace RecipentMgt.Infrastucture.Migrations
 
             modelBuilder.Entity("RecipeMgt.Domain.Entities.Image", b =>
                 {
+                    b.HasOne("RecipeMgt.Domain.Entities.Dish", "Dish")
+                        .WithMany("Images")
+                        .HasForeignKey("EntityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("RecipeMgt.Domain.Entities.Recipe", "Recipe")
                         .WithMany("Images")
                         .HasForeignKey("EntityId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Dish");
 
                     b.Navigation("Recipe");
                 });
@@ -626,6 +637,8 @@ namespace RecipentMgt.Infrastucture.Migrations
 
             modelBuilder.Entity("RecipeMgt.Domain.Entities.Dish", b =>
                 {
+                    b.Navigation("Images");
+
                     b.Navigation("Recipes");
                 });
 

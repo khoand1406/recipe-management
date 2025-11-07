@@ -47,7 +47,7 @@ namespace RecipeMgt.Application.Services.Auth
                 {
                     _logger.LogWarning("Login failed: user not found or inactive. Email: {Email}", inputEmail);
 
-                    return new LoginResponse { Success = false, Message = "User not found" };
+                    return new LoginResponse { Success = false, Message = "Wrong email or password" };
                 }
                 if(!UserUtils.VerifyPassword(inputPassword, user.PasswordHash))
                 {

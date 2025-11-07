@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RecipentMgt.Infrastucture.Persistence;
 
@@ -11,9 +12,11 @@ using RecipentMgt.Infrastucture.Persistence;
 namespace RecipentMgt.Infrastucture.Migrations
 {
     [DbContext(typeof(RecipeManagementContext))]
-    partial class RecipeManagementContextModelSnapshot : ModelSnapshot
+    [Migration("20251107132327_AddImagesDish")]
+    partial class AddImagesDish
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -180,6 +183,9 @@ namespace RecipentMgt.Infrastucture.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<int?>("DishId")
+                        .HasColumnType("int");
+
                     b.Property<int>("EntityId")
                         .HasColumnType("int");
 
@@ -200,6 +206,8 @@ namespace RecipentMgt.Infrastucture.Migrations
 
                     b.HasKey("ImageId")
                         .HasName("PK__Images__7516F70CAF793B1B");
+
+                    b.HasIndex("DishId");
 
                     b.HasIndex("EntityId");
 
@@ -515,6 +523,10 @@ namespace RecipentMgt.Infrastucture.Migrations
 
             modelBuilder.Entity("RecipeMgt.Domain.Entities.Image", b =>
                 {
+                    b.HasOne("RecipeMgt.Domain.Entities.Dish", null)
+                        .WithMany("Images")
+                        .HasForeignKey("DishId");
+
                     b.HasOne("RecipeMgt.Domain.Entities.Recipe", "Recipe")
                         .WithMany("Images")
                         .HasForeignKey("EntityId")
@@ -626,6 +638,8 @@ namespace RecipentMgt.Infrastucture.Migrations
 
             modelBuilder.Entity("RecipeMgt.Domain.Entities.Dish", b =>
                 {
+                    b.Navigation("Images");
+
                     b.Navigation("Recipes");
                 });
 

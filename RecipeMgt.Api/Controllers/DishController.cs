@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using RecipeMgt.Application.DTOs.Request.Dishes;
 using RecipeMgt.Application.Services.Dishes;
 
@@ -18,73 +17,90 @@ namespace RecipeMgt.Api.Controllers
             _logger = logger;
         }
 
+       
         [HttpGet]
-        public async Task<IActionResult> getAll()
+        public async Task<IActionResult> GetAll()
         {
             var result = await _dishService.getDishes();
             return Ok(result);
         }
 
-        [HttpGet("cate/{id}")]
-        public async Task<IActionResult> getListByCategory(int id)
+        
+        [HttpGet("cate/{id:int}")]
+        public async Task<IActionResult> GetListByCategory(int id)
         {
-            var result= await _dishService.getDishesByCategory(id);
+            var result = await _dishService.getDishesByCategory(id);
             return Ok(result);
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> getDetail(int id)
+        
+        [HttpGet("{id:int}")]
+        public async Task<IActionResult> GetDetail(int id)
         {
-            var result= await _dishService.GetDishDetail(id);
+            var result = await _dishService.GetDishDetail(id);
+            if (result == null)
+                return NotFound($"Không tìm thấy món ăn có ID = {id}");
+
             return Ok(result);
         }
 
+        
         [HttpPost("create")]
-        public async Task<IActionResult> createDishes([FromBody] CreateDishRequest request)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> CreateDish([FromForm] CreateDishRequest request)
         {
             try
             {
-                var result= await _dishService.CreateDish(request);
-                if (result.Success)
-                {
-                    return Ok(result);
-                }
-                return BadRequest(result.Message);
-            }catch (Exception ex)
+                var result = await _dishService.CreateDish(request);
+                if (!result.Success)
+                    return BadRequest(result.Message);
+
+                return Ok(result);
+            }
+            catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                _logger.LogError(ex, "Error creating dish");
+                return StatusCode(500, new { Message = "Internal server error", Error = ex.Message });
             }
         }
 
+        
         [HttpPatch("update")]
-
-        public async Task<IActionResult> updateDishes([FromBody] UpdateDishRequest request)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UpdateDish([FromForm] UpdateDishRequest request)
         {
             try
             {
-                var result= await _dishService.UpdateDish(request);
-                if (result.Success)
-                {
-                    return Ok(result.Message);
-                }
-                return BadRequest(result.Message);
+                var result = await _dishService.UpdateDish(request);
+                if (!result.Success)
+                    return BadRequest(result.Message);
 
-            }catch(Exception ex)
+                return Ok(result);
+            }
+            catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                _logger.LogError(ex, "Error updating dish");
+                return StatusCode(500, new { Message = "Internal server error", Error = ex.Message });
             }
         }
 
-        [HttpDelete("delete/{id}")]
-        public async Task<IActionResult> deleteDishes(int id)
+        
+        [HttpDelete("delete/{id:int}")]
+        public async Task<IActionResult> DeleteDish(int id)
         {
-            var result = await _dishService.deleteDish(id);
-            if(result.Success)
+            try
             {
-                return Ok(result.Message);
-            }
-            return BadRequest(result.Message);
-        }
+                var result = await _dishService.deleteDish(id);
+                if (!result.Success)
+                    return BadRequest(result.Message);
 
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting dish");
+                return StatusCode(500, new { Message = "Internal server error", Error = ex.Message });
+            }
+        }
     }
 }

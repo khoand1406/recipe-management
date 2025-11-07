@@ -58,6 +58,7 @@ namespace RecipentMgt.Infrastucture.Persistence
                     .IsRequired()
                     .HasMaxLength(100);
                 entity.Property(e => e.Description).HasMaxLength(255);
+                entity.Property(e=> e.ImageUrl).HasMaxLength(255);
             });
 
             modelBuilder.Entity<Dish>(entity =>
@@ -89,13 +90,9 @@ namespace RecipentMgt.Infrastucture.Persistence
                     .HasColumnType("datetime");
             });
 
-            modelBuilder.Entity<Image>()
-        .HasOne(i => i.Recipe)
-        .WithMany(r => r.Images)
-        .HasForeignKey(i => i.EntityId)
-        .HasPrincipalKey(r => r.RecipeId)
-        .OnDelete(DeleteBehavior.Cascade);
+            
 
+            
 
             modelBuilder.Entity<Bookmark>()
                 .HasOne(b => b.User)

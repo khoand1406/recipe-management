@@ -43,7 +43,7 @@ namespace RecipeMgt.Application.Services.Bookmarks
                 RecipeId = b.RecipeId,
                 UserId = b.UserId,
                 RecipeTitle = b.Recipe?.Title ?? "Unknown",
-                RecipeThumbnail = b.Recipe?.Images.First().ImageUrl, 
+                RecipeThumbnail = "", 
                 CreatedAt = b.CreatedAt
             }).ToList();
         }

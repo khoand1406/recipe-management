@@ -76,6 +76,7 @@ namespace RecipeMgt.Application.Services.Recipes
 
                 var result = await _repository.createRecipes(recipe, ingredients, steps, images);
                 var authorInfo = await _userRepository.getUserAsync(request.AuthorId);
+                var imageRecipes = await _repository.getRecipeImages(recipe.RecipeId);
 
                 return new CreateRecipeResponse 
                 { 
@@ -91,7 +92,7 @@ namespace RecipeMgt.Application.Services.Recipes
                         Servings = recipe.Servings, 
                         CreatedAt = recipe.CreatedAt, 
                         UpdatedAt = recipe.UpdatedAt,
-                        Images= recipe.Images,
+                        Images= imageRecipes,
                         Author= authorInfo,
                         
                     } 

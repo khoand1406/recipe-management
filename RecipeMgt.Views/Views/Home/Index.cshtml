@@ -1,18 +1,11 @@
-﻿@{
+﻿@model List<RecipeMgt.Views.Models.Response.CategoryDto>
+
+@{
     ViewData["Title"] = "Dashboard";
     Layout = "~/Views/Shared/_Layout.cshtml";
-
-    var trending = new List<dynamic> {
-        new { Name = "thịt", Image = "/images/trending/thit.jpg" },
-        new { Name = "thịt kho", Image = "/images/trending/thitkho.jpg" },
-        new { Name = "thực đơn món ngon mỗi ngày", Image = "/images/trending/monngon.jpg" },
-        new { Name = "nấm đùi gà", Image = "/images/trending/namduiga.jpg" },
-        new { Name = "sườn", Image = "/images/trending/suon.jpg" },
-        new { Name = "bánh", Image = "/images/trending/banh.jpg" },
-        new { Name = "ức gà", Image = "/images/trending/ucga.jpg" },
-        new { Name = "bún", Image = "/images/trending/bun.jpg" }
-    };
 }
+
+
 
 <div class="dashboard-container py-5 text-center">
     <!-- Logo + Search -->
@@ -33,20 +26,18 @@
     </div>
 
     <!-- Trending -->
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-3 px-2">
-            <h5 class="fw-bold text-secondary">Từ Khóa Thịnh Hành</h5>
-            <small class="text-muted">Cập nhật 04:22</small>
-        </div>
-
-        <div class="row g-3">
-            @foreach (var item in trending)
+    <div class="container mt-5">
+        <div class="row g-4">
+            @foreach (var category in Model)
             {
-                <div class="col-6 col-sm-4 col-md-3 col-lg-2">
-                    <div class="trending-card position-relative rounded overflow-hidden">
-                        <img src="@item.Image" alt="@item.Name" class="w-100 h-100 object-fit-cover" />
+                <div class="col-6 col-md-4 col-lg-3">
+                    <div class="category-card position-relative rounded overflow-hidden shadow-sm">
+                        <div class="bg-image" style="background-image: url('@category.ImageUrl');"></div>
                         <div class="overlay d-flex align-items-end">
-                            <span class="text-white fw-semibold ps-2 pb-2">@item.Name</span>
+                            <div class="text-white fw-semibold ps-3 pb-3">
+                                <h6>@category.CategoryName</h6>
+                                <small>@category.Description</small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -102,5 +93,37 @@
         .fw-semibold {
             font-weight: 600 !important;
         }
+
+        .category-card {
+            height: 180px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+            .category-card:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+            }
+
+        .bg-image {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            z-index: 1;
+        }
+
+        .overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0.1));
+            z-index: 2;
+            transition: background 0.3s ease;
+        }
+
+            .overlay:hover {
+                background: linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0.2));
+            }
     </style>
 }

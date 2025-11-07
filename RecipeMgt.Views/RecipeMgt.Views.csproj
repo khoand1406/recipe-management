@@ -7,9 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Models\RequestModel\" />
+    <Folder Include="Models\Request\" />
     <Folder Include="Models\ViewModels\" />
-    <Folder Include="Views\Auth\" />
     <Folder Include="Views\User\" />
     <Folder Include="Views\Recipe\" />
   </ItemGroup>

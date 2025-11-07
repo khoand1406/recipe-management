@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using RecipeMgt.Views.Models;
+using RecipeMgt.Views.Models.RequestModel;
 using System.Diagnostics;
 
 namespace RecipeMgt.Views.Controllers
@@ -7,15 +8,18 @@ namespace RecipeMgt.Views.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly DashboardClient _client;
 
         public HomeController(ILogger<HomeController> logger)
         {
             _logger = logger;
+            _client= new DashboardClient("https://localhost:7059");
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View();
+            var categories = await _client.GetCategoriesAsync();
+            return View(categories);
         }
 
         public IActionResult Privacy()

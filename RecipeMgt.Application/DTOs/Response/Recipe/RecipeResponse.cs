@@ -30,7 +30,7 @@ namespace RecipeMgt.Application.DTOs.Response.Recipe
 
         public virtual RecipeMgt.Domain.Entities.User Author { get; set; } = new RecipeMgt.Domain.Entities.User();
 
-        public ICollection<Image> Images { get; set; }= new List<Image>();
+        public List<string> Images { get; set; }
     }
 
     public class CreateRecipeResponse
