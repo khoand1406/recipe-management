@@ -1,0 +1,204 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - RecipeMgt</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @RenderSection("Styles", required: false)
+
+    <style>
+        body {
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background-color: #f9fafb;
+        }
+
+        .wrapper {
+            display: flex;
+            flex: 1;
+        }
+
+        /* === SIDEBAR (Modern Light Theme) === */
+        .sidebar {
+            width: 240px;
+            background-color: #ffffff;
+            border-right: 1px solid #e5e7eb;
+            min-height: 100vh;
+            position: fixed;
+            transition: width 0.3s ease;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+            z-index: 100;
+        }
+
+        .sidebar.collapsed {
+            width: 70px;
+        }
+
+        .sidebar .brand {
+            font-size: 1.2rem;
+            font-weight: 600;
+            padding: 20px;
+            border-bottom: 1px solid #e5e7eb;
+            color: #374151;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .sidebar nav a {
+            color: #374151;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin: 4px 12px;
+            transition: all 0.2s ease-in-out;
+            font-weight: 500;
+        }
+
+        .sidebar nav a:hover {
+            background-color: #f3f4f6;
+        }
+
+        .sidebar nav a.active {
+            background-color: #e0f2fe;
+            color: #0ea5e9;
+            font-weight: 600;
+        }
+
+        .sidebar i {
+            margin-right: 10px;
+            font-size: 1.1rem;
+        }
+
+        .sidebar.collapsed a span {
+            display: none;
+        }
+
+        .sidebar.collapsed .brand span {
+            display: none;
+        }
+
+        /* === MAIN CONTENT === */
+        .main {
+            margin-left: 240px;
+            flex: 1;
+            padding: 20px;
+            background-color: #f9fafb;
+            transition: margin-left 0.3s ease;
+        }
+
+        .main.collapsed {
+            margin-left: 70px;
+        }
+
+        /* === NAVBAR === */
+        .navbar-custom {
+            background-color: #ffffff;
+            border-bottom: 1px solid #e5e7eb;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        footer {
+            background: #ffffff;
+            border-top: 1px solid #e5e7eb;
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+
+        /* === Responsive === */
+        @@media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .main {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="brand">
+                <span>🍳 RecipeMgt</span>
+                <button class="btn btn-sm btn-outline-secondary d-none d-md-inline" id="toggleSidebar">
+                    ☰
+                </button>
+            </div>
+            <nav>
+                <a asp-controller="Dashboard" asp-action="Index" class="active">🏠<span>Dashboard</span></a>
+                <a asp-controller="Recipe" asp-action="Index">📖<span>My Recipes</span></a>
+                <a asp-controller="Bookmark" asp-action="Index">🔖<span>Bookmarks</span></a>
+                <a asp-controller="Following" asp-action="Index">👥<span>Following</span></a>
+                <a asp-controller="Settings" asp-action="Index">⚙️<span>Settings</span></a>
+                <a asp-controller="Auth" asp-action="Logout" class="text-danger">🚪<span>Logout</span></a>
+            </nav>
+        </div>
+
+        <!-- Main -->
+        <div class="main" id="main">
+            <nav class="navbar navbar-expand navbar-custom mb-3">
+                <div class="container-fluid">
+                    <button class="btn btn-outline-secondary d-md-none me-2" id="mobileToggle">
+                        ☰
+                    </button>
+                    <span class="navbar-brand mb-0 h5 text-secondary">
+                        Welcome, @User.Identity?.Name
+                    </span>
+                    <div class="d-flex align-items-center">
+                        <a class="btn btn-outline-secondary btn-sm me-2" asp-controller="Profile" asp-action="Index">Profile</a>
+                        <a class="btn btn-outline-danger btn-sm" asp-controller="Auth" asp-action="Logout">Logout</a>
+                    </div>
+                </div>
+            </nav>
+
+            <main role="main">
+                @RenderBody()
+            </main>
+
+            <footer>
+                &copy; 2025 - RecipeMgt User Dashboard
+            </footer>
+        </div>
+    </div>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const sidebar = document.getElementById("sidebar");
+        const main = document.getElementById("main");
+        const toggleSidebar = document.getElementById("toggleSidebar");
+        const mobileToggle = document.getElementById("mobileToggle");
+
+        toggleSidebar?.addEventListener("click", () => {
+            sidebar.classList.toggle("collapsed");
+            main.classList.toggle("collapsed");
+        });
+
+        mobileToggle?.addEventListener("click", () => {
+            sidebar.classList.toggle("show");
+        });
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

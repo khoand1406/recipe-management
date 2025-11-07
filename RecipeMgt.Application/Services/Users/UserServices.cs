@@ -1,4 +1,8 @@
-﻿using RecipeMgt.Application.DTOs.Response.User;
+﻿using AutoMapper;
+using RecipeMgt.Application.DTOs.Response.User;
+using RecipeMgt.Domain.Entities;
+using RecipentMgt.Infrastucture.Repository.Following;
+using RecipentMgt.Infrastucture.Repository.Ratings;
 using RecipentMgt.Infrastucture.Repository.Users;
 using System;
 using System.Collections.Generic;
@@ -8,36 +12,60 @@ using System.Threading.Tasks;
 
 namespace RecipeMgt.Application.Services.Users
 {
-    public class UserServices:IUserService
+    public class UserService : IUserService
     {
-        private readonly IUserRepository _repository;
+        private readonly IFollowingRepository _followRepo;
+        private readonly IRatingRepository _ratingRepo;
+        private readonly IUserRepository _userRepo;
+        private readonly IMapper _mapper;
 
-
-        public UserServices(IUserRepository repository)
+        public UserService(
+            IFollowingRepository followRepo,
+            IRatingRepository ratingRepo,
+            IUserRepository userRepo,
+            IMapper mapper)
         {
-            _repository = repository;
+            _followRepo = followRepo;
+            _ratingRepo = ratingRepo;
+            _userRepo = userRepo;
+            _mapper = mapper;
         }
 
         
+        public async Task<bool> ToggleFollowAsync(int followerId, int followingId)
+        {
+            if (await _followRepo.IsFollowingAsync(followerId, followingId))
+            {
+                await _followRepo.UnfollowAsync(followerId, followingId);
+                return false;
+            }
+            else
+            {
+                await _followRepo.FollowAsync(new Following
+                {
+                    FollowerId = followerId,
+                    FollowingId = followingId,
+                    CreatedAt = DateTime.UtcNow
+                });
+                return true;
+            }
+        }
+
         public Task<bool> IsFollowingAsync(int followerId, int followingId)
+            => _followRepo.IsFollowingAsync(followerId, followingId);
+
+
+        async Task<List<UserResponseDTO>> IUserService.GetFollowersAsync(int userId)
         {
-            throw new NotImplementedException();
+            var following = await _followRepo.GetFollowers(userId);
+            return _mapper.Map<List<UserResponseDTO>>(following);
         }
 
-        
-        public Task<bool> ToggleFollowAsync(int followerId, int followingId)
+        async Task<List<UserResponseDTO>> IUserService.GetFollowingAsync(int userId)
         {
-            throw new NotImplementedException();
-        }
-
-        Task<List<UserResponseDTO>> IUserService.GetFollowersAsync(int userId)
-        {
-            throw new NotImplementedException();
-        }
-
-        Task<List<UserResponseDTO>> IUserService.GetFollowingAsync(int userId)
-        {
-            throw new NotImplementedException();
+            var follows= await _followRepo.GetFollowingUsers(userId);
+            return _mapper.Map<List<UserResponseDTO>>(follows);    
         }
     }
+
 }

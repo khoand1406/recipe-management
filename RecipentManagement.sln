@@ -3,13 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34330.188
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecipeMgt.Api", "RecipeMgt.Api\RecipeMgt.Api.csproj", "{C635C059-C667-4A51-83C0-3C2D5C9B2702}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RecipeMgt.Api", "RecipeMgt.Api\RecipeMgt.Api.csproj", "{C635C059-C667-4A51-83C0-3C2D5C9B2702}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecipeMgt.Application", "RecipeMgt.Application\RecipeMgt.Application.csproj", "{F31DB2A3-641F-4B9D-8B42-74C30F1C0B71}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RecipeMgt.Application", "RecipeMgt.Application\RecipeMgt.Application.csproj", "{F31DB2A3-641F-4B9D-8B42-74C30F1C0B71}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecipeMgt.Domain", "RecipeMgt.Domain\RecipeMgt.Domain.csproj", "{C64B63A7-8C2A-4576-ABF1-245E63E87365}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RecipeMgt.Domain", "RecipeMgt.Domain\RecipeMgt.Domain.csproj", "{C64B63A7-8C2A-4576-ABF1-245E63E87365}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecipentMgt.Infrastucture", "RecipentMgt.Infrastucture\RecipentMgt.Infrastucture.csproj", "{F3925B08-6947-42D2-8F24-49A145DE6FA4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RecipentMgt.Infrastucture", "RecipentMgt.Infrastucture\RecipentMgt.Infrastucture.csproj", "{F3925B08-6947-42D2-8F24-49A145DE6FA4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RecipeMgt.Views", "RecipeMgt.Views\RecipeMgt.Views.csproj", "{7ABC1724-F96B-4597-861E-F170C543AEE2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{F3925B08-6947-42D2-8F24-49A145DE6FA4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F3925B08-6947-42D2-8F24-49A145DE6FA4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F3925B08-6947-42D2-8F24-49A145DE6FA4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7ABC1724-F96B-4597-861E-F170C543AEE2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7ABC1724-F96B-4597-861E-F170C543AEE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7ABC1724-F96B-4597-861E-F170C543AEE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7ABC1724-F96B-4597-861E-F170C543AEE2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
