@@ -30,6 +30,7 @@ namespace RecipentMgt.Infrastucture
             services.AddScoped<IIngredientRepository, IngredientRepository>();
             
             
+            
 
             return services;
         }

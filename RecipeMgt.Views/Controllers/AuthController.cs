@@ -6,6 +6,7 @@ namespace RecipeMgt.Views.Controllers
 {
     public class AuthController : Controller
     {
+
         private readonly AuthClient _authClient;
         private readonly IConfiguration _configuration;
 

@@ -58,7 +58,6 @@ namespace RecipentMgt.Infrastucture.Persistence
                     .IsRequired()
                     .HasMaxLength(100);
                 entity.Property(e => e.Description).HasMaxLength(255);
-                entity.Property(e=> e.ImageUrl).HasMaxLength(255);
             });
 
             modelBuilder.Entity<Dish>(entity =>
@@ -90,6 +89,9 @@ namespace RecipentMgt.Infrastucture.Persistence
                     .HasColumnType("datetime");
             });
 
+            
+
+            
             
 
             modelBuilder.Entity<Bookmark>()
