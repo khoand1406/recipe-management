@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -15,8 +15,8 @@ namespace RecipeMgt.Domain.Entities
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-        // Navigation
-        public User User { get; set; } = new User();
-        public Recipe Recipe { get; set; }= new Recipe();
+        // Navigation properties - should NOT be initialized to avoid EF tracking issues
+        public User? User { get; set; }
+        public Recipe? Recipe { get; set; }
     }
 }

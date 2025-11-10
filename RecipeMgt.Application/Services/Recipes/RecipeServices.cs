@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using Microsoft.Extensions.Logging;
 using RecipeMgt.Application.DTOs.Request.Recipes;
 using RecipeMgt.Application.DTOs.Response.Recipe;
@@ -32,6 +32,14 @@ namespace RecipeMgt.Application.Services.Recipes
             _logger = logger;
             _dishrepository = dishRepository;
             _userRepository= userRepository;
+        }
+
+        public async Task<RecipeResponse?> GetRecipeById(int id)
+        {
+            var recipe = await _repository.getRecipeById(id);
+            if (recipe == null) return null;
+            var result = _mapper.Map<RecipeResponse>(recipe);
+            return result;
         }
 
         public async Task<CreateRecipeResponse> CreateRecipe(CreateRecipeRequest request)
@@ -76,6 +84,7 @@ namespace RecipeMgt.Application.Services.Recipes
 
                 var result = await _repository.createRecipes(recipe, ingredients, steps, images);
                 var authorInfo = await _userRepository.getUserAsync(request.AuthorId);
+                var imageRecipes = await _repository.getRecipeImages(recipe.RecipeId);
 
                 return new CreateRecipeResponse 
                 { 
@@ -91,7 +100,7 @@ namespace RecipeMgt.Application.Services.Recipes
                         Servings = recipe.Servings, 
                         CreatedAt = recipe.CreatedAt, 
                         UpdatedAt = recipe.UpdatedAt,
-                        Images= recipe.Images,
+                        Images= imageRecipes,
                         Author= authorInfo,
                         
                     } 

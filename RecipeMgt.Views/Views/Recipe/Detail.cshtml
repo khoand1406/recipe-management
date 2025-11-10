@@ -1,0 +1,358 @@
+@model RecipeMgt.Views.Models.Response.RecipeResponse
+
+@{
+    ViewData["Title"] = Model.Title;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container py-5">
+    <div class="mb-4">
+        <a href="javascript:history.back()" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            @if (Model.Images != null && Model.Images.Any())
+            {
+                <div id="recipeCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
+                    <div class="carousel-inner rounded shadow">
+                        @for (int i = 0; i < Model.Images.Count; i++)
+                        {
+                            <div class="carousel-item @(i == 0 ? "active" : "")">
+                                <img src="@Model.Images[i]" class="d-block w-100" alt="@Model.Title" style="height: 450px; object-fit: cover;">
+                            </div>
+                        }
+                    </div>
+                    @if (Model.Images.Count > 1)
+                    {
+                        <button class="carousel-control-prev" type="button" data-bs-target="#recipeCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Previous</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#recipeCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Next</span>
+                        </button>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="bg-light d-flex align-items-center justify-content-center rounded shadow mb-4" style="height: 450px;">
+                    <i class="bi bi-card-image text-muted" style="font-size: 6rem;"></i>
+                </div>
+            }
+
+            <h1 class="display-4 fw-bold mb-3">@Model.Title</h1>
+            
+            <div class="d-flex align-items-center mb-4">
+                @if (Model.Author != null)
+                {
+                    <div class="me-4">
+                        <i class="bi bi-person-circle text-warning"></i>
+                        <span class="ms-2">@Model.Author.FullName</span>
+                    </div>
+                }
+                <div class="me-4">
+                    <i class="bi bi-clock text-warning"></i>
+                    <span class="ms-2">@(Model.CookingTime ?? 0) mins</span>
+                </div>
+                <div class="me-4">
+                    <i class="bi bi-people text-warning"></i>
+                    <span class="ms-2">@(Model.Servings ?? 0) servings</span>
+                </div>
+                <div>
+                    <span class="badge bg-secondary">@Model.DifficultyLevel</span>
+                </div>
+            </div>
+
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold mb-3">Description</h5>
+                    <p class="card-text">@Model.Description</p>
+                </div>
+            </div>
+
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold mb-3">
+                        <i class="bi bi-egg text-warning"></i> Ingredients
+                    </h5>
+                    @{
+                        var ingredients = ViewBag.Ingredients as List<RecipeMgt.Views.Models.Response.IngredientResponse>;
+                    }
+                    @if (ingredients == null || !ingredients.Any())
+                    {
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> No ingredients available for this recipe yet.
+                        </div>
+                    }
+                    else
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var ingredient in ingredients)
+                            {
+                                <li class="list-group-item d-flex justify-content-between align-items-center ingredient-item">
+                                    <span class="ingredient-name">
+                                        <i class="bi bi-check-circle text-success me-2"></i>
+                                        @ingredient.Name
+                                    </span>
+                                    <span class="badge bg-light text-dark ingredient-quantity">@ingredient.Quantity</span>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </div>
+
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold mb-3">
+                        <i class="bi bi-list-ol text-warning"></i> Instructions
+                    </h5>
+                    @{
+                        var steps = ViewBag.Steps as List<RecipeMgt.Views.Models.Response.StepResponse>;
+                    }
+                    @if (steps == null || !steps.Any())
+                    {
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> No instructions available for this recipe yet.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="steps-container">
+                            @foreach (var step in steps)
+                            {
+                                <div class="step-item mb-4 p-3 border rounded">
+                                    <div class="d-flex align-items-start">
+                                        <div class="step-number me-3">
+                                            <span class="badge bg-warning text-white rounded-circle" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                                                @step.StepNumber
+                                            </span>
+                                        </div>
+                                        <div class="step-content flex-grow-1">
+                                            <p class="mb-0">@step.Instruction</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm sticky-top" style="top: 20px;">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold mb-3">Recipe Info</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <strong>Recipe ID:</strong> @Model.RecipeId
+                        </li>
+                        <li class="mb-2">
+                            <strong>Created:</strong> @Model.CreatedAt?.ToString("MMM dd, yyyy")
+                        </li>
+                        <li class="mb-2">
+                            <strong>Last Updated:</strong> @Model.UpdatedAt?.ToString("MMM dd, yyyy")
+                        </li>
+                    </ul>
+                    <hr>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-warning text-white fw-semibold bookmark-recipe-btn" data-recipe-id="@Model.RecipeId">
+                            <i class="bi bi-bookmark"></i> Save Recipe
+                        </button>
+                        <button class="btn btn-outline-warning fw-semibold">
+                            <i class="bi bi-share"></i> Share
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-3">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold mb-3">
+                        <i class="bi bi-chat-dots text-warning"></i> Comments
+                    </h5>
+                    @{
+                        var comments = ViewBag.Comments as List<RecipeMgt.Views.Models.Response.CommentResponseDTO>;
+                    }
+                    @if (comments == null || !comments.Any())
+                    {
+                        <div class="alert alert-light border">
+                            <i class="bi bi-chat-left-text text-muted"></i>
+                            <span class="text-muted ms-2">No comments yet. Be the first to comment!</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="comments-container" style="max-height: 500px; overflow-y: auto;">
+                            @foreach (var comment in comments)
+                            {
+                                <div class="comment-item mb-3 p-3 border rounded">
+                                    <div class="d-flex align-items-start">
+                                        <div class="comment-avatar me-3">
+                                            @if (!string.IsNullOrEmpty(comment.UserAvatar))
+                                            {
+                                                <img src="@comment.UserAvatar" alt="@comment.UserName" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+                                            }
+                                            else
+                                            {
+                                                <div class="rounded-circle bg-warning text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                    <i class="bi bi-person-fill"></i>
+                                                </div>
+                                            }
+                                        </div>
+                                        <div class="comment-content flex-grow-1">
+                                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                                <strong class="comment-author">@comment.UserName</strong>
+                                                <small class="text-muted">@comment.CreatedAt.ToString("MMM dd, yyyy")</small>
+                                            </div>
+                                            <p class="mb-0 comment-text">@comment.Content</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="text-muted small mt-2">
+                            <i class="bi bi-info-circle"></i> @comments.Count comment@(comments.Count != 1 ? "s" : "")
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <style>
+        .sticky-top {
+            position: sticky;
+        }
+
+        .card {
+            border-radius: 12px;
+        }
+
+        .carousel-item img {
+            border-radius: 12px;
+        }
+
+        .step-item {
+            background-color: #f8f9fa;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .step-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .step-number .badge {
+            font-weight: 700;
+        }
+
+        .step-content {
+            line-height: 1.6;
+        }
+
+        .ingredient-item {
+            transition: background-color 0.2s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .ingredient-item:hover {
+            background-color: #f8f9fa;
+            border-left-color: #ffc107;
+        }
+
+        .ingredient-name {
+            font-weight: 500;
+        }
+
+        .ingredient-quantity {
+            font-size: 0.9rem;
+            padding: 0.4rem 0.8rem;
+            border: 1px solid #dee2e6;
+        }
+
+        .comment-item {
+            background-color: #f8f9fa;
+            transition: box-shadow 0.2s ease;
+        }
+
+        .comment-item:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .comment-author {
+            color: #495057;
+            font-size: 0.95rem;
+        }
+
+        .comment-text {
+            color: #6c757d;
+            line-height: 1.6;
+        }
+
+        .comments-container {
+            scrollbar-width: thin;
+            scrollbar-color: #ffc107 #f8f9fa;
+        }
+
+        .comments-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .comments-container::-webkit-scrollbar-track {
+            background: #f8f9fa;
+        }
+
+        .comments-container::-webkit-scrollbar-thumb {
+            background: #ffc107;
+            border-radius: 3px;
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('.bookmark-recipe-btn').on('click', function() {
+                const button = $(this);
+                const recipeId = button.data('recipe-id');
+                const icon = button.find('i');
+                
+                // Disable button during request
+                button.prop('disabled', true);
+                
+                $.ajax({
+                    url: '@Url.Action("AddBookmark", "Bookmark")',
+                    type: 'POST',
+                    data: { recipeId: recipeId },
+                    success: function(response) {
+                        if (response.success) {
+                            // Change button appearance
+                            icon.removeClass('bi-bookmark').addClass('bi-bookmark-fill');
+                            button.removeClass('btn-warning').addClass('btn-success');
+                            button.html('<i class="bi bi-bookmark-fill"></i> Recipe Saved');
+                            
+                            // Show success message
+                            alert('Recipe saved to your bookmarks!');
+                        } else {
+                            alert(response.message || 'Failed to save recipe');
+                            button.prop('disabled', false);
+                        }
+                    },
+                    error: function() {
+                        alert('Error saving recipe. Please try again.');
+                        button.prop('disabled', false);
+                    }
+                });
+            });
+        });
+    </script>
+}

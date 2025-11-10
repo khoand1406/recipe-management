@@ -13,7 +13,11 @@ namespace RecipeMgt.Application.Mapper
     public class DishProfile:Profile
     {
         public DishProfile() {
-            CreateMap<CreateDishRequest, Dish>();
+            CreateMap<CreateDishRequest, Dish>()
+            .ForMember(dest => dest.Images, opt => opt.Ignore());
+
+            CreateMap<UpdateDishRequest, Dish>()
+                .ForMember(dest => dest.Images, opt => opt.Ignore());
             CreateMap<Dish, DishResponse>();
 
             CreateMap<Dish, DishDetailResponse>();

@@ -1,0 +1,175 @@
+@model RecipeMgt.Views.Models.Response.DishDetailResponse
+
+@{
+    ViewData["Title"] = Model.DishName;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container py-5">
+    <div class="mb-4">
+        <a href="@Url.Action("ByCategory", "Dish", new { id = Model.CategoryId })" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Dishes
+        </a>
+    </div>
+
+    <div class="row mb-5">
+        <div class="col-lg-5">
+            @if (Model.ImageUrls != null && Model.ImageUrls.Any())
+            {
+                <div id="dishCarousel" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner rounded shadow">
+                        @for (int i = 0; i < Model.ImageUrls.Count; i++)
+                        {
+                            <div class="carousel-item @(i == 0 ? "active" : "")">
+                                <img src="@Model.ImageUrls[i]" class="d-block w-100" alt="@Model.DishName" style="height: 350px; object-fit: cover;">
+                            </div>
+                        }
+                    </div>
+                    @if (Model.ImageUrls.Count > 1)
+                    {
+                        <button class="carousel-control-prev" type="button" data-bs-target="#dishCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Previous</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#dishCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Next</span>
+                        </button>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="bg-secondary d-flex align-items-center justify-content-center rounded shadow" style="height: 350px;">
+                    <i class="bi bi-image text-white" style="font-size: 5rem;"></i>
+                </div>
+            }
+        </div>
+        <div class="col-lg-7">
+            <h1 class="display-5 fw-bold mb-3">@Model.DishName</h1>
+            <span class="badge bg-primary mb-3">@Model.CategoryName</span>
+            <p class="lead text-muted">@Model.Description</p>
+        </div>
+    </div>
+
+    <hr class="my-5">
+
+    <h3 class="mb-4">Recipes for @Model.DishName</h3>
+
+    @if (Model.Recipes == null || !Model.Recipes.Any())
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No recipes available for this dish yet.
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var recipe in Model.Recipes)
+            {
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card recipe-card h-100 shadow-sm">
+                        @if (recipe.Images != null && recipe.Images.Any())
+                        {
+                            <img src="@recipe.Images.First()" class="card-img-top" alt="@recipe.Title" style="height: 200px; object-fit: cover;">
+                        }
+                        else
+                        {
+                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <i class="bi bi-card-image text-muted" style="font-size: 3rem;"></i>
+                            </div>
+                        }
+                        <div class="card-body">
+                            <h5 class="card-title">@recipe.Title</h5>
+                            <p class="card-text text-muted small">@recipe.Description</p>
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <small class="text-muted">
+                                    <i class="bi bi-clock"></i> @(recipe.CookingTime ?? 0) mins
+                                </small>
+                                <span class="badge bg-secondary">@recipe.DifficultyLevel</span>
+                            </div>
+                            @if (recipe.Author != null)
+                            {
+                                <small class="text-muted d-block mt-2">
+                                    <i class="bi bi-person"></i> By @recipe.Author.FullName
+                                </small>
+                            }
+                        </div>
+                        <div class="card-footer bg-white border-0">
+                            <div class="d-grid gap-2">
+                                <a href="@Url.Action("Detail", "Recipe", new { id = recipe.RecipeId })" class="btn btn-outline-warning fw-semibold">
+                                    <i class="bi bi-eye"></i> View Recipe
+                                </a>
+                                <button class="btn btn-warning text-white fw-semibold bookmark-btn" data-recipe-id="@recipe.RecipeId">
+                                    <i class="bi bi-bookmark"></i> Bookmark
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@section Styles {
+    <style>
+        .recipe-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .recipe-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15) !important;
+        }
+
+        .card-img-top {
+            transition: transform 0.3s ease;
+        }
+
+        .recipe-card:hover .card-img-top {
+            transform: scale(1.05);
+        }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('.bookmark-btn').on('click', function() {
+                const button = $(this);
+                const recipeId = button.data('recipe-id');
+                const icon = button.find('i');
+                
+                // Disable button during request
+                button.prop('disabled', true);
+                
+                $.ajax({
+                    url: '@Url.Action("AddBookmark", "Bookmark")',
+                    type: 'POST',
+                    data: { recipeId: recipeId },
+                    success: function(response) {
+                        if (response.success) {
+                            // Change button appearance
+                            icon.removeClass('bi-bookmark').addClass('bi-bookmark-fill');
+                            button.removeClass('btn-warning').addClass('btn-success');
+                            button.html('<i class="bi bi-bookmark-fill"></i> Bookmarked');
+                            
+                            // Show success message
+                            alert('Recipe bookmarked successfully!');
+                        } else {
+                            alert(response.message || 'Failed to bookmark recipe');
+                            button.prop('disabled', false);
+                        }
+                    },
+                    error: function() {
+                        alert('Error bookmarking recipe. Please try again.');
+                        button.prop('disabled', false);
+                    }
+                });
+            });
+        });
+    </script>
+}

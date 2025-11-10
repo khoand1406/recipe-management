@@ -66,6 +66,11 @@ namespace RecipentMgt.Infrastucture.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
                     b.HasKey("CategoryId")
                         .HasName("PK__Categori__19093A0BB89254FB");
 

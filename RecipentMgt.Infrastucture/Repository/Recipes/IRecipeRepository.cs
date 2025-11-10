@@ -28,5 +28,6 @@ namespace RecipentMgt.Infrastucture.Repository.Recipes
 
         Task<(bool Success, string Message, int Traceid)> updateRecipes(Recipe request, List<Ingredient> ingredients, List<Step> steps, List<Image> images);
         Task<bool> deleteRecipes(int id);
+        Task<List<string>> getRecipeImages(int recipeId);
     }
 }

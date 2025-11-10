@@ -1,0 +1,77 @@
+@model List<RecipeMgt.Views.Models.Response.DishResponse>
+
+@{
+    ViewData["Title"] = "All Dishes";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>All Dishes</h2>
+        <a href="@Url.Action("Index", "Home")" class="btn btn-outline-secondary">
+            <i class="bi bi-house"></i> Home
+        </a>
+    </div>
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> No dishes available.
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var dish in Model)
+            {
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="card dish-card h-100 shadow-sm">
+                        @if (dish.ImageUrls != null && dish.ImageUrls.Any())
+                        {
+                            <img src="@dish.ImageUrls.First()" class="card-img-top" alt="@dish.DishName" style="height: 200px; object-fit: cover;">
+                        }
+                        else
+                        {
+                            <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <i class="bi bi-image text-white" style="font-size: 3rem;"></i>
+                            </div>
+                        }
+                        <div class="card-body">
+                            <h5 class="card-title">@dish.DishName</h5>
+                            <p class="card-text text-muted small">@dish.Description</p>
+                            <span class="badge bg-primary">@dish.CategoryName</span>
+                        </div>
+                        <div class="card-footer bg-white border-0">
+                            <a href="@Url.Action("Detail", "Dish", new { id = dish.DishId })" class="btn btn-warning w-100 text-white fw-semibold">
+                                View Recipes
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@section Styles {
+    <style>
+        .dish-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .dish-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15) !important;
+        }
+
+        .card-img-top {
+            transition: transform 0.3s ease;
+        }
+
+        .dish-card:hover .card-img-top {
+            transform: scale(1.05);
+        }
+    </style>
+}

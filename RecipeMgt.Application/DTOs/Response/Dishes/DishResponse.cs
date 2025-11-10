@@ -18,13 +18,16 @@ namespace RecipeMgt.Application.DTOs.Response.Dishes
 
         public int CategoryId { get; set; }
 
-        public virtual Category Category { get; set; }
+        public string CategoryName => Category?.CategoryName ?? string.Empty;
 
+        public virtual Category? Category { get; set; }
+
+        public List<string> ImageUrls { get; set; } = new();
     }
 
     public class DishDetailResponse
     {
-        public int DishId { get; set; } 
+        public int DishId { get; set; }
 
         public string DishName { get; set; }
 
@@ -32,7 +35,11 @@ namespace RecipeMgt.Application.DTOs.Response.Dishes
 
         public int CategoryId { get; set; }
 
-        public virtual Category Category { get; set; }
+        public string CategoryName => Category?.CategoryName ?? string.Empty;
+
+        public virtual Category? Category { get; set; }
+
+        public List<string> ImageUrls { get; set; } = new();
 
         public virtual ICollection<RecipeResponse> Recipes { get; set; } = new List<RecipeResponse>();
     }

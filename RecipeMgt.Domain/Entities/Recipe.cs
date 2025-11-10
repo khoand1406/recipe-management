@@ -29,7 +29,6 @@ public partial class Recipe
 
     public virtual Dish Dish { get; set; }
 
-    public virtual ICollection<Image> Images { get; set; } = new List<Image>();
 
     public virtual ICollection<Ingredient> Ingredients { get; set; } = new List<Ingredient>();
 

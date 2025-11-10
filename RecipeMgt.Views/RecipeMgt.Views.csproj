@@ -7,11 +7,24 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Models\RequestModel\" />
+    <Folder Include="Models\Request\" />
     <Folder Include="Models\ViewModels\" />
-    <Folder Include="Views\Auth\" />
     <Folder Include="Views\User\" />
-    <Folder Include="Views\Recipe\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.11">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RecipeMgt.Api\RecipeMgt.Api.csproj" />
+    <ProjectReference Include="..\RecipeMgt.Application\RecipeMgt.Application.csproj" />
+    <ProjectReference Include="..\RecipeMgt.Domain\RecipeMgt.Domain.csproj" />
+    <ProjectReference Include="..\RecipentMgt.Infrastucture\RecipentMgt.Infrastucture.csproj" />
   </ItemGroup>
 
 </Project>

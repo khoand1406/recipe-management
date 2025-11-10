@@ -1,4 +1,4 @@
-﻿using RecipeMgt.Application.DTOs.Request.Recipes;
+using RecipeMgt.Application.DTOs.Request.Recipes;
 using RecipeMgt.Application.DTOs.Response.Recipe;
 using RecipeMgt.Domain.Entities;
 using RecipeMgt.Domain.RequestEntity;
@@ -13,6 +13,8 @@ namespace RecipeMgt.Application.Services.Recipes
 {
     public interface IRecipeServices
     {
+        public Task<RecipeResponse?> GetRecipeById(int id);
+
         public Task<IEnumerable<RecipeResponse>> GetRecipesByFilter();
 
         public Task<IEnumerable<RecipeResponse>> GetRecipesByDish(int id);

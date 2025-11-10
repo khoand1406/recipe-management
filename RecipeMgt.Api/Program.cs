@@ -53,7 +53,16 @@ internal class Program
         });
         builder.Services.AddApplication(builder.Configuration);
         builder.Services.AddInfrastructure(builder.Configuration);
-        
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowAll", policy =>
+            {
+                policy.AllowAnyOrigin()
+                      .AllowAnyHeader()
+                      .AllowAnyMethod();
+            });
+        });
+
         builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
         builder.Services.AddValidatorsFromAssemblyContaining<RegistetRequestValidator>();
         builder.Services.AddValidatorsFromAssemblyContaining<ChangePasswordRequestValidator>();

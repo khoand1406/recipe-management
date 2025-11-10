@@ -102,6 +102,14 @@ namespace RecipentMgt.Infrastucture.Repository.Recipes
             return await _context.Recipes.FindAsync(id);
         }
 
+        public async Task<List<string>> getRecipeImages(int recipeId)
+        {
+            return await _context.Images
+                .Where(i => i.EntityType == "Recipe" && i.EntityId == recipeId)
+                .Select(i => i.ImageUrl)
+                .ToListAsync();
+        }
+
         public async Task<IEnumerable<Recipe>> GetRecipes(int dishId)
         {
             return await _context.Recipes.Where(x => x.DishId == dishId).ToListAsync();

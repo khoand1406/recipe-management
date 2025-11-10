@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using FluentValidation.Results;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -40,6 +40,22 @@ namespace RecipeMgt.Api.Controllers
             _updateRecipeValidator = updateValidator;
             _bookmarkService = bookmarkService;
             _commentServices= commentServices;
+        }
+
+        [HttpGet("{id:int}")]
+        public async Task<IActionResult> GetRecipeById(int id)
+        {
+            try
+            {
+                var result = await _services.GetRecipeById(id);
+                if (result == null)
+                    return NotFound(new { message = $"Recipe with id {id} not found" });
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpGet("dish/{id}")]

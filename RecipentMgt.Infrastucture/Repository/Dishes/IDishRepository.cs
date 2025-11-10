@@ -17,10 +17,15 @@ namespace RecipentMgt.Infrastucture.Repository.Dishes
 
         public Task<IEnumerable<Dish>> GetDishesBySearchQuery(string searchQuery);
 
-        public Task<(bool Success, string Message, int TraceIdentifier)> CreateDish(Dish dish);
+        public Task<(bool Success, string Message, Dish? Data)> CreateDish(Dish dish, List<Image> images);
 
-        public Task<(bool Success, string Message, int TraceIdentifier)> UpdateDish(Dish dish);
+        public Task<(bool Success, string Message, int TraceIdentifier)> UpdateDish(Dish dish, List<Image> images);
 
         public Task<(bool Success, string Message)> DeleteDish(int id);
+
+        Task<List<string>> GetDishImages(int dishId);
+
+
+
     }
 }

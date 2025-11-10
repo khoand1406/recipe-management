@@ -1,12 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.Identity.Client;
 using RecipeMgt.Domain.Entities;
 using RecipentMgt.Infrastucture.Persistence;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace RecipentMgt.Infrastucture.Repository.Dishes
@@ -22,84 +20,211 @@ namespace RecipentMgt.Infrastucture.Repository.Dishes
             _logger = logger;
         }
 
-        public async Task<(bool Success, string Message, int TraceIdentifier)> CreateDish(Dish dish)
+        public async Task<(bool Success, string Message, Dish? Data)> CreateDish(Dish dish, List<Image> images)
         {
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
             try
             {
-                await _context.Dishes.AddAsync(dish);
+
+                _context.Dishes.Add(dish);
                 await _context.SaveChangesAsync();
-                _logger.LogInformation("Successfull created dish with id: " + dish.DishId);
-                return (true, "Create new dish successfully", dish.DishId);
-            }catch (Exception ex)
+
+                // Liên kết ảnh với Dish mới
+                if (images != null && images.Any())
+                {
+                    foreach (var img in images)
+                    {
+                        img.EntityId = dish.DishId;
+                        img.EntityType = "Dish";
+                        img.UploadedAt = DateTime.Now;
+                    }
+
+                    _context.Images.AddRange(images);
+                    await _context.SaveChangesAsync();
+                }
+
+                await transaction.CommitAsync();
+                _logger.LogInformation($"Created dish '{dish.DishName}' successfully with {images?.Count} images.");
+
+                return (true, "Dish created successfully", dish);
+            }
+            catch (Exception ex)
             {
-                _logger.LogError("Error occurs while insert dish record to database: "+  ex.Message);
-                return (false, ex.Message, 0);
+                await transaction.RollbackAsync();
+                _logger.LogError($"Error creating dish: {ex.Message}");
+                return (false, "Error creating dish", null);
             }
         }
 
         public async Task<(bool Success, string Message)> DeleteDish(int id)
         {
+            using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                var dish= await GetById(id);
-                if(dish == null)
-                {
-                    return (false, "Not found dish with id: " + id);
-                }
+                var dish = await _context.Dishes.FindAsync(id);
+                if (dish == null)
+                    return (false, $"Dish with id {id} not found");
+
+                // Xóa cả hình ảnh liên quan (nếu có)
+                var relatedImages = _context.Images
+                    .Where(img => img.EntityType == "Dish" && img.EntityId == id);
+                _context.Images.RemoveRange(relatedImages);
+
                 _context.Dishes.Remove(dish);
                 await _context.SaveChangesAsync();
-                return (true, "Successful delete dish with id: " + id);
-            }catch (Exception ex)
+
+                await transaction.CommitAsync();
+
+                _logger.LogInformation("Deleted dish with id: {DishId}", id);
+                return (true, $"Successfully deleted dish with id: {id}");
+            }
+            catch (Exception ex)
             {
-                _logger.LogError("Error occurs while insert dish record to database: " + ex.Message);
+                await transaction.RollbackAsync();
+                _logger.LogError(ex, "Error deleting dish {DishId}", id);
                 return (false, ex.Message);
             }
         }
 
         public async Task<IEnumerable<Dish>> GetAll()
         {
-            return await _context.Dishes.ToListAsync();
+            var dishes = await _context.Dishes
+                .Include(d => d.Category)
+                .Include(d => d.Recipes)
+                .ToListAsync();
+
+            // Nạp ảnh cho từng dish
+            foreach (var dish in dishes)
+            {
+                dish.Images = await _context.Images
+                    .Where(img => img.EntityType == "Dish" && img.EntityId == dish.DishId)
+                    .ToListAsync();
+            }
+
+            return dishes;
         }
+
 
         public async Task<IEnumerable<Dish>> GetByCategory(int categoryId)
         {
-            return await _context.Dishes.Where(dish=> dish.CategoryId == categoryId).ToListAsync();
+            var dishes = await _context.Dishes
+                .Where(d => d.CategoryId == categoryId)
+                .Include(d => d.Category)
+                .Include(d => d.Recipes)
+                .ToListAsync();
+
+            foreach (var dish in dishes)
+            {
+                dish.Images = await _context.Images
+                    .Where(img => img.EntityType == "Dish" && img.EntityId == dish.DishId)
+                    .ToListAsync();
+            }
+
+            return dishes;
         }
+
 
         public async Task<Dish?> GetById(int id)
         {
-            return await _context.Dishes.Include(dish=> dish.Recipes).FirstOrDefaultAsync(dish=> dish.DishId== id);
+            var dish = await _context.Dishes
+                .Include(d => d.Category)
+                .Include(d => d.Recipes)
+                .FirstOrDefaultAsync(d => d.DishId == id);
+
+            if (dish != null)
+            {
+                dish.Images = await _context.Images
+                    .Where(img => img.EntityType == "Dish" && img.EntityId == dish.DishId)
+                    .ToListAsync();
+            }
+
+            return dish;
         }
+
 
         public async Task<IEnumerable<Dish>> GetDishesBySearchQuery(string searchQuery)
         {
-            return await _context.Dishes.Where(dish=> dish.DishName.Contains(searchQuery)).ToListAsync();
+            var dishes = await _context.Dishes
+                .Where(d => d.DishName.Contains(searchQuery))
+                .Include(d => d.Category)
+                .Include(d => d.Recipes)
+                .ToListAsync();
+
+            foreach (var dish in dishes)
+            {
+                dish.Images = await _context.Images
+                    .Where(img => img.EntityType == "Dish" && img.EntityId == dish.DishId)
+                    .ToListAsync();
+            }
+
+            return dishes;
         }
 
-        public async Task<(bool Success, string Message, int TraceIdentifier)> UpdateDish(Dish dish )
+        public async Task<List<string>> GetDishImages(int dishId)
+        {
+            return await _context.Images
+            .Where(i => i.EntityId == dishId && i.EntityType == "Dish")
+             .OrderByDescending(i => i.UploadedAt)
+             .Select(i => i.ImageUrl)
+            .ToListAsync();
+        }
+
+        public async Task<(bool Success, string Message, int TraceIdentifier)> UpdateDish(Dish dish, List<Image> images)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
+
             try
             {
-                
-                var dishFound= await GetById(dish.DishId);
-                if (dishFound == null)
+                var existingDish = await _context.Dishes
+                    .Include(d => d.Category)
+                    .FirstOrDefaultAsync(d => d.DishId == dish.DishId);
+
+                if (existingDish == null)
+                    return (false, "Dish not found", 0);
+
+                // Update thông tin cơ bản
+                existingDish.DishName = dish.DishName;
+                existingDish.Description = dish.Description;
+
+
+
+                // Xoá ảnh cũ nếu có
+                var oldImages = await _context.Images
+                    .Where(i => i.EntityType == "Dish" && i.EntityId == dish.DishId)
+                    .ToListAsync();
+
+                if (oldImages.Any())
                 {
-                    return (false, $"Not found dish with id: {dish.DishId}", 0);
+                    _context.Images.RemoveRange(oldImages);
+                    await _context.SaveChangesAsync();
                 }
-                _context.Dishes.Update(dish);
+
+                // Thêm ảnh mới
+                if (images != null && images.Any())
+                {
+                    foreach (var img in images)
+                    {
+                        img.EntityId = dish.DishId;
+                        img.EntityType = "Dish";
+                        img.UploadedAt = DateTime.Now;
+                    }
+
+                    _context.Images.AddRange(images);
+                }
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                _logger.LogInformation($"Update dish record with id: {dish.DishId} successfully");
+                _logger.LogInformation($"Updated dish {dish.DishId} successfully with {images?.Count} new images.");
 
-                return (true, $"Update dish with id: {dish.DishId} successfully", dish.DishId);
-            }catch (Exception ex)
+                return (true, "Dish updated successfully", dish.DishId);
+            }
+            catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                _logger.LogError("Error occurs while insert dish record to database: " + ex.Message);
-                return (false, ex.ToString(), 0);
+                _logger.LogError($"Error updating dish: {ex.Message}");
+                return (false, "Error updating dish", 0);
             }
         }
     }
