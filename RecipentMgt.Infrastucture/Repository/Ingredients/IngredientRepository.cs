@@ -53,5 +53,15 @@ namespace RecipentMgt.Infrastucture.Repository.Ingredients
             await _context.SaveChangesAsync();
             return true;
         }
+
+        public void RemoveRange(IEnumerable<Ingredient> ingredients)=> _context.RemoveRange(ingredients);
+
+        public async Task AddRangeAsync(IEnumerable<Ingredient> ingredients)
+        {
+            await _context.AddRangeAsync(ingredients);
+        }
+
+        public void UpdateRange(IEnumerable<Ingredient> ingredients)=> _context.UpdateRange(ingredients);
+        
     }
 }

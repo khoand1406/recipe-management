@@ -20,18 +20,20 @@ namespace RecipeMgt.Application.Services.Recipes
         private readonly IRecipeRepository _repository;
         private readonly IDishRepository _dishrepository;
         private readonly IUserRepository _userRepository;
+        private readonly IUnitOfWork _uow;
         private readonly ICloudinaryService _cloudinaryservice;
         private readonly IMapper _mapper;
         private readonly ILogger<RecipeServices> _logger;
 
-        public RecipeServices(IRecipeRepository repository, IMapper mapper, ILogger<RecipeServices> logger, IDishRepository dishRepository, ICloudinaryService service, IUserRepository userRepository)
+        public RecipeServices(IRecipeRepository repository, IMapper mapper, ILogger<RecipeServices> logger, IDishRepository dishRepository, ICloudinaryService service, IUserRepository userRepository, IUnitOfWork uow)
         {
             _repository = repository;
             _mapper = mapper;
             _cloudinaryservice = service;
             _logger = logger;
             _dishrepository = dishRepository;
-            _userRepository= userRepository;
+            _userRepository = userRepository;
+            _uow = uow;
         }
 
         public async Task<RecipeResponse?> GetRecipeById(int id)
@@ -42,6 +44,75 @@ namespace RecipeMgt.Application.Services.Recipes
             return result;
         }
 
+
+        public async Task<CreateRecipeResponse> CreateRecipes(CreateRecipeRequest request)
+        {
+            await _uow.BeginTransactionAsync();
+            try
+            {
+                var dish = await _uow.Dishes.GetById(request.DishId);
+                if (dish == null)
+                {
+                    _logger.LogError($"Error occurs when create recipe: Dish with id {request.DishId} not found");
+                    return new CreateRecipeResponse { Success = false, Message = "Create Recipe Failed! Not found dish with Id: " + request.DishId };
+                }
+                var recipe = _mapper.Map<Recipe>(request);
+                recipe.CreatedAt = DateTime.Now;
+                recipe.UpdatedAt = DateTime.Now;
+                await _uow.Recipes.AddAsync(recipe);
+                await _uow.SaveChangesAsync();
+
+                var ingredients = request.Ingredients.Select(i => { 
+                    var ing = _mapper.Map<Ingredient>(i);
+                    ing.RecipeId = recipe.RecipeId;
+                    return ing;
+                }).ToList();
+
+                var steps = request.Steps.Select(i =>
+                {
+                    var step = _mapper.Map<Step>(i);
+                    step.RecipeId = recipe.RecipeId;
+                    return step;
+                }).ToList();
+
+                var images = request.ImageUrls != null && request.ImageUrls.Any() ? request.ImageUrls.Select(url => new Image
+                {
+                    Caption = url,
+                    EntityId= recipe.RecipeId,
+                    EntityType= "Recipe",
+                    ImageUrl = url,
+                    UploadedAt = DateTime.Now,
+                }).ToList() : null ;
+
+                await _uow.Recipes.AddRangeAsync(images);
+                await _uow.Recipes.AddRangeAsync(steps);
+                await _uow.Recipes.AddRangeAsync(ingredients);
+                await _uow.CommitAsync();
+                var author = await _uow.Users.getUserAsync(request.AuthorId);
+                return new CreateRecipeResponse { Success = true, Message = "Create recipe successfully",
+                    Data = new RecipeResponse
+                    {
+                        RecipeId = recipe.RecipeId,
+                        Title = recipe.Title,
+                        AuthorId = recipe.AuthorId,
+                        CookingTime = recipe.CookingTime,
+                        Description = recipe.Description,
+                        DifficultyLevel = recipe.DifficultyLevel,
+                        Servings = recipe.Servings,
+                        CreatedAt = recipe.CreatedAt,
+                        UpdatedAt = recipe.UpdatedAt,
+                        Images = request.ImageUrls?? new List<string>(),
+                        Author = author,
+
+                    }
+                };
+            }catch (Exception ex)
+            {
+                await _uow.RollbackAsync();
+                _logger.LogError(ex, "CreateRecipe failed");
+                return new CreateRecipeResponse { Success = false, Message = "Create recipe failed" };
+            }
+        }
         public async Task<CreateRecipeResponse> CreateRecipe(CreateRecipeRequest request)
         {
             try
@@ -66,18 +137,12 @@ namespace RecipeMgt.Application.Services.Recipes
                     : new List<Step>();
 
                 var images = new List<Image>();
-                if (request.Images != null && request.Images.Any())
+                if (request.ImageUrls != null && request.ImageUrls.Any())
                 {
-                    foreach (var img in request.Images)
+                    foreach (var img in request.ImageUrls)
                     {
-                        var uploadResult = await _cloudinaryservice.UploadImageAsync(img);
-                        images.Add(new Image
-                        {
-                            EntityType = "Recipe",
-                            ImageUrl = uploadResult,
-                            Caption = Path.GetFileNameWithoutExtension(img.FileName),
-                            UploadedAt = DateTime.Now
-                        });
+                        var image= new Image { ImageUrl= img, UploadedAt= DateTime.Now, Caption= img, EntityType= "Recipe", EntityId=0 };
+                        images.Add(image);
                     }
                 }
 
@@ -91,7 +156,7 @@ namespace RecipeMgt.Application.Services.Recipes
                     Success = true, 
                     Message = result.Message, 
                     Data = new RecipeResponse { 
-                        RecipeId = result.Traceid, 
+                        RecipeId = recipe.RecipeId, 
                         Title = recipe.Title, 
                         AuthorId = recipe.AuthorId, 
                         CookingTime = recipe.CookingTime, 

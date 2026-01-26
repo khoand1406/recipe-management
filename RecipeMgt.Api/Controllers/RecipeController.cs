@@ -151,7 +151,6 @@ namespace RecipeMgt.Api.Controllers
         {
             try
             {
-                // ✅ Lấy UserId từ middleware
                 var userId = HttpContext.Items["UserId"] as int?;
                 if (userId == null)
                 {
@@ -162,15 +161,10 @@ namespace RecipeMgt.Api.Controllers
                         RequestId = HttpContext.TraceIdentifier
                     });
                 }
-
-                // ✅ Parse Ingredients & Steps từ JSON text sang List<>
                 request.Ingredients = JsonSerializer.Deserialize<List<IngredientDto>>(request.IngredientsJson ?? "[]") ?? new();
                 request.Steps = JsonSerializer.Deserialize<List<StepDto>>(request.StepsJson ?? "[]") ?? new();
 
-                // ✅ Gán AuthorId
                 request.AuthorId = userId.Value;
-
-                // ✅ Validate dữ liệu
                 var validationResult = await _createRecipeValidator.ValidateAsync(request);
                 if (!validationResult.IsValid)
                 {
@@ -182,19 +176,6 @@ namespace RecipeMgt.Api.Controllers
                         RequestId = HttpContext.TraceIdentifier
                     });
                 }
-
-                // ✅ Upload ảnh lên Cloudinary (nếu có)
-                if (request.Images != null && request.Images.Any())
-                {
-                    request.ImageUrls = new List<string>();
-                    foreach (var file in request.Images)
-                    {
-                        var uploadedUrl = await _cloudinaryService.UploadImageAsync(file);
-                        request.ImageUrls.Add(uploadedUrl);
-                    }
-                }
-
-                // ✅ Gọi service tạo Recipe
                 var result = await _services.CreateRecipe(request);
                 if (result.Success)
                 {
@@ -204,8 +185,6 @@ namespace RecipeMgt.Api.Controllers
                         Data= result,
                     });
                 }
-
-                // Nếu service báo lỗi
                 return BadRequest(new ApiResponse<CreateRecipeResponse>
                 {
                     Success = false,
@@ -215,7 +194,6 @@ namespace RecipeMgt.Api.Controllers
             }
             catch (Exception ex)
             {
-                // ✅ Exception
                 return StatusCode(500, new ApiResponse<CreateRecipeResponse>
                 {
                     Success = false,

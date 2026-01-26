@@ -28,10 +28,7 @@ namespace RecipentMgt.Infrastucture
             services.AddScoped<IRatingRepository, RatingRepository>();
             services.AddScoped<IStepRepository, StepRepository>();
             services.AddScoped<IIngredientRepository, IngredientRepository>();
-            
-            
-            
-
+            services.AddScoped<IUnitOfWork, UnitOfWork.UnitOfWork>();
             return services;
         }
     }

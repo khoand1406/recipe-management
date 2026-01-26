@@ -9,5 +9,13 @@ namespace RecipentMgt.Infrastucture.Repository.Ingredients
         Task<Ingredient> CreateAsync(Ingredient ingredient);
         Task<Ingredient?> UpdateAsync(Ingredient ingredient);
         Task<bool> DeleteAsync(int ingredientId);
+
+        void RemoveRange(IEnumerable<Ingredient> ingredients);
+
+        Task AddRangeAsync(IEnumerable<Ingredient>ingredients);
+
+        void UpdateRange(IEnumerable<Ingredient> ingredients);
+
+
     }
 }

@@ -9,5 +9,11 @@ namespace RecipentMgt.Infrastucture.Repository.Steps
         Task<Step> CreateAsync(Step step);
         Task<Step?> UpdateAsync(Step step);
         Task<bool> DeleteAsync(int stepId);
+
+        Task AddRangeAsync(IEnumerable<Step> steps);
+
+        void UpdateRangeAsync(IEnumerable<Step> steps);
+
+        void RemoveRange(IEnumerable<Step> steps);
     }
 }

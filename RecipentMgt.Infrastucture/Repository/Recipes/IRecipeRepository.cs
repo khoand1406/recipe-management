@@ -24,9 +24,9 @@ namespace RecipentMgt.Infrastucture.Repository.Recipes
 
         public Task<PagedResponse<Recipe>> GetSearchedResult(SearchRecipeRequest search);
 
-        Task<(bool Success, string Message, int Traceid)> createRecipes(Recipe request, List<Ingredient> ingredients, List<Step> steps, List<Image> images);
+        Task<(bool Success, string Message, int Traceid)> createRecipes(Recipe request, List<Ingredient> ingredients, List<Step> steps, List<RecipeMgt.Domain.Entities.Image> images);
 
-        Task<(bool Success, string Message, int Traceid)> updateRecipes(Recipe request, List<Ingredient> ingredients, List<Step> steps, List<Image> images);
+        Task<(bool Success, string Message, int Traceid)> updateRecipes(Recipe request, List<Ingredient> ingredients, List<Step> steps, List<RecipeMgt.Domain.Entities.Image> images);
         Task<bool> deleteRecipes(int id);
         Task<List<string>> getRecipeImages(int recipeId);
     }

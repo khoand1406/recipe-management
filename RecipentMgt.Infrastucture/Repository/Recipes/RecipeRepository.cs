@@ -23,51 +23,17 @@ namespace RecipentMgt.Infrastucture.Repository.Recipes
             _logger = logger;
         }
 
-        public async Task<(bool Success, string Message, int Traceid)> createRecipes(Recipe request, List<Ingredient> ingredients, List<Step> steps, List<Image> images)
-        {
-            using var transaction = await _context.Database.BeginTransactionAsync();
-            try
-            {
-                request.CreatedAt = DateTime.Now;
-                request.UpdatedAt = DateTime.Now;
-                await _context.Recipes.AddAsync(request);
-                await _context.SaveChangesAsync();
+        public async Task AddAsync(Recipe recipe)
+        => await _context.Recipes.AddAsync(recipe);
 
-                foreach (var ingredient in ingredients)
-                {
-                    ingredient.RecipeId = request.RecipeId;
-                }
+        public async Task AddRangeAsync(List<Ingredient> ingredients)
+    => await _context.Ingredients.AddRangeAsync(ingredients);
 
-                foreach (var step in steps)
-                {
-                    step.RecipeId = request.RecipeId;
-                }
+        public async Task AddRangeAsync(List<Step> steps)
+            => await _context.Steps.AddRangeAsync(steps);
 
-                foreach (var image in images)
-                {
-                    image.EntityType = "Recipe";
-                    image.EntityId = request.RecipeId;
-                    
-                    image.UploadedAt = DateTime.Now;
-                }
-                await _context.Ingredients.AddRangeAsync(ingredients);
-                await _context.Steps.AddRangeAsync(steps);
-                await _context.Images.AddRangeAsync(images);
-                await _context.SaveChangesAsync();
-
-                await transaction.CommitAsync();
-                _logger.LogInformation($"Successfully created recipe with id {request.RecipeId}");
-                return (true, "Create new recipe successfully", request.RecipeId);
-
-            }
-            catch (Exception ex)
-            {
-                await transaction.RollbackAsync();
-                _logger.LogError($"Error occurs while creating recipe: {ex.Message}");
-                return (false, ex.Message, 0);
-
-            }
-        }
+        public async Task AddRangeAsync(List<Image> images)
+            => await _context.Images.AddRangeAsync(images);
 
         public async Task<bool> deleteRecipes(int id)
         {
@@ -99,14 +65,16 @@ namespace RecipentMgt.Infrastucture.Repository.Recipes
 
         public async Task<Recipe?> getRecipeById(int id)
         {
-            return await _context.Recipes.FindAsync(id);
+            return await _context.Recipes
+        .Include(r => r.Ingredients)
+        .Include(r => r.Steps)
+        .FirstOrDefaultAsync(r => r.RecipeId == id);
         }
-
-        public async Task<List<string>> getRecipeImages(int recipeId)
+    
+        public async Task<List<Image>> getRecipeImages(int recipeId)
         {
             return await _context.Images
                 .Where(i => i.EntityType == "Recipe" && i.EntityId == recipeId)
-                .Select(i => i.ImageUrl)
                 .ToListAsync();
         }
 
@@ -174,80 +142,15 @@ namespace RecipentMgt.Infrastucture.Repository.Recipes
             };
         }
 
-        public async Task<(bool Success, string Message, int Traceid)> updateRecipes(Recipe request, List<Ingredient> ingredients, List<Step> steps, List<Image> images)
+        public void RemoveRange(List<Image> images)=> _context.RemoveRange(images);
+        
+
+        public void Update(Recipe recipe)
         {
-            using var transaction = await _context.Database.BeginTransactionAsync();
-            try
-            {
-                request.UpdatedAt = DateTime.Now;
-                _context.Recipes.Update(request);
-                await _context.SaveChangesAsync();
-
-                var existingIngredients = await _context.Ingredients
-           .Where(i => i.RecipeId == request.RecipeId)
-           .ToListAsync();
-
-                var toDeleteIngredients = existingIngredients
-                    .Where(ei => !ingredients.Any(i => i.IngredientId == ei.IngredientId))
-                    .ToList();
-
-                _context.Ingredients.RemoveRange(toDeleteIngredients);
-
-
-                foreach (var ingredient in ingredients)
-                {
-                    ingredient.RecipeId = request.RecipeId;
-                    if (ingredient.IngredientId == 0)
-                        await _context.Ingredients.AddAsync(ingredient);
-                    else
-                        _context.Ingredients.Update(ingredient);
-                }
-
-                var existingSteps = await _context.Steps
-                    .Where(s => s.RecipeId == request.RecipeId)
-                    .ToListAsync();
-
-                var toDeleteSteps = existingSteps
-                    .Where(es => !steps.Any(s => s.StepId == es.StepId))
-                    .ToList();
-
-                _context.Steps.RemoveRange(toDeleteSteps);
-
-                foreach (var step in steps)
-                {
-                    step.RecipeId = request.RecipeId;
-                    if (step.StepId == 0)
-                        await _context.Steps.AddAsync(step);
-                    else
-                        _context.Steps.Update(step);
-                }
-
-                var existingImages = await _context.Images.Where(s => s.EntityId == request.RecipeId && s.EntityType.Contains("Recipe")).ToListAsync();
-
-                _context.Images.RemoveRange(existingImages);
-
-                foreach (var image in images)
-                {
-                    image.EntityId = request.RecipeId;
-                    image.EntityType = "Recipe";
-                    image.UploadedAt = DateTime.Now;
-                    await _context.Images.AddAsync(image);
-                }
-
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-
-                return (true, "Update successfully", request.RecipeId);
-            }
-
-
-            catch (Exception ex)
-            {
-                await transaction.RollbackAsync();
-                _logger.LogError(ex, "Error updating recipe {RecipeId}", request.RecipeId);
-                return (false, ex.Message, 0);
-            }
+            _context.Recipes.Update(recipe);
         }
+
+       
     }
 }
 

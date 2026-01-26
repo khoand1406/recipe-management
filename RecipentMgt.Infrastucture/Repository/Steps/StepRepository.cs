@@ -54,5 +54,16 @@ namespace RecipentMgt.Infrastucture.Repository.Steps
             await _context.SaveChangesAsync();
             return true;
         }
+
+        public async Task AddRangeAsync(IEnumerable<Step> steps)
+        {
+            await _context.Steps.AddRangeAsync(steps);
+        }
+
+        public void UpdateRangeAsync(IEnumerable<Step> steps) => _context.UpdateRange(steps);
+        
+
+        public void RemoveRange(IEnumerable<Step> steps)=> _context.RemoveRange(steps);
+        
     }
 }

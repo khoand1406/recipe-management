@@ -1,3 +1,4 @@
+using RecipeMgt.Application.DTOs;
 using RecipeMgt.Application.DTOs.Request.Recipes;
 using RecipeMgt.Application.DTOs.Response.Recipe;
 using RecipeMgt.Domain.Entities;
@@ -25,11 +26,11 @@ namespace RecipeMgt.Application.Services.Recipes
 
         public Task<Domain.RequestEntity.PagedResponse<Recipe>> GetSearchResult(SearchRecipeRequest request);
 
-        public Task<CreateRecipeResponse> CreateRecipe(CreateRecipeRequest request);
+        public Task<Result<RecipeResponse>> CreateRecipeAsync(CreateRecipeRequest request);
 
-        public Task<UpdateRecipeResponse> UpdateRecipe(UpdateRecipeRequest request);
+        public Task<Result> UpdateRecipeAsync(UpdateRecipeRequest request, int currentUserId);
 
-        public Task<DeleteRecipeResponse> DeleteRecipe(int id);
+        public Task<Result> DeleteRecipe(int id);
 
 
     }

@@ -23,7 +23,6 @@ namespace RecipeMgt.Application.DTOs.Request.Recipes
 
         public string DifficultyLevel { get; set; } = "Medium";
 
-        public List<IFormFile>? Images { get; set; }
 
         public List<string>? ImageUrls
         {

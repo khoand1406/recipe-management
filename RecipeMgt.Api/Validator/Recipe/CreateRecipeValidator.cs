@@ -22,13 +22,10 @@ namespace RecipeMgt.Api.Validator.Recipe
             .NotNull().WithMessage("Ingredients list cannot be null.")
             .Must(x => x.Count > 0).WithMessage("At least one ingredient is required.");
 
-            
-
             RuleFor(x => x.Steps)
                 .NotNull().WithMessage("Steps list cannot be null.")
                 .Must(x => x.Count > 0).WithMessage("At least one step is required.");
 
-            
         }
     }
 }
