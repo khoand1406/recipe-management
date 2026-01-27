@@ -8,6 +8,11 @@ namespace RecipeMgt.Application.Constant
 {
     public static class AuthenticationError
     {
-        public const string AuthenticationError = "AUTHENTICATION_FAILED";
+        public const string AuthenError = "AUTHENTICATION_FAILED";
+        public const string BadCredentials = "BAD_CREDENTIALS";
+        public const string DuplicateEmail = "DUPLICATE_EMAIL";
+        public const string DuplicateUsername = "DUPLICATE_USERNAME";
+        public const string InvalidToken = "INVALID_TOKEN";
+        public const string TokenExpired = "TOKEN_EXPIRED";
     }
 }

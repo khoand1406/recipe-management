@@ -1,6 +1,6 @@
 ﻿using System.Security.Claims;
 
-namespace RecipeMgt.Api.Middleware
+namespace RecipeMgt.Api.Common.Middleware
 {
     public class UserContextMiddleware
     {
@@ -21,14 +21,14 @@ namespace RecipeMgt.Api.Middleware
                 var role = context.User.FindFirst("role")?.Value;
                 if (userId != null)
                 {
-                    context.Items["UserId"]= int.Parse(userId);
-                    context.Items["Role"]= role;
+                    context.Items["UserId"] = int.Parse(userId);
+                    context.Items["Role"] = role;
                     _logger.LogDebug("UserContextMiddleware: UserId={UserId}, Role={Role}", userId, role);
                 }
             }
             await _next(context);
         }
 
-        
+
     }
 }

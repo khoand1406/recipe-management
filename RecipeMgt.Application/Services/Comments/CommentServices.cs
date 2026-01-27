@@ -1,4 +1,7 @@
-﻿using RecipeMgt.Application.DTOs.Response.Comments;
+﻿using AutoMapper;
+using RecipeMgt.Application.DTOs;
+using RecipeMgt.Application.DTOs.Request.Comments;
+using RecipeMgt.Application.DTOs.Response.Comments;
 using RecipeMgt.Domain.Entities;
 using RecipentMgt.Infrastucture.Repository.Comments;
 using System;
@@ -12,28 +15,36 @@ namespace RecipeMgt.Application.Services.Comments
     public class CommentServices : ICommentServices
     {
         private readonly ICommentRepository _repository;
+        private readonly IMapper _mapper;
 
-        public CommentServices(ICommentRepository repository)
+        public CommentServices(ICommentRepository repository, IMapper mapper)
         {
             _repository = repository;
+            _mapper = mapper;
         }
 
-        public async Task AddCommentAsync(int userId, int recipeId, string content)
+        public async Task<Result> AddCommentAsync(int userId, int recipeId, string content)
         {
-            var comment = new Comment
+            var comment = new CreateCommentDTO
             {
                 UserId = userId,
                 RecipeId = recipeId,
-                Content = content
+                Content = content, 
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now,
+
             };
-            await _repository.AddCommentAsync(comment);
+            var mapped = _mapper.Map<Comment>(comment);
+            await _repository.AddCommentAsync(mapped);
+            return Result.Success();
+
         }
 
-        public async Task<List<CommentResposneDTO>> GetCommentsAsync(int recipeId)
+        public async Task<Result<List<CommentResposneDTO>>> GetCommentsAsync(int recipeId)
         {
             var comments = await _repository.GetCommentsByRecipeIdAsync(recipeId);
 
-            return comments.Select(c => new CommentResposneDTO
+            var listDTO=  comments.Select(c => new CommentResposneDTO
             {
                 CommentId = c.CommentId,
                 RecipeId = c.RecipeId,
@@ -43,9 +54,10 @@ namespace RecipeMgt.Application.Services.Comments
                 Content = c.Content,
                 CreatedAt = c.CreatedAt
             }).ToList();
+            return Result<List<CommentResposneDTO>>.Success(listDTO);
         }
 
-        public Task<bool> RemoveAsync(int userId, int recipeId)
+        public Task<Result> RemoveAsync(int userId, int recipeId)
         {
             throw new NotImplementedException();
         }

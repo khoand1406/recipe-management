@@ -19,7 +19,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Constant\" />
     <Folder Include="Services\Notification\" />
   </ItemGroup>
 

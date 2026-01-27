@@ -6,12 +6,12 @@ using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using RecipeMgt.Api.Validator.Auth;
 using FluentValidation;
-using RecipeMgt.Api.Middleware;
 using RecipeMgt.Application.DTOs.Request.Dishes;
 using RecipeMgt.Application.DTOs.Request.Recipes;
 using CloudinaryDotNet;
 using dotenv.net;
 using RecipeMgt.Api.Validator.Rating;
+using RecipeMgt.Api.Common.Middleware;
 
 internal class Program
 {
@@ -102,6 +102,7 @@ internal class Program
         builder.Services.AddSwaggerGen();
 
         var app = builder.Build();
+        app.UseMiddleware<ErrorHandlingMiddleware>();
 
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())

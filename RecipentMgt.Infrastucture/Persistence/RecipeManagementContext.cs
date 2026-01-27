@@ -45,6 +45,8 @@ namespace RecipentMgt.Infrastucture.Persistence
 
         public virtual DbSet<User> Users { get; set; }
 
+        public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) { }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -88,11 +90,6 @@ namespace RecipentMgt.Infrastucture.Persistence
                     .HasDefaultValueSql("(getdate())")
                     .HasColumnType("datetime");
             });
-
-            
-
-            
-            
 
             modelBuilder.Entity<Bookmark>()
                 .HasOne(b => b.User)
@@ -244,6 +241,16 @@ namespace RecipentMgt.Infrastucture.Persistence
                     .HasForeignKey(d => d.RoleId)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK__Users__RoleId__29572725");
+            });
+
+            modelBuilder.Entity<RefreshToken>(entity =>
+            {
+                entity.HasIndex(x => x.Token).IsUnique();
+
+                entity.HasOne(x => x.User)
+                      .WithMany(u => u.RefreshTokens)
+                      .HasForeignKey(x => x.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
             });
 
             OnModelCreatingPartial(modelBuilder);

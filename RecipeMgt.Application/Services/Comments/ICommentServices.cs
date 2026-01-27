@@ -1,4 +1,5 @@
-﻿using RecipeMgt.Application.DTOs.Response.Comments;
+﻿using RecipeMgt.Application.DTOs;
+using RecipeMgt.Application.DTOs.Response.Comments;
 using RecipeMgt.Domain.Entities;
 using System;
 using System.Collections.Generic;
@@ -10,9 +11,9 @@ namespace RecipeMgt.Application.Services.Comments
 {
     public interface ICommentServices
     {
-        Task AddCommentAsync(int userId, int recipeId, string content);
-        Task<List<CommentResposneDTO>> GetCommentsAsync(int recipeId);
+        Task<Result> AddCommentAsync(int userId, int recipeId, string content);
+        Task<Result<List<CommentResposneDTO>>> GetCommentsAsync(int recipeId);
 
-        Task<bool> RemoveAsync(int userId, int recipeId);
+        Task<Result> RemoveAsync(int userId, int recipeId);
     }
 }

@@ -19,7 +19,7 @@ namespace RecipeMgt.Application.Services.Followings
             if (await _repo.IsFollowingAsync(followerId, followingId))
             {
                 await _repo.UnfollowAsync(followerId, followingId);
-                return false; // unfollowed
+                return false;
             }
             else
             {
@@ -29,7 +29,7 @@ namespace RecipeMgt.Application.Services.Followings
                     FollowingId = followingId,
                     CreatedAt = DateTime.UtcNow
                 });
-                return true; // followed
+                return true;
             }
         }
     }

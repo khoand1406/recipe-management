@@ -40,8 +40,4 @@
     <ProjectReference Include="..\RecipentMgt.Infrastucture\RecipentMgt.Infrastucture.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="ActionFIlter\" />
-  </ItemGroup>
-
 </Project>

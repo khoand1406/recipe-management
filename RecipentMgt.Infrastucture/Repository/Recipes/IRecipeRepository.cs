@@ -24,10 +24,20 @@ namespace RecipentMgt.Infrastucture.Repository.Recipes
 
         public Task<PagedResponse<Recipe>> GetSearchedResult(SearchRecipeRequest search);
 
-        Task<(bool Success, string Message, int Traceid)> createRecipes(Recipe request, List<Ingredient> ingredients, List<Step> steps, List<RecipeMgt.Domain.Entities.Image> images);
+        Task AddAsync(Recipe newRecipe);
 
-        Task<(bool Success, string Message, int Traceid)> updateRecipes(Recipe request, List<Ingredient> ingredients, List<Step> steps, List<RecipeMgt.Domain.Entities.Image> images);
+        Task AddRangeAsync(List<Image> images);
+
+        Task AddRangeAsync(List<Ingredient> ingredients);
+
+        Task AddRangeAsync(List<Step> steps);
+
+       
+
+        void RemoveRange(List<Image> images);
+
+        void Update(Recipe newRecipe);
         Task<bool> deleteRecipes(int id);
-        Task<List<string>> getRecipeImages(int recipeId);
+        Task<List<Image>> getRecipeImages(int recipeId);
     }
 }

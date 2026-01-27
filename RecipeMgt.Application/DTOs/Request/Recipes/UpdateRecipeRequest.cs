@@ -27,23 +27,14 @@ namespace RecipeMgt.Application.DTOs.Request.Recipes
 
         public string DifficultyLevel { get; set; } = "Medium";
 
-        public List<IFormFile>? Images { get; set; }
 
         public List<string>? ImageUrls
         {
             get; set;
         }
 
-        [FromForm]
-        public string IngredientsJson { get; set; } = string.Empty;
+        public List<IngredientDto> Ingredients { get; set; } = [];
 
-        [FromForm]
-        public string StepsJson { get; set; } = string.Empty;
-
-        [NotMapped]
-        public List<IngredientDto> Ingredients { get; set; } = new();
-
-        [NotMapped]
-        public List<StepDto> Steps { get; set; } = new();
+        public List<StepDto> Steps { get; set; } = [];
     }
 }

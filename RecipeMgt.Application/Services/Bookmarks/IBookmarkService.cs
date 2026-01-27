@@ -1,4 +1,5 @@
-﻿using RecipeMgt.Application.DTOs.Response.Comments;
+﻿using RecipeMgt.Application.DTOs;
+using RecipeMgt.Application.DTOs.Response.Comments;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,8 +10,8 @@ namespace RecipeMgt.Application.Services.Bookmarks
 {
     public interface IBookmarkService
     {
-        Task<bool> AddBookmarkAsync(int userId, int recipeId);
+        Task<Result> AddBookmarkAsync(int userId, int recipeId);
 
-        Task<List<BookmarkResponseDto>> GetBookmarksByUserAsync(int userId);
+        Task<Result<List<BookmarkResponseDto>>> GetBookmarksByUserAsync(int userId);
     }
 }

@@ -2,16 +2,22 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using RecipeMgt.Application.Constant;
 using RecipeMgt.Application.DTOs.Request.Auth;
+using RecipeMgt.Application.DTOs.Response;
 using RecipeMgt.Application.DTOs.Response.Auth;
+using RecipeMgt.Application.Exceptions;
 using RecipeMgt.Application.Utils;
 using RecipeMgt.Domain.Entities;
+using RecipentMgt.Infrastucture.Repository.RefreshTokens;
 using RecipentMgt.Infrastucture.Repository.Users;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -20,130 +26,99 @@ namespace RecipeMgt.Application.Services.Auth
     public class AuthServices : IAuthServices
     {
         private readonly IUserRepository _userRepository;
+        private readonly IRefreshTokenRepository _refreshTokenRepository;
         private readonly ILogger<AuthServices> _logger;
         private readonly IConfiguration _configuration;
-        private readonly Dictionary<string, string> _activeTokens = new();
 
-        public AuthServices(IUserRepository userRepository, ILogger<AuthServices> logger, IConfiguration configuration)
+
+        public AuthServices(IUserRepository userRepository, ILogger<AuthServices> logger, IConfiguration configuration, IRefreshTokenRepository refreshToken)
         {
             _userRepository = userRepository;
             _logger = logger;
             _configuration = configuration;
+            _refreshTokenRepository = refreshToken;
         }
 
-        public async Task<ChangePasswordResponse> changePassword(ChangePasswordRequest changePasswordRequest)
+        public Task<ChangePasswordResponse> changePassword(ChangePasswordRequest changePasswordRequest)
         {
             throw new NotImplementedException();
         }
 
-        public async Task<LoginResponse> Login(LoginRequest loginRequest)
+        public async Task<LoginResponse> Login(LoginRequest request)
         {
-            try
+            var email = request.email.Trim();
+            var password = request.password.Trim();
+
+            var user = await _userRepository.getUserByEmail(email)
+                ?? throw new AuthenticationException(AuthenticationError.AuthenError);
+
+            if (!UserUtils.VerifyPassword(password, user.PasswordHash))
+                throw new AuthenticationException(AuthenticationError.BadCredentials);
+
+            var token = GenerateJwtToken(user);
+            var refreshToken = GenerateRefreshToken();
+            await _refreshTokenRepository.RevokeAllByUserAsync(user.UserId);
+            await _refreshTokenRepository.AddAsync(new RefreshToken
             {
-                var inputEmail = loginRequest.email.Trim();
-                var inputPassword = loginRequest.password.Trim();
-                var user = await _userRepository.getUserByEmail(inputEmail);
-                if (user == null)
-                {
-                    _logger.LogWarning("Login failed: user not found or inactive. Email: {Email}", inputEmail);
+                UserId = user.UserId,
+                Token = refreshToken,
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddDays(7),
+                IsRevoked = false
+            });
 
-                    return new LoginResponse { Success = false, Message = "Wrong email or password" };
-                }
-                if(!UserUtils.VerifyPassword(inputPassword, user.PasswordHash))
-                {
-                    _logger.LogWarning("Login failed: password mismatch. Email: {Email}, InputPassword: '{InputPassword}', DbPassword: '{DbPassword}'", inputEmail, inputPassword, user.PasswordHash);
-
-                    return new LoginResponse { Success = false, Message = "Invalid password" };
-                }
-                var token= GenerateJwtToken(user);
-
-                _activeTokens[token] = user.Email;
-
-                return new LoginResponse
-                {
-                    Success = true,
-                    User = new UserResponse
-                    {
-                        UserId = user.UserId,
-                        FullName = user.FullName,
-                        Email = user.Email,
-                        CreatedAt = user.CreatedAt ?? DateTime.Now
-
-                    },
-                    Token = token,
-                    ExpiresAt = DateTime.Now.AddHours(8),
-                    Message = "Login Successful"
-
-
-                };
-            }
-            catch(Exception ex)
+            return new LoginResponse
             {
-                _logger.LogError(ex, "Error during staff login for email {Email}", loginRequest.email);
-                return new LoginResponse
+                Success = true,
+                Token = token,
+                RefreshToken = refreshToken,
+                ExpiresAt = DateTime.UtcNow.AddMinutes(30),
+                User = new UserResponse
                 {
-                    Success = false,
-                    Message = "An error occurred during login"
-                };
-            }
-            
+                    UserId = user.UserId,
+                    FullName = user.FullName,
+                    Email = user.Email,
+                    CreatedAt = user.CreatedAt ?? DateTime.UtcNow
+                },
+                Message = "Login successful"
+            };
         }
 
-        public async Task<RegisterResponse> Register(RegisterRequest registerRequest)
+
+        public async Task<RegisterResponse> Register(RegisterRequest request)
         {
-            try
+            var email = request.Email.Trim();
+            var username = request.UserName.Trim();
+            var password = request.Password.Trim();
+
+            if (await _userRepository.checkDuplicateEmail(email))
+                throw new AuthenticationException(AuthenticationError.DuplicateEmail);
+
+            if (await _userRepository.getUserByUsername(username) != null)
+                throw new AuthenticationException(AuthenticationError.DuplicateUsername);
+
+            var user = new User
             {
-                var userName= registerRequest.UserName.Trim();
-                var email= registerRequest.Email.Trim();
-                var password= registerRequest.Password.Trim();
+                Email = email,
+                FullName = username,
+                PasswordHash = UserUtils.HashPassword(password),
+                RoleId = RoleConstants.USER_ROLE_ID,
+                CreatedAt = DateTime.UtcNow
+            };
 
-                var result = await checkDuplicateEmail(email);
-                if (result)
-                {
-                    return new RegisterResponse
-                    {
-                        Success=false,
-                        Message= "Email existed! Try again with another one"
-                    };
-                }
+            await _userRepository.createUser(user);
 
-                var found= await _userRepository.getUserByUsername(userName);
-                if(found!=null)
-                {
-                    return new RegisterResponse
-                    {
-                        Success = false,
-                        Message = "userName existed! Try again with another one"
-                    };
-                }
-                var payload = new User
-                {
-                    CreatedAt = DateTime.Now,
-                    Email = email,
-                    PasswordHash = UserUtils.HashPassword(password),
-                    FullName = userName,
-                    RoleId= 2
-                    
-                };
-                var register = await _userRepository.createUser(payload);
-                return new RegisterResponse { Success = true, Message = "Register successfully" };
-
-                
-            }catch(Exception ex)
+            return new RegisterResponse
             {
-                _logger.LogError(ex, "Error during staff login for email {Email}", registerRequest.Email);
-                return new RegisterResponse
-                {
-                    Success= false,
-                    Message= "An error occurred during login"
-                };
-            }
+                Success = true,
+                Message = "Register successfully"
+            };
         }
 
         private string GenerateJwtToken(User user)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"]??"");
+            var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"] ?? "");
             var issuer = _configuration["Jwt:Issuer"];
             var audience = _configuration["Jwt:Audience"];
 
@@ -159,7 +134,7 @@ namespace RecipeMgt.Application.Services.Auth
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddHours(8),
+                Expires = DateTime.UtcNow.AddMinutes(30),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
                 Issuer = issuer,
                 Audience = audience
@@ -168,10 +143,32 @@ namespace RecipeMgt.Application.Services.Auth
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
         }
-
-        private async Task<bool> checkDuplicateEmail(string email)
+        public async Task<TokenResponse> Refreshtoken(string refreshToken)
         {
-            return await _userRepository.checkDuplicateEmail(email);
+            var storedToken = await _refreshTokenRepository.GetByTokenAsync(refreshToken) ?? throw new AuthenticationException(AuthenticationError.InvalidToken);
+            if (storedToken.IsRevoked || storedToken.ExpiresAt < DateTime.UtcNow) throw new AuthenticationException(AuthenticationError.TokenExpired);
+            storedToken.IsRevoked = true;
+            storedToken.RevokedAt = DateTime.UtcNow;
+            var user = storedToken.User;
+            var newAccessToken = GenerateJwtToken(user);
+            var newRefreshToken = GenerateRefreshToken();
+            await _refreshTokenRepository.UpdateAsync(storedToken);
+            await _refreshTokenRepository.AddAsync(new RefreshToken
+            {
+                UserId = user.UserId,
+                Token = newRefreshToken,
+                CreatedAt = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddDays(7),
+                IsRevoked = false
+            });
+            return new TokenResponse { AccessToken = newAccessToken, RefreshToken = newRefreshToken };
+
+
+        }
+
+        private string GenerateRefreshToken()
+        {
+            return Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
         }
     }
 }

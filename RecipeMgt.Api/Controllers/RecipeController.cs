@@ -3,6 +3,8 @@ using FluentValidation.Results;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using RecipeMgt.Api.Common;
+using RecipeMgt.Application.Constant;
 using RecipeMgt.Application.DTOs;
 using RecipeMgt.Application.DTOs.Request.Recipes;
 using RecipeMgt.Application.DTOs.Response.Recipe;
@@ -39,7 +41,7 @@ namespace RecipeMgt.Api.Controllers
             _createRecipeValidator = validator;
             _updateRecipeValidator = updateValidator;
             _bookmarkService = bookmarkService;
-            _commentServices= commentServices;
+            _commentServices = commentServices;
         }
 
         [HttpGet("{id:int}")]
@@ -110,13 +112,13 @@ namespace RecipeMgt.Api.Controllers
             {
                 Success = true,
                 Data = results,
-                
+
             });
         }
 
         [Authorize]
         [HttpPost("upload-image")]
-
+        [Consumes("multipart/form-data")]
 
         public async Task<IActionResult> UploadImage([FromForm] IFormFile file, [FromServices] ICloudinaryService cloudinaryService)
         {
@@ -145,167 +147,126 @@ namespace RecipeMgt.Api.Controllers
         }
 
         [Authorize]
-        [Consumes("multipart/form-data")]
         [HttpPost("create")]
-        public async Task<ActionResult<ApiResponse<CreateRecipeResponse>>> CreateRecipe([FromForm] CreateRecipeRequest request)
+        public async Task<ActionResult<ApiResponse<RecipeResponse>>> CreateRecipe(CreateRecipeRequest request)
         {
-            try
-            {
-                var userId = HttpContext.Items["UserId"] as int?;
-                if (userId == null)
-                {
-                    return Unauthorized(new ApiResponse<CreateRecipeResponse>
-                    {
-                        Success = false,
-                        Message = "User not found",
-                        RequestId = HttpContext.TraceIdentifier
-                    });
-                }
-                request.Ingredients = JsonSerializer.Deserialize<List<IngredientDto>>(request.IngredientsJson ?? "[]") ?? new();
-                request.Steps = JsonSerializer.Deserialize<List<StepDto>>(request.StepsJson ?? "[]") ?? new();
 
-                request.AuthorId = userId.Value;
-                var validationResult = await _createRecipeValidator.ValidateAsync(request);
-                if (!validationResult.IsValid)
-                {
-                    return BadRequest(new ApiResponse<CreateRecipeResponse>
-                    {
-                        Success = false,
-                        Message = "Validation Failed",
-                        Errors = validationResult.Errors.Select(e => $"{e.PropertyName}: {e.ErrorMessage}").ToList(),
-                        RequestId = HttpContext.TraceIdentifier
-                    });
-                }
-                var result = await _services.CreateRecipe(request);
-                if (result.Success)
-                {
-                    return Ok(new ApiResponse<CreateRecipeResponse>
-                    {
-                        Success= true,
-                        Data= result,
-                    });
-                }
-                return BadRequest(new ApiResponse<CreateRecipeResponse>
-                {
-                    Success = false,
-                    Message = result.Message ?? "Failed to create recipe",
-                    RequestId = HttpContext.TraceIdentifier
-                });
-            }
-            catch (Exception ex)
+            var userId = HttpContext.Items["UserId"] as int?;
+            if (userId == null)
             {
-                return StatusCode(500, new ApiResponse<CreateRecipeResponse>
+                return Unauthorized(new ApiResponse
                 {
                     Success = false,
-                    Message = ex.Message,
+                    Message = "User not found",
                     RequestId = HttpContext.TraceIdentifier
                 });
             }
+        
+            request.AuthorId = userId.Value;
+            var validationResult = await _createRecipeValidator.ValidateAsync(request);
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(new ApiResponse
+                {
+                    Success = false,
+                    Message = "Validation Failed",
+                    Errors = validationResult.Errors.Select(e => $"{e.PropertyName}: {e.ErrorMessage}").ToList(),
+                    RequestId = HttpContext.TraceIdentifier
+                });
+            }
+            var result = await _services.CreateRecipeAsync(request);
+            if (result.IsFailure)
+            {
+                return BadRequest(new ApiResponse
+                {
+                    Success = false,
+                    Message = result.Error,
+                    RequestId = HttpContext.TraceIdentifier
+                });
+            }
+
+            return Ok(new ApiResponse<RecipeResponse>
+            {
+                Success = true,
+                Data = result.Value,
+                RequestId = HttpContext.TraceIdentifier
+            });
         }
+
+
         [Authorize]
-        [Consumes("multipart/form-data")]
         [HttpPut("update")]
-        public async Task<ActionResult<ApiResponse<UpdateRecipeResponse>>> updateRecipe([FromForm] UpdateRecipeRequest request)
+        public async Task<IActionResult> UpdateRecipe([FromBody] UpdateRecipeRequest request)
         {
-            try
-            {
-                var userId = HttpContext.Items["UserId"] as int?;
-                if (userId == null)
-                {
-                    return Unauthorized(new { message = "User not found" });
-                }
-                request.Ingredients = JsonSerializer.Deserialize<List<IngredientDto>>(request.IngredientsJson ?? "[]") ?? new();
-                request.Steps = JsonSerializer.Deserialize<List<StepDto>>(request.StepsJson ?? "[]") ?? new();
-
-                var validation = await _updateRecipeValidator.ValidateAsync(request);
-                if (!validation.IsValid)
-                {
-                    return BadRequest(new ApiResponse<UpdateRecipeResponse>
-                    {
-                        Success = false,
-
-                        Message = "Validaton Failed",
-                        Errors = validation.Errors
-                                            .Select(e => $"{e.PropertyName}: {e.ErrorMessage}")
-                                            .ToList(),
-                        RequestId = HttpContext.TraceIdentifier
-                    });
-                }
-                var userId_parsed = userId.Value;
-                request.AuthorId = userId_parsed;
-
-                if (userId_parsed != request.AuthorId)
-                {
-                    return Forbid("Can't update other user's recipes");
-                }
-
-                if (request.Images != null && request.Images.Any())
-                {
-                    request.ImageUrls = new List<string>();
-                    foreach (var file in request.Images)
-                    {
-                        var uploadedUrl = await _cloudinaryService.UploadImageAsync(file);
-                        request.ImageUrls.Add(uploadedUrl);
-                    }
-                }
-                var result = await _services.UpdateRecipe(request);
-                if (result.Success)
-                {
-                    return new ApiResponse<UpdateRecipeResponse>
-                    {
-                        Success = true,
-
-                        RequestId = HttpContext.TraceIdentifier
-
-                    };
-                }
-                return new ApiResponse<UpdateRecipeResponse>
+            var userId = HttpContext.Items["UserId"] as int?;
+            if (userId is null)
+                return Unauthorized(new ApiResponse
                 {
                     Success = false,
-                };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Error while updating recipe: " + ex.Message);
-                return BadRequest(new ApiResponse<UpdateRecipeResponse>
-                {
-                    Success = false,
-                    Message = ex.Message,
+                    Message = AuthenticationError.AuthenError,
                     RequestId = HttpContext.TraceIdentifier
                 });
-            }
+
+            var validation = await _updateRecipeValidator.ValidateAsync(request);
+            if (!validation.IsValid)
+                return BadRequest(new ApiResponse
+                {
+                    Success = false,
+                    Message = "Validation failed",
+                    Errors = validation.Errors
+                        .Select(e => $"{e.PropertyName}: {e.ErrorMessage}")
+                        .ToList(),
+                    RequestId = HttpContext.TraceIdentifier
+                });
+
+            var result = await _services.UpdateRecipeAsync(
+                request,
+                userId.Value
+            );
+
+            if (result.IsFailure)
+                return result.Error switch
+                {
+                    RecipeErrorMessage.NotFound =>
+                        NotFound(new ApiResponse
+                        {
+                            Success = false,
+                            Message = result.Error,
+                            RequestId = HttpContext.TraceIdentifier
+                        }),
+
+                    RecipeErrorMessage.Forbidden =>
+                        Forbid(),
+
+                    _ =>
+                        BadRequest(new ApiResponse
+                        {
+                            Success = false,
+                            Message = result.Error,
+                            RequestId = HttpContext.TraceIdentifier
+                        })
+                };
+
+            return Ok(new ApiResponse
+            {
+                Success = true,
+                Message = "Update recipe successfully",
+                RequestId = HttpContext.TraceIdentifier
+            });
         }
+
 
         [Authorize]
         [HttpDelete("delete/{id}")]
-        public async Task<ActionResult<ApiResponse<DeleteRecipeResponse>>> DeleteRecipe(int id)
+        public async Task<IActionResult> DeleteRecipe(int id)
         {
-            try
-            {
+            
                 var result = await _services.DeleteRecipe(id);
-                if (result.Success)
-                {
-                    return new ApiResponse<DeleteRecipeResponse>
-                    {
-                        Success = true,
-                        Message = result.Message,
-                    };
-
-                }
-                return new ApiResponse<DeleteRecipeResponse>
-                {
-                    Success = false,
-                };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Error during delete recipe: " + ex.Message);
-                return BadRequest(new ApiResponse<DeleteRecipeResponse>()
-                {
-                    Success = false,
-                    Message = ex.Message,
-                });
-            }
+            if (result.IsFailure)
+                return BadRequest(ApiResponseFactory.Fail(result.Error, HttpContext));
+            return Ok(ApiResponseFactory.Success("Delete Successfully", HttpContext));
+            
+            
         }
 
         [Authorize]
@@ -323,7 +284,7 @@ namespace RecipeMgt.Api.Controllers
         {
             var userId = int.Parse(User.FindFirst("nameid")?.Value!);
             var added = await _bookmarkService.AddBookmarkAsync(userId, recipeId);
-            if (!added) return BadRequest(new { message = "Already bookmarked" });
+            if (added.IsFailure) return BadRequest(new { message = "Already bookmarked" });
             return Ok(new { message = "Bookmarked!" });
         }
 

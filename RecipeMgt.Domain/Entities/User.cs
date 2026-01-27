@@ -30,6 +30,6 @@ public partial class User
     public ICollection<Following> Followers { get; set; } = new List<Following>();     
     public ICollection<Following> FollowingUsers { get; set; } = new List<Following>();
 
-
+    public ICollection<RefreshToken> RefreshTokens { get; set; }= new List<RefreshToken>();
     public virtual Role Role { get; set; }
 }

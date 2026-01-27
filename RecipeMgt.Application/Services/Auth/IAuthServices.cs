@@ -1,4 +1,5 @@
 ﻿using RecipeMgt.Application.DTOs.Request.Auth;
+using RecipeMgt.Application.DTOs.Response;
 using RecipeMgt.Application.DTOs.Response.Auth;
 using System;
 using System.Collections.Generic;
@@ -15,5 +16,7 @@ namespace RecipeMgt.Application.Services.Auth
         Task<ChangePasswordResponse> changePassword(ChangePasswordRequest changePasswordRequest); 
 
         Task<RegisterResponse> Register(RegisterRequest registerRequest);
+
+        Task<TokenResponse> Refreshtoken(string refreshToken);
     }
 }

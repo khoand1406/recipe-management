@@ -7,11 +7,9 @@ namespace RecipeMgt.Application.DTOs.Request.Recipes
 {
     public class CreateRecipeRequest
     {
-        public int RecipeId { get; set; }
-
         public int DishId { get; set; }
 
-        public string Title { get; set; }=string.Empty;
+        public string Title { get; set; } = string.Empty;
 
         public string Description { get; set; } = string.Empty;
 
@@ -23,35 +21,24 @@ namespace RecipeMgt.Application.DTOs.Request.Recipes
 
         public string DifficultyLevel { get; set; } = "Medium";
 
+        public List<string> ImageUrls { get; set; } = [];
 
-        public List<string>? ImageUrls
-        {
-            get; set;
-        }
+        public List<IngredientDto> Ingredients { get; set; } = [];
 
-        [FromForm]
-        public string IngredientsJson { get; set; } = string.Empty;
-
-        [FromForm]
-        public string StepsJson { get; set; } = string.Empty;
-
-        [NotMapped]
-        public List<IngredientDto> Ingredients { get; set; } = new();
-
-        [NotMapped]
-        public List<StepDto> Steps { get; set; } = new();
+        public List<StepDto> Steps { get; set; } = [];
     }
+
 
     public class IngredientDto
     {
-        public int? IngredientId { get; set; } // null = mới
+        public int? IngredientId { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Quantity { get; set; } = string.Empty;
     }
 
     public class StepDto
     {
-        public int? StepId { get; set; } // null = mới
+        public int? StepId { get; set; }
         public int StepNumber { get; set; }
 
         public string Instruction { get; set; } = string.Empty;

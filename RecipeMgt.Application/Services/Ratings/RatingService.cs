@@ -10,8 +10,10 @@ namespace RecipeMgt.Application.Services.Ratings
 {
     using AutoMapper;
     using Microsoft.Extensions.Logging;
+    using RecipeMgt.Application.DTOs;
     using RecipeMgt.Application.DTOs.Request.Rating;
     using RecipeMgt.Application.DTOs.Response.Rating;
+    using RecipeMgt.Application.Exceptions;
     using RecipeMgt.Domain.Entities;
     using RecipentMgt.Infrastucture.Repository.Ratings;
     using System;
@@ -30,7 +32,7 @@ namespace RecipeMgt.Application.Services.Ratings
             _logger = logger;
         }
 
-        public async Task<RatingResponse> AddOrUpdateRatingAsync(AddRatingRequest request, int userId)
+        public async Task<Result<RatingResponse>> AddOrUpdateRatingAsync(AddRatingRequest request, int userId)
         {
             try
             {
@@ -40,45 +42,52 @@ namespace RecipeMgt.Application.Services.Ratings
                     UserId = userId,
                     Score = request.Score,
                     Comment = request.Comment,
-                    
                 };
 
                 await _ratingRepository.AddOrUpdateRatingAsync(rating);
 
                 double avg = await _ratingRepository.GetAverageRatingAsync(request.RecipeId) ?? 0;
 
-                return new RatingResponse
-                {
-                    Success = true,
-                    Message = "Rating saved successfully",
-                    AverageRating = avg
-                };
+                return Result<RatingResponse>.Success(new RatingResponse { AverageRating = avg });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error while saving rating");
-                return new RatingResponse { Success = false, Message = ex.Message };
+                throw new BadRequestException(ex.Message);
             }
         }
 
-        public async Task<double> GetAverageRatingAsync(int recipeId)
+        public async Task<Result<double>> GetAverageRatingAsync(int recipeId)
         {
-            return await _ratingRepository.GetAverageRatingAsync(recipeId)?? 0;
+            var result = await _ratingRepository.GetAverageRatingAsync(recipeId) ?? 0;
+            return Result<double>.Success(result);
         }
 
-        public async Task<UserRatingResponse?> GetUserRatingAsync(int userId, int recipeId)
+        public async Task<Result<UserRatingResponse?>> GetUserRatingAsync(
+        int userId,
+        int recipeId)
         {
-            var rating = await _ratingRepository.GetUserRatingAsync(userId, recipeId);
-            if (rating == null) return null;
+            var rating = await _ratingRepository
+                .GetUserRatingAsync(userId, recipeId);
 
-            return new UserRatingResponse
+            if (rating == null)
+            {
+                return Result<UserRatingResponse?>.Failure(
+                    "User has not rated this recipe yet"
+                );
+            }
+
+            var response = new UserRatingResponse
             {
                 RecipeId = recipeId,
                 UserId = userId,
-                Score = rating.Score?? 0,
+                Score = rating.Score ?? 0,
                 Comment = rating.Comment
             };
+
+            return Result<UserRatingResponse?>.Success(response);
         }
+
     }
 
 }

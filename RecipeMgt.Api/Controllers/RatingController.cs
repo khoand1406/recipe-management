@@ -1,7 +1,7 @@
 ﻿using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using RecipeMgt.Api.Common;
 using RecipeMgt.Application.DTOs.Request.Rating;
 using RecipeMgt.Application.Services.Ratings;
 
@@ -12,9 +12,11 @@ namespace RecipeMgt.Api.Controllers
     public class RatingController : ControllerBase
     {
         private readonly IRatingService _ratingService;
-        private IValidator<AddRatingRequest> _ratingValidator;
+        private readonly IValidator<AddRatingRequest> _ratingValidator;
 
-        public RatingController(IRatingService ratingService, IValidator<AddRatingRequest> validator)
+        public RatingController(
+            IRatingService ratingService,
+            IValidator<AddRatingRequest> validator)
         {
             _ratingService = ratingService;
             _ratingValidator = validator;
@@ -28,29 +30,58 @@ namespace RecipeMgt.Api.Controllers
             var validation = await _ratingValidator.ValidateAsync(request);
             if (!validation.IsValid)
             {
-                return BadRequest(new
-                {
-                    success = false,
-                    message = "Validation Failed",
-                    errors = validation.Errors.Select(e => $"{e.PropertyName}: {e.ErrorMessage}")
-                });
+                return BadRequest(
+                    ApiResponseFactory.Fail(validation, HttpContext)
+                );
             }
 
             var userId = HttpContext.Items["UserId"] as int?;
             if (userId == null)
-                return Unauthorized("User not found!");
+            {
+                return Unauthorized(
+                    ApiResponseFactory.Fail("Unauthorized", HttpContext)
+                );
+            }
 
-            var result = await _ratingService.AddOrUpdateRatingAsync(request, userId.Value);
-            return Ok(result);
+            var result = await _ratingService.AddOrUpdateRatingAsync(
+                request, userId.Value
+            );
+
+            if (!result.IsSuccess)
+            {
+                return BadRequest(
+                    ApiResponseFactory.Fail(
+                        result.Error,
+                        HttpContext
+                        )
+                );
+            }
+
+            return Ok(
+                ApiResponseFactory.Success(result.Value, HttpContext)
+            );
         }
+
 
 
         [HttpGet("average/{recipeId}")]
         public async Task<IActionResult> GetAverageRating(int recipeId)
         {
-            double avg = await _ratingService.GetAverageRatingAsync(recipeId);
-            return Ok(new { recipeId, averageRating = avg });
+            var avg = await _ratingService.GetAverageRatingAsync(recipeId);
+
+            return Ok(
+                ApiResponseFactory.Success(
+                    new
+                    {
+                        RecipeId = recipeId,
+                        AverageRating = avg
+                    },
+                    HttpContext
+                )
+            );
         }
+
+
 
         [Authorize]
         [HttpGet("user/{recipeId}")]
@@ -58,14 +89,29 @@ namespace RecipeMgt.Api.Controllers
         {
             var userId = HttpContext.Items["UserId"] as int?;
             if (userId == null)
-                return Unauthorized(new { message = "User not found!" });
+            {
+                return Unauthorized(
+                    ApiResponseFactory.Fail("Unauthorized", HttpContext)
+                );
+            }
 
-            var result = await _ratingService.GetUserRatingAsync(userId.Value, recipeId);
+            var result = await _ratingService.GetUserRatingAsync(
+                userId.Value, recipeId
+            );
 
-            if (result == null)
-                return Ok(new { message = "User has not rated this recipe yet" });
+            if (!result.IsSuccess)
+            {
+                return NotFound(
+                    ApiResponseFactory.Fail(
+                        result.Error,
+                        HttpContext
+                    )
+                );
+            }
 
-            return Ok(result);
+            return Ok(
+                ApiResponseFactory.Success(result.Value, HttpContext)
+            );
         }
     }
 }

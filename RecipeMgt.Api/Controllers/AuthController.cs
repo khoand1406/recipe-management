@@ -1,14 +1,11 @@
-﻿using Azure.Core;
-using FluentValidation;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity.Data;
+﻿using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using RecipeMgt.Api.Common;
 using RecipeMgt.Application.DTOs;
 using RecipeMgt.Application.DTOs.Request.Auth;
 using RecipeMgt.Application.DTOs.Response.Auth;
 using RecipeMgt.Application.Services.Auth;
-using System.ComponentModel.DataAnnotations;
 
 namespace RecipeMgt.Api.Controllers
 {
@@ -19,7 +16,7 @@ namespace RecipeMgt.Api.Controllers
         private readonly IAuthServices _authServices;
         private ILogger<AuthController> _logger;
         private readonly IValidator<Application.DTOs.Request.Auth.LoginRequest> _loginValidator;
-        private readonly IValidator<Application.DTOs.Request.Auth.RegisterRequest> _registerValidator;
+        private readonly IValidator<RegisterRequest> _registerValidator;
         private readonly IValidator<ChangePasswordRequest> _changePasswordValidator;
 
         public AuthController(
@@ -35,152 +32,51 @@ namespace RecipeMgt.Api.Controllers
             _registerValidator = registerValidator;
             _changePasswordValidator = changePasswordValidator;
         }
-
         [HttpPost("login")]
-        public async Task<ActionResult<ApiResponse<LoginResponse>>> loginUser([FromBody] Application.DTOs.Request.Auth.LoginRequest loginRequest)
+        public async Task<ActionResult<ApiResponse<LoginResponse>>> Login(
+            [FromBody] LoginRequest request)
         {
-            try
-            {
-                var validation= await _loginValidator.ValidateAsync(loginRequest);
-                if(!validation.IsValid)
-                {
-                    return BadRequest(new ApiResponse<LoginResponse>
-                    {
-                        Success = false,
-                        Message = "Validation failed",
-                        Errors = validation.Errors
-                                            .Select(e => $"{e.PropertyName}: {e.ErrorMessage}")
-                                            .ToList(),
-                        RequestId = HttpContext.TraceIdentifier
-                    });
-                }
-                var result = await _authServices.Login(loginRequest);
+            var validation = await _loginValidator.ValidateAsync(request);
+            if (!validation.IsValid)
+                return BadRequest(ApiResponseFactory.Fail(validation, HttpContext));
 
-                if(result.Success)
-                {
-                    _logger.LogInformation("Staff login successful for email: {Email}", loginRequest.email);
-                    return Ok(new ApiResponse<LoginResponse>
-                    {
-                        Success = true,
-                        Data = result,
-                        Message = "Login successful",
-                        RequestId = HttpContext.TraceIdentifier
-                    });
-                }
-                else
-                {
-                    return Unauthorized(new ApiResponse<LoginResponse>
-                    {
-                        Success = false,
-                        Message = result.Message,
-                        RequestId = HttpContext.TraceIdentifier
-                    });
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error during staff login for email: {Email}", loginRequest.email);
-                return StatusCode(500, new ApiResponse<LoginResponse>
-                {
-                    Success = false,
-                    Message = "An error occurred during login",
-                    RequestId = HttpContext.TraceIdentifier
-                });
-            }
+            var result = await _authServices.Login(request);
+
+            return Ok(ApiResponseFactory.Success(result, HttpContext));
         }
 
         [HttpPost("register")]
-        public async Task<ActionResult<ApiResponse<RegisterResponse>>> Register([FromBody] Application.DTOs.Request.Auth.RegisterRequest request)
+        public async Task<ActionResult<ApiResponse<RegisterResponse>>> Register([FromBody] RegisterRequest request)
         {
-            try
+            var validation = await _registerValidator.ValidateAsync(request);
+            if (!validation.IsValid)
             {
-                var validation= await _registerValidator.ValidateAsync(request);
-                if(!validation.IsValid)
-                {
-                    return BadRequest(new ApiResponse<RegisterResponse>
-                    {
-                        Success = false,
-                        Message = "Validation failed",
-                        Errors = validation.Errors
-                                            .Select(e => $"{e.PropertyName}: {e.ErrorMessage}")
-                                            .ToList(),
-                        RequestId = HttpContext.TraceIdentifier
-                    });
-                }
-                
-                var result= await _authServices.Register(request);
-                if (result.Success)
-                {
-                    return Ok(new ApiResponse<Application.DTOs.Request.Auth.RegisterRequest>
-                    {
-                        Success= true,
-                        Message= result.Message,
-                        RequestId = HttpContext.TraceIdentifier
-                    });
-                }
-                else
-                {
-                    return BadRequest(new ApiResponse<Application.DTOs.Request.Auth.RegisterRequest>
-                    {
-                        Success = false,
-                        Message = result.Message,
-                        RequestId = HttpContext.TraceIdentifier
-                    });
-                }
-
-            }catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error during user register with email: " + request.Email);
-                return StatusCode(500, new ApiResponse<RegisterResponse> { Success = false, Message= ex.Message, RequestId= HttpContext.TraceIdentifier });
+                return BadRequest(ApiResponseFactory.Fail(validation, HttpContext));
             }
-        }
 
+            var result = await _authServices.Register(request);
+            return Ok(ApiResponseFactory.Success(result, HttpContext));
+        }
+        [Authorize]
         [HttpPatch("change-password")]
 
-        public async Task<ActionResult<ApiResponse<ChangePasswordResponse>>> changePassword([FromBody]ChangePasswordRequest request)
+        public async Task<ActionResult<ApiResponse<ChangePasswordResponse>>> changePassword([FromBody] ChangePasswordRequest request)
         {
-            try
-            {
                 var validation = await _changePasswordValidator.ValidateAsync(request);
                 if (!validation.IsValid)
                 {
-                    return BadRequest(new ApiResponse<ChangePasswordResponse>
-                    {
-                        Success = false,
-                        Message = "Validation failed",
-                        Errors = validation.Errors
-                                            .Select(e => $"{e.PropertyName}: {e.ErrorMessage}")
-                                            .ToList(),
-                        RequestId = HttpContext.TraceIdentifier
-                    });
+                    return BadRequest(ApiResponseFactory.Fail(validation, HttpContext)) ;
                 }
-                
-
                 var result = await _authServices.changePassword(request);
-                if (result.Success)
-                {
-                    return new ApiResponse<ChangePasswordResponse>
-                    {
-                        Success = true,
-                        Message = result.Message,
-                    };
-                }
-                else
-                {
-                    return BadRequest(new ApiResponse<ChangePasswordResponse>
-                    {
-                        Success = false,
-                        Message = result.Message,
-                        RequestId = HttpContext.TraceIdentifier
-
-                    });
-                }
-
-            }catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error during user register with email: " + request.Email);
-                return StatusCode(500, new ApiResponse<RegisterResponse> { Success = false, Message = ex.Message, RequestId = HttpContext.TraceIdentifier });
-            }
+                return Ok(ApiResponseFactory.Success(result, HttpContext)); 
         }
+
+        [HttpPost("refresh")]
+        public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
+        {
+            var result = await _authServices.Refreshtoken(request.RefreshToken);
+            return Ok(ApiResponseFactory.Success(result, HttpContext));
+        }
+
     }
 }

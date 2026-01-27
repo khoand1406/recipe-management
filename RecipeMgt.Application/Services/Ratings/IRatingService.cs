@@ -1,4 +1,5 @@
-﻿using RecipeMgt.Application.DTOs.Request.Rating;
+﻿using RecipeMgt.Application.DTOs;
+using RecipeMgt.Application.DTOs.Request.Rating;
 using RecipeMgt.Application.DTOs.Response.Rating;
 using System;
 using System.Collections.Generic;
@@ -10,8 +11,8 @@ namespace RecipeMgt.Application.Services.Ratings
 {
     public interface IRatingService
     {
-        Task<RatingResponse> AddOrUpdateRatingAsync(AddRatingRequest request, int userId);
-        Task<double> GetAverageRatingAsync(int recipeId);
-        Task<UserRatingResponse?> GetUserRatingAsync(int userId, int recipeId);
+        Task<Result<RatingResponse>> AddOrUpdateRatingAsync(AddRatingRequest request, int userId);
+        Task<Result<double>> GetAverageRatingAsync(int recipeId);
+        Task<Result<UserRatingResponse?>> GetUserRatingAsync(int userId, int recipeId);
     }
 }

@@ -1,4 +1,5 @@
-﻿using RecipeMgt.Application.DTOs.Response.Comments;
+﻿using RecipeMgt.Application.DTOs;
+using RecipeMgt.Application.DTOs.Response.Comments;
 using RecipeMgt.Domain.Entities;
 using RecipentMgt.Infrastucture.Repository.Bookmarks;
 using System;
@@ -18,10 +19,10 @@ namespace RecipeMgt.Application.Services.Bookmarks
             _repository = repository;
         }
 
-        public async Task<bool> AddBookmarkAsync(int userId, int recipeId)
+        public async Task<Result> AddBookmarkAsync(int userId, int recipeId)
         {
             if (await _repository.IsBookmarkedAsync(userId, recipeId))
-                return false; // Already bookmarked
+                return Result.Failure("Already bookmark");
 
             var bookmark = new Bookmark
             {
@@ -30,14 +31,14 @@ namespace RecipeMgt.Application.Services.Bookmarks
             };
 
             await _repository.AddBookmarkAsync(bookmark);
-            return true;
+            return Result.Success();
         }
 
-        public async Task<List<BookmarkResponseDto>> GetBookmarksByUserAsync(int userId)
+        public async Task<Result<List<BookmarkResponseDto>>> GetBookmarksByUserAsync(int userId)
         {
             var bookmarks = await _repository.GetBookmarksByUserAsync(userId);
 
-            return bookmarks.Select(b => new BookmarkResponseDto
+            var listDTO= bookmarks.Select(b => new BookmarkResponseDto
             {
                 BookmarkId = b.BookmarkId,
                 RecipeId = b.RecipeId,
@@ -46,6 +47,7 @@ namespace RecipeMgt.Application.Services.Bookmarks
                 RecipeThumbnail = "", 
                 CreatedAt = b.CreatedAt
             }).ToList();
+            return Result<List<BookmarkResponseDto>>.Success(listDTO);
         }
     }
 }

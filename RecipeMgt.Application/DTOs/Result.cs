@@ -25,10 +25,10 @@ namespace RecipeMgt.Application.DTOs
         }
 
         public static Result Success()
-            => new Result(true, string.Empty);
+            => new(true, string.Empty);
 
         public static Result Failure(string error)
-            => new Result(false, error);
+            => new(false, error);
     }
 
     public class Result<T> : Result
@@ -46,9 +46,9 @@ namespace RecipeMgt.Application.DTOs
         }
 
         public static Result<T> Success(T value)
-            => new Result<T>(value);
+            => new(value);
 
         public static new Result<T> Failure(string error)
-            => new Result<T>(error);
+            => new(error);
     }
 }

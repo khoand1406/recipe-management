@@ -1,5 +1,8 @@
 using AutoMapper;
+using CloudinaryDotNet;
 using Microsoft.Extensions.Logging;
+using RecipeMgt.Application.Constant;
+using RecipeMgt.Application.DTOs;
 using RecipeMgt.Application.DTOs.Request.Recipes;
 using RecipeMgt.Application.DTOs.Response.Recipe;
 using RecipeMgt.Application.Services.Cloudiary;
@@ -17,35 +20,30 @@ namespace RecipeMgt.Application.Services.Recipes
 {
     public class RecipeServices : IRecipeServices
     {
-        private readonly IRecipeRepository _repository;
-        private readonly IDishRepository _dishrepository;
-        private readonly IUserRepository _userRepository;
+
+
         private readonly IUnitOfWork _uow;
-        private readonly ICloudinaryService _cloudinaryservice;
+
         private readonly IMapper _mapper;
         private readonly ILogger<RecipeServices> _logger;
 
-        public RecipeServices(IRecipeRepository repository, IMapper mapper, ILogger<RecipeServices> logger, IDishRepository dishRepository, ICloudinaryService service, IUserRepository userRepository, IUnitOfWork uow)
+        public RecipeServices(IMapper mapper, ILogger<RecipeServices> logger, IUnitOfWork uow)
         {
-            _repository = repository;
+
             _mapper = mapper;
-            _cloudinaryservice = service;
             _logger = logger;
-            _dishrepository = dishRepository;
-            _userRepository = userRepository;
             _uow = uow;
         }
 
         public async Task<RecipeResponse?> GetRecipeById(int id)
         {
-            var recipe = await _repository.getRecipeById(id);
+            var recipe = await _uow.Recipes.getRecipeById(id);
             if (recipe == null) return null;
             var result = _mapper.Map<RecipeResponse>(recipe);
             return result;
         }
 
-
-        public async Task<CreateRecipeResponse> CreateRecipes(CreateRecipeRequest request)
+        public async Task<Result<RecipeResponse>> CreateRecipeAsync(CreateRecipeRequest request)
         {
             await _uow.BeginTransactionAsync();
             try
@@ -54,7 +52,7 @@ namespace RecipeMgt.Application.Services.Recipes
                 if (dish == null)
                 {
                     _logger.LogError($"Error occurs when create recipe: Dish with id {request.DishId} not found");
-                    return new CreateRecipeResponse { Success = false, Message = "Create Recipe Failed! Not found dish with Id: " + request.DishId };
+                    return Result<RecipeResponse>.Failure(RecipeErrorMessage.DishNotFound);
                 }
                 var recipe = _mapper.Map<Recipe>(request);
                 recipe.CreatedAt = DateTime.Now;
@@ -62,7 +60,8 @@ namespace RecipeMgt.Application.Services.Recipes
                 await _uow.Recipes.AddAsync(recipe);
                 await _uow.SaveChangesAsync();
 
-                var ingredients = request.Ingredients.Select(i => { 
+                var ingredients = request.Ingredients.Select(i =>
+                {
                     var ing = _mapper.Map<Ingredient>(i);
                     ing.RecipeId = recipe.RecipeId;
                     return ing;
@@ -78,209 +77,177 @@ namespace RecipeMgt.Application.Services.Recipes
                 var images = request.ImageUrls != null && request.ImageUrls.Any() ? request.ImageUrls.Select(url => new Image
                 {
                     Caption = url,
-                    EntityId= recipe.RecipeId,
-                    EntityType= "Recipe",
+                    EntityId = recipe.RecipeId,
+                    EntityType = "Recipe",
                     ImageUrl = url,
                     UploadedAt = DateTime.Now,
-                }).ToList() : null ;
+                }).ToList() : null;
 
-                await _uow.Recipes.AddRangeAsync(images);
+                if (images != null)
+                {
+                    await _uow.Recipes.AddRangeAsync(images);
+                }
                 await _uow.Recipes.AddRangeAsync(steps);
                 await _uow.Recipes.AddRangeAsync(ingredients);
                 await _uow.CommitAsync();
-                var author = await _uow.Users.getUserAsync(request.AuthorId);
-                return new CreateRecipeResponse { Success = true, Message = "Create recipe successfully",
-                    Data = new RecipeResponse
-                    {
-                        RecipeId = recipe.RecipeId,
-                        Title = recipe.Title,
-                        AuthorId = recipe.AuthorId,
-                        CookingTime = recipe.CookingTime,
-                        Description = recipe.Description,
-                        DifficultyLevel = recipe.DifficultyLevel,
-                        Servings = recipe.Servings,
-                        CreatedAt = recipe.CreatedAt,
-                        UpdatedAt = recipe.UpdatedAt,
-                        Images = request.ImageUrls?? new List<string>(),
-                        Author = author,
+               
+                var response = _mapper.Map<RecipeResponse>(recipe);
+                response.Images = request.ImageUrls ?? [];
 
-                    }
-                };
-            }catch (Exception ex)
+                return Result<RecipeResponse>.Success(response);
+            }
+            catch (Exception ex)
             {
                 await _uow.RollbackAsync();
                 _logger.LogError(ex, "CreateRecipe failed");
-                return new CreateRecipeResponse { Success = false, Message = "Create recipe failed" };
+
+                return Result<RecipeResponse>.Failure(RecipeErrorMessage.CreateFailed);
             }
         }
-        public async Task<CreateRecipeResponse> CreateRecipe(CreateRecipeRequest request)
+
+
+        public async Task<Result> DeleteRecipe(int id)
         {
             try
             {
-                var dish = await _dishrepository.GetById(request.DishId);
-                if (dish == null)
+                var found = await _uow.Recipes.getRecipeById(id);
+                if (found == null)
                 {
-                    _logger.LogError($"Error occurs when create recipe: Dish with id {request.DishId} not found");
-                    return new CreateRecipeResponse { Success = false, Message = "Create Recipe Failed! Not found dish with Id: " + request.DishId };
+                    _logger.LogError(message: $"Not found recipe with id:{id}");
+                    return Result.Failure(RecipeErrorMessage.NotFound);
                 }
-                var recipe = _mapper.Map<Recipe>(request);
-                recipe.CreatedAt = DateTime.Now;
-                recipe.UpdatedAt = DateTime.Now;
-
-
-                var ingredients = request.Ingredients != null && request.Ingredients.Any()
-                    ? _mapper.Map<List<Ingredient>>(request.Ingredients)
-                    : new List<Ingredient>();
-
-                var steps = request.Steps != null && request.Steps.Any()
-                    ? _mapper.Map<List<Step>>(request.Steps)
-                    : new List<Step>();
-
-                var images = new List<Image>();
-                if (request.ImageUrls != null && request.ImageUrls.Any())
+                var result = await _uow.Recipes.deleteRecipes(id);
+                if (result)
                 {
-                    foreach (var img in request.ImageUrls)
-                    {
-                        var image= new Image { ImageUrl= img, UploadedAt= DateTime.Now, Caption= img, EntityType= "Recipe", EntityId=0 };
-                        images.Add(image);
-                    }
+                    return Result.Success();
                 }
-
-
-                var result = await _repository.createRecipes(recipe, ingredients, steps, images);
-                var authorInfo = await _userRepository.getUserAsync(request.AuthorId);
-                var imageRecipes = await _repository.getRecipeImages(recipe.RecipeId);
-
-                return new CreateRecipeResponse 
-                { 
-                    Success = true, 
-                    Message = result.Message, 
-                    Data = new RecipeResponse { 
-                        RecipeId = recipe.RecipeId, 
-                        Title = recipe.Title, 
-                        AuthorId = recipe.AuthorId, 
-                        CookingTime = recipe.CookingTime, 
-                        Description = recipe.Description, 
-                        DifficultyLevel = recipe.DifficultyLevel, 
-                        Servings = recipe.Servings, 
-                        CreatedAt = recipe.CreatedAt, 
-                        UpdatedAt = recipe.UpdatedAt,
-                        Images= imageRecipes,
-                        Author= authorInfo,
-                        
-                    } 
-                };
-
+                return Result.Failure(RecipeErrorMessage.DeleteFailed);
 
             }
             catch (Exception ex)
             {
-                _logger.LogError("Error occurs when creating recipe: " + ex.Message);
-                return new CreateRecipeResponse { Success = false, Message = "Create Recipe Failed" };
-            }
-        }
-
-        public async Task<DeleteRecipeResponse> DeleteRecipe(int id)
-        {
-            try
-            {
-                var found= await _repository.getRecipeById(id);
-                if(found == null)
-                {
-                    _logger.LogError("Not found recipe with id:" + id);
-                    return new DeleteRecipeResponse { Success = false, Message = "Not found recipe with id: " + id };
-                }
-                var result= await _repository.deleteRecipes(id);
-                if (result)
-                {
-                    return new DeleteRecipeResponse { Success = true, Message = "Delete successfully" };
-                }
-                return new DeleteRecipeResponse { Success = false, Message = "Delete Failed" };
-
-            }catch(Exception ex)
-            {
                 _logger.LogError($"Failed to delete recipe: {id}, {ex.Message}");
-                return new DeleteRecipeResponse { Success = false, Message = ex.Message };
+                 return Result.Failure(RecipeErrorMessage.DeleteFailed);
             }
         }
 
         public async Task<IEnumerable<RecipeResponse>> GetRecipesByDish(int id)
         {
-            var listRecipes= await  _repository.GetRecipes(id);
+            var listRecipes = await _uow.Recipes.GetRecipes(id);
             var result = _mapper.Map<IEnumerable<RecipeResponse>>(listRecipes);
             return result;
         }
 
         public async Task<IEnumerable<RecipeResponse>> GetRecipesByFilter()
         {
-            var listRecipes = await _repository.getRecipesByFilter();
+            var listRecipes = await _uow.Recipes.getRecipesByFilter();
             var result = _mapper.Map<IEnumerable<RecipeResponse>>(listRecipes);
             return result;
         }
 
         public async Task<IEnumerable<RecipeWithUserInfo>> GetRecipesByUser(int userId)
         {
-            var listRecipes = await _repository.GetRecipesByUser(userId);
+            var listRecipes = await _uow.Recipes.GetRecipesByUser(userId);
             var result = _mapper.Map<IEnumerable<RecipeWithUserInfo>>(listRecipes);
             return result;
         }
 
         public async Task<IEnumerable<RecipeResponse>> GetRelatedRecipes(int id)
         {
-            var listRecipes = await _repository.GetRecipesByUser(id);
+            var listRecipes = await _uow.Recipes.GetRecipesByUser(id);
             var result = _mapper.Map<IEnumerable<RecipeResponse>>(listRecipes);
             return result;
         }
 
         public async Task<Domain.RequestEntity.PagedResponse<Recipe>> GetSearchResult(Domain.RequestEntity.SearchRecipeRequest request)
         {
-            return await _repository.GetSearchedResult(request);
+            return await _uow.Recipes.GetSearchedResult(request);
         }
 
-        public async Task<UpdateRecipeResponse> UpdateRecipe(UpdateRecipeRequest request)
+        public async Task<Result> UpdateRecipeAsync(UpdateRecipeRequest request, int currentUserId)
         {
+            await _uow.BeginTransactionAsync();
             try
             {
-                
-                var recipeUpdate = _mapper.Map<Recipe>(request);
-                recipeUpdate.UpdatedAt = DateTime.Now;
-                var ingredients = request.Ingredients != null && request.Ingredients.Any()
-                    ? _mapper.Map<List<Ingredient>>(request.Ingredients)
-                    : new List<Ingredient>();
-
-                var steps = request.Steps != null && request.Steps.Any()
-                    ? _mapper.Map<List<Step>>(request.Steps)
-                    : new List<Step>();
-
-                var images = new List<Image>();
-                if (request.Images != null && request.Images.Any())
+                var recipe = await _uow.Recipes.getRecipeById(request.RecipeId);
+                if (recipe == null)
                 {
-                    foreach (var img in request.Images)
-                    {
-                        var uploadResult = await _cloudinaryservice.UploadImageAsync(img);
-                        images.Add(new Image
-                        {
-                            EntityType = "Recipe",
-                            ImageUrl = uploadResult,
-                            Caption = Path.GetFileNameWithoutExtension(img.FileName),
-                            UploadedAt = DateTime.Now
-                        });
-                    }
+                    return Result<RecipeResponse>.Failure(RecipeErrorMessage.NotFound);
                 }
-                var result= await _repository.updateRecipes(recipeUpdate, ingredients, steps, images);
-                if (result.Success)
-                {
-                    _logger.LogInformation("Successfully update recipe with id: " + request.RecipeId);
-                    return new UpdateRecipeResponse { Success = true, Message = result.Message };
+                if (recipe.AuthorId != currentUserId)
+                    return Result.Failure(RecipeErrorMessage.Forbidden);
 
+                recipe.Title = request.Title;
+                recipe.Description = request.Description;
+                recipe.CookingTime = request.CookingTime;
+                recipe.DifficultyLevel = request.DifficultyLevel;
+                recipe.Servings = request.Servings;
+                recipe.UpdatedAt = DateTime.Now;
+                _uow.Recipes.Update(recipe);
+
+                var newIncomingIngredients = request.Ingredients.Select(item => _mapper.Map<Ingredient>(item)).ToList();
+                foreach (var item in newIncomingIngredients)
+                {
+                    item.RecipeId = recipe.RecipeId;
                 }
-                return new UpdateRecipeResponse { Success = false, };
+                var toDeleteIngredients = recipe.Ingredients
+                    .Where(db => !newIncomingIngredients.Any(i => i.IngredientId == db.IngredientId))
+                    .ToList();
+
+                var toAddIngredients = newIncomingIngredients
+                    .Where(i => i.IngredientId == 0)
+                    .ToList();
+
+                var toUpdateIngredients = newIncomingIngredients
+                    .Where(i => i.IngredientId != 0)
+                    .ToList();
+                _uow.Ingredients.RemoveRange(toDeleteIngredients);
+                await _uow.Ingredients.AddRangeAsync(toAddIngredients);
+                _uow.Ingredients.UpdateRange(toUpdateIngredients);
+
+                var incomingSteps = request.Steps
+            .Select(s => _mapper.Map<Step>(s))
+            .ToList();
+
+                foreach (var step in incomingSteps)
+                    step.RecipeId = recipe.RecipeId;
+
+                var toDeleteSteps = recipe.Steps
+                    .Where(db => !incomingSteps.Any(s => s.StepId == db.StepId))
+                    .ToList();
+
+                var toAddSteps = incomingSteps
+                    .Where(s => s.StepId == 0)
+                    .ToList();
+
+                var toUpdateSteps = incomingSteps
+                    .Where(s => s.StepId != 0)
+                    .ToList();
+                _uow.Steps.RemoveRange(toDeleteSteps);
+                await _uow.Steps.AddRangeAsync(toAddSteps);
+                _uow.Steps.UpdateRangeAsync(toUpdateSteps);
+
+                var oldImages = await _uow.Recipes.getRecipeImages(recipe.RecipeId);
+                _uow.Recipes.RemoveRange(oldImages);
+                var newImages = request.ImageUrls != null && request.ImageUrls.Count == 0 ? request.ImageUrls.Select(item => new Image
+                {
+                    EntityType = "Recipe",
+                    EntityId = recipe.RecipeId,
+                    ImageUrl = item,
+                    Caption = Path.GetFileName(item),
+                    UploadedAt = DateTime.Now
+                }).ToList() : null;
+                if (newImages != null) await _uow.Recipes.AddRangeAsync(newImages);
+                await _uow.CommitAsync();
+                return Result.Success();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
-                _logger.LogError("Error while updating recipes: "+ ex.Message);
-                return new UpdateRecipeResponse { Success = false, Message= "Update Recipe Failed!" };
+                await _uow.RollbackAsync();
+                _logger.LogError(ex, "UpdateRecipe failed: {RecipeId}", request.RecipeId);
+                return Result.Failure(RecipeErrorMessage.UpdateFailed);
             }
         }
     }
 }
+
