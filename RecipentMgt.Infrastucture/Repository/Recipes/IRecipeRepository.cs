@@ -22,7 +22,7 @@ namespace RecipentMgt.Infrastucture.Repository.Recipes
 
         Task<Recipe?> getRecipeById(int id);
 
-        public Task<PagedResponse<Recipe>> GetSearchedResult(SearchRecipeRequest search);
+        public Task<PagedResponse<Recipe>> GetSearchedResult(string? Title, string? Ingredient,string? difficulty, int? MaxCookingTime, string? CreatorName, int page, int pageSize, string? sortBy, string? sortOrder );
 
         Task AddAsync(Recipe newRecipe);
 

@@ -37,9 +37,9 @@ namespace RecipeMgt.Api.Common.Middleware
             catch (AppException ex)
             {
                 _logger.LogWarning(ex, "Handled Application Exception");
-                context.Response.StatusCode= (int)HttpStatusCode.BadRequest;
+                context.Response.StatusCode= ex.StatusCode;
                 context.Response.ContentType = "application/json";
-                var response = ApiResponseFactory.Fail("Application Exception", context, [ex.Message]);
+                var response = ApiResponseFactory.Fail(ex.Message, context);
                 await context.Response.WriteAsync(JsonSerializer.Serialize(response));
             }
             catch (Exception ex)

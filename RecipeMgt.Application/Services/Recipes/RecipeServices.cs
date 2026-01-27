@@ -1,5 +1,6 @@
 using AutoMapper;
 using CloudinaryDotNet;
+using Microsoft.AspNetCore.Mvc.Internal;
 using Microsoft.Extensions.Logging;
 using RecipeMgt.Application.Constant;
 using RecipeMgt.Application.DTOs;
@@ -159,9 +160,12 @@ namespace RecipeMgt.Application.Services.Recipes
             return result;
         }
 
-        public async Task<Domain.RequestEntity.PagedResponse<Recipe>> GetSearchResult(Domain.RequestEntity.SearchRecipeRequest request)
+        public async Task<Domain.RequestEntity.PagedResponse<RecipeResponse>> GetSearchResult(SearchRecipeRequest request)
         {
-            return await _uow.Recipes.GetSearchedResult(request);
+            var pagedResponse=  await _uow.Recipes.GetSearchedResult(request.Title, request.Ingredient, request.Difficulty, request.MaxCookingTime, 
+                            request.CreatorName, request.Page, request.PageSize, request.SortBy, request.SortOrder);
+            var result= _mapper.Map<Domain.RequestEntity.PagedResponse<RecipeResponse>>(pagedResponse);
+            return result;
         }
 
         public async Task<Result> UpdateRecipeAsync(UpdateRecipeRequest request, int currentUserId)

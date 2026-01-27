@@ -14,7 +14,7 @@ namespace RecipeMgt.Application.DTOs.Request.Recipes
         public int? MaxCookingTime { get; set; }
         public string? CreatorName { get; set; }
 
-        // ✅ Mới thêm:
+        
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 10;
         public string? SortBy { get; set; } = "CreatedAt"; // Field sắp xếp

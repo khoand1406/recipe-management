@@ -100,45 +100,45 @@ namespace RecipentMgt.Infrastucture.Repository.Recipes
             throw new NotImplementedException();
         }
 
-        public async Task<PagedResponse<Recipe>> GetSearchedResult(SearchRecipeRequest request)
+        public async Task<PagedResponse<Recipe>> GetSearchedResult(string? Title, string? Ingredient, string? difficulty, int? MaxCookingTime, string? CreatorName, int page, int pageSize, string? sortBy, string? sortOrder)
         {
-            var query = _context.Recipes.Include(r=> r.Author).Include(r=> r.Ingredients).AsQueryable();
-            if (!string.IsNullOrEmpty(request.Title))
-                query = query.Where(r => r.Title.Contains(request.Title));
+            var query = _context.Recipes.Include(r => r.Author).Include(r => r.Ingredients).AsQueryable();
+            if (!string.IsNullOrEmpty(Title))
+                query = query.Where(r => r.Title.Contains(Title));
 
-            if (!string.IsNullOrEmpty(request.Difficulty))
-                query = query.Where(r => r.DifficultyLevel == request.Difficulty);
+            if (!string.IsNullOrEmpty(difficulty))
+                query = query.Where(r => r.DifficultyLevel == difficulty);
 
-            if (request.MaxCookingTime.HasValue)
-                query = query.Where(r => r.CookingTime <= request.MaxCookingTime.Value);
+            if (MaxCookingTime.HasValue)
+                query = query.Where(r => r.CookingTime <= MaxCookingTime.Value);
 
-            if (!string.IsNullOrEmpty(request.CreatorName))
-                query = query.Where(r => r.Author.FullName.Contains(request.CreatorName));
+            if (!string.IsNullOrEmpty(CreatorName))
+                query = query.Where(r => r.Author.FullName.Contains(CreatorName));
 
-            if (!string.IsNullOrEmpty(request.Ingredient))
-                query = query.Where(r => r.Ingredients.Any(i => i.Name.Contains(request.Ingredient)));
+            if (!string.IsNullOrEmpty(Ingredient))
+                query = query.Where(r => r.Ingredients.Any(i => i.Name.Contains(Ingredient)));
 
             var totalCounts = await query.CountAsync();
 
-            query = request.SortBy?.ToLower() switch
+            query = sortBy?.ToLower() switch
             {
-                "title" => request.SortOrder == "asc" ? query.OrderBy(r => r.Title) : query.OrderByDescending(r => r.Title),
-                "cookingtime" => request.SortOrder == "asc" ? query.OrderBy(r => r.CookingTime) : query.OrderByDescending(r => r.CookingTime),
-                "difficulty" => request.SortOrder == "asc" ? query.OrderBy(r => r.DifficultyLevel) : query.OrderByDescending(r => r.DifficultyLevel),
-                "creator" => request.SortOrder == "asc" ? query.OrderBy(r => r.Author.FullName) : query.OrderByDescending(r => r.Author.FullName),
-                _ => request.SortOrder == "asc" ? query.OrderBy(r => r.RecipeId) : query.OrderByDescending(r => r.RecipeId)
+                "title" => sortOrder == "asc" ? query.OrderBy(r => r.Title) : query.OrderByDescending(r => r.Title),
+                "cookingtime" => sortOrder == "asc" ? query.OrderBy(r => r.CookingTime) : query.OrderByDescending(r => r.CookingTime),
+                "difficulty" => sortOrder == "asc" ? query.OrderBy(r => r.DifficultyLevel) : query.OrderByDescending(r => r.DifficultyLevel),
+                "creator" => sortOrder == "asc" ? query.OrderBy(r => r.Author.FullName) : query.OrderByDescending(r => r.Author.FullName),
+                _ => sortOrder == "asc" ? query.OrderBy(r => r.RecipeId) : query.OrderByDescending(r => r.RecipeId)
             };
 
-            var skip = (request.Page - 1) * request.PageSize;
-            var items = await query.Skip(skip).Take(request.PageSize).ToListAsync();
+            var skip = (page - 1) * pageSize;
+            var items = await query.Skip(skip).Take(pageSize).ToListAsync();
 
             return new PagedResponse<Recipe>
             {
                 Items = items,
-                Page = request.Page,
-                PageSize = request.PageSize,
+                Page = page,
+                PageSize = pageSize,
                 TotalItems = totalCounts,
-                TotalPages = (int)Math.Ceiling(totalCounts / (double)request.PageSize)
+                TotalPages = (int)Math.Ceiling(totalCounts / (double)pageSize)
             };
         }
 

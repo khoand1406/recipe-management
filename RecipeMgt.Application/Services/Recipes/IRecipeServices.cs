@@ -8,7 +8,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using SearchRecipeRequest = RecipeMgt.Domain.RequestEntity.SearchRecipeRequest;
+using SearchRecipeRequest = RecipeMgt.Application.DTOs.Request.Recipes.SearchRecipeRequest;
+
 
 namespace RecipeMgt.Application.Services.Recipes
 {
@@ -24,7 +25,7 @@ namespace RecipeMgt.Application.Services.Recipes
 
         public Task<IEnumerable<RecipeResponse>> GetRelatedRecipes(int id);
 
-        public Task<Domain.RequestEntity.PagedResponse<Recipe>> GetSearchResult(SearchRecipeRequest request);
+        public Task<Domain.RequestEntity.PagedResponse<RecipeResponse>> GetSearchResult(SearchRecipeRequest request);
 
         public Task<Result<RecipeResponse>> CreateRecipeAsync(CreateRecipeRequest request);
 
