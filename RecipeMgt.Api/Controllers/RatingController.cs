@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RecipeMgt.Api.Common;
+using RecipeMgt.Api.Common.Extension;
 using RecipeMgt.Application.DTOs.Request.Rating;
 using RecipeMgt.Application.Services.Ratings;
 
@@ -35,16 +36,9 @@ namespace RecipeMgt.Api.Controllers
                 );
             }
 
-            var userId = HttpContext.Items["UserId"] as int?;
-            if (userId == null)
-            {
-                return Unauthorized(
-                    ApiResponseFactory.Fail("Unauthorized", HttpContext)
-                );
-            }
-
+            var userId = HttpContext.GetUserId();
             var result = await _ratingService.AddOrUpdateRatingAsync(
-                request, userId.Value
+                request, userId
             );
 
             if (!result.IsSuccess)
@@ -87,16 +81,11 @@ namespace RecipeMgt.Api.Controllers
         [HttpGet("user/{recipeId}")]
         public async Task<IActionResult> GetUserRating(int recipeId)
         {
-            var userId = HttpContext.Items["UserId"] as int?;
-            if (userId == null)
-            {
-                return Unauthorized(
-                    ApiResponseFactory.Fail("Unauthorized", HttpContext)
-                );
-            }
+            var userId = HttpContext.GetUserId();
+            
 
             var result = await _ratingService.GetUserRatingAsync(
-                userId.Value, recipeId
+                userId, recipeId
             );
 
             if (!result.IsSuccess)

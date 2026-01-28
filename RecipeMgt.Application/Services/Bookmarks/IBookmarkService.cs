@@ -13,5 +13,7 @@ namespace RecipeMgt.Application.Services.Bookmarks
         Task<Result> AddBookmarkAsync(int userId, int recipeId);
 
         Task<Result<List<BookmarkResponseDto>>> GetBookmarksByUserAsync(int userId);
+
+        Task<Result> RemoveBookmarkAsync(int bookmarkId, int userId);
     }
 }

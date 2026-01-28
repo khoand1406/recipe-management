@@ -11,6 +11,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using RecipeMgt.Application.Services.Images;
+using RecipeMgt.Domain.RequestEntity;
+using RecipeMgt.Application.DTOs;
 
 namespace RecipeMgt.Application.Services.Dishes
 {
@@ -29,98 +31,95 @@ namespace RecipeMgt.Application.Services.Dishes
             _imageService = service;
         }
 
-        public async Task<CreateDishResponse> CreateDish(CreateDishRequest request)
+        public async Task<Result<CreateDishResponse>> CreateDish(CreateDishRequest request)
         {
             try
             {
                 var dish = _mapper.Map<Dish>(request);
-                var images = await _imageService.UploadEntityImagesAsync(request?.Images, "Dish");
+
+                var images = new List<Image>();
+                if (request.Images?.Count > 0)
+                {
+                    images = await _imageService
+                        .UploadEntityImagesAsync(request.Images, "Dish");
+                }
 
                 var result = await _repo.CreateDish(dish, images);
-                if (!result.Success)
-                    return new CreateDishResponse { Success = false, Message = result.Message };
+                if (!result.Success || result.Data == null)
+                    return Result<CreateDishResponse>.Failure(result.Message);
 
-                return new CreateDishResponse
-                {
-                    Success = true,
-                    Message = "Create dish successfully",
-                    Data = new DishResponse
-                    {
-                        DishId = dish.DishId,
-                        DishName = dish.DishName,
-                        Description = dish.Description,
-                        CategoryId = dish.CategoryId,
-                        ImageUrls = images.Select(i => i.ImageUrl).ToList()
-                    }
-                };
+                var response = _mapper.Map<CreateDishResponse>(result.Data);
+                response.Data.ImageUrls = result.Data.Images?
+                    .Select(i => i.ImageUrl)
+                    .ToList() ?? [];
+
+                return Result<CreateDishResponse>.Success(response);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating dish: {DishName}", request.DishName);
-                return new CreateDishResponse { Success = false, Message = "Error creating dish" };
+                _logger.LogError(ex, "Error creating dish {DishName}", request.DishName);
+                return Result<CreateDishResponse>.Failure("CREATE_DISH_FAILED");
             }
         }
 
-        public async Task<UpdateDishResponse> UpdateDish(UpdateDishRequest request)
+
+        public async Task<Result> UpdateDish(UpdateDishRequest request)
         {
             try
             {
                 var dishUpdate = _mapper.Map<Dish>(request);
                 var images = new List<Image>();
 
-                if (request.Images != null && request.Images.Any())
+                if (request.Images != null && request.Images.Count != 0)
                     images = await _imageService.UploadEntityImagesAsync(request.Images, "Dish");
 
-                var result = await _repo.UpdateDish(dishUpdate, images);
+                var (Success, Message, DishId) = await _repo.UpdateDish(dishUpdate, images);
 
-                if (result.Success)
-                    return new UpdateDishResponse { Success = true, Message = result.Message };
-
-                return new UpdateDishResponse { Success = false, Message = result.Message ?? "Update failed" };
+                if (!Success)
+                    return Result.Failure(Message);
+                return Result.Success();
             }
             catch (Exception ex)
             {
                 _logger.LogError($"Error while updating dish: {ex.Message}");
-                return new UpdateDishResponse { Success = false, Message = "Update Dish Failed!" };
+                return Result.Failure("UPDATE_DISH_FAILED");
             }
         }
 
-        public async Task<DeleteDishResponse> deleteDish(int id)
+        public async Task<Result> DeleteDish(int id)
         {
-            var result = await _repo.DeleteDish(id);
-            return new DeleteDishResponse { Success = result.Success, Message = result.Message };
+            var (Success, Message) = await _repo.DeleteDish(id);
+            if (!Success)
+            {
+                return Result.Failure(Message);
+            }
+            return Result.Success();
         }
 
-        public async Task<DishDetailResponse?> GetDishDetail(int id)
+        public async Task<Result<DishDetailResponse>> GetDishDetail(int id)
         {
             var dish = await _repo.GetById(id);
-            if (dish == null) return null;
+            if (dish == null)
+                return Result<DishDetailResponse>.Failure("DISH_NOT_FOUND");
 
             var response = _mapper.Map<DishDetailResponse>(dish);
             response.ImageUrls = await _repo.GetDishImages(id);
-            return response;
+
+            return Result<DishDetailResponse>.Success(response);
         }
 
-        public async Task<IEnumerable<DishResponse>> getDishes()
+        public async Task<Result<PagedResponse<DishResponse>>> getDishes(int page, int pageSize, string? searchQuery, int? categoryId)
         {
-            var dishes = await _repo.GetAll();
-            var responses = _mapper.Map<IEnumerable<DishResponse>>(dishes).ToList();
-
-            foreach (var dish in responses)
-                dish.ImageUrls = await _repo.GetDishImages(dish.DishId);
-
-            return responses;
-        }
-
-        public async Task<IEnumerable<DishResponse>> getDishesByCategory(int categoryId)
-        {
-            var dishes = await _repo.GetByCategory(categoryId);
-            var responses = _mapper.Map<IEnumerable<DishResponse>>(dishes).ToList();
-
-            foreach (var dish in responses)
-                dish.ImageUrls = await _repo.GetDishImages(dish.DishId);
-
-            return responses;
+            var result = await _repo.Search(page, pageSize, searchQuery, categoryId);
+            var mappedResult = new PagedResponse<DishResponse>
+            {
+                Items = _mapper.Map<IEnumerable<DishResponse>>(result.Items),
+                TotalItems = result.TotalItems,
+                TotalPages = result.TotalPages,
+                Page = result.Page,
+                PageSize = pageSize,
+            };
+            return Result<PagedResponse<DishResponse>>.Success(mappedResult);
         }
     }
 

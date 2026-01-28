@@ -20,7 +20,7 @@ public partial class User
 
     public virtual ICollection<Rating> Ratings { get; set; } = new List<Rating>();
 
-    [JsonIgnore]
+    
     public virtual ICollection<Recipe> Recipes { get; set; } = new List<Recipe>();
 
     public virtual ICollection<Bookmark> Bookmarks { get; set; } = new List<Bookmark>();
@@ -32,4 +32,9 @@ public partial class User
 
     public ICollection<RefreshToken> RefreshTokens { get; set; }= new List<RefreshToken>();
     public virtual Role Role { get; set; }
+
+    public virtual UserStatistic UserStatistic { get; set; }
+
+    public ICollection<UserActivityLog> ActivityLogs { get; set; }
+
 }

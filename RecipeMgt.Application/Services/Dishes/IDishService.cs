@@ -1,5 +1,7 @@
-﻿using RecipeMgt.Application.DTOs.Request.Dishes;
+﻿using RecipeMgt.Application.DTOs;
+using RecipeMgt.Application.DTOs.Request.Dishes;
 using RecipeMgt.Application.DTOs.Response.Dishes;
+using RecipeMgt.Domain.RequestEntity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,16 +12,14 @@ namespace RecipeMgt.Application.Services.Dishes
 {
     public interface IDishService
     {
-        public Task<IEnumerable<DishResponse>> getDishes();
+        public Task<Result<PagedResponse<DishResponse>>> getDishes(int page, int pageSize, string? searchQuery, int? categoryId);
 
-        public Task<DishDetailResponse> GetDishDetail(int id);
+        public Task<Result<DishDetailResponse>> GetDishDetail(int id);
 
-        public Task<CreateDishResponse> CreateDish(CreateDishRequest dish);
+        public Task<Result<CreateDishResponse>> CreateDish(CreateDishRequest dish);
 
-        public Task<UpdateDishResponse> UpdateDish(UpdateDishRequest dish);
+        public Task<Result> UpdateDish(UpdateDishRequest dish);
 
-        public Task<IEnumerable<DishResponse>> getDishesByCategory(int categoryId);
-
-        public Task<DeleteDishResponse> deleteDish(int id);
+        public Task<Result> DeleteDish(int id);
     }
 }

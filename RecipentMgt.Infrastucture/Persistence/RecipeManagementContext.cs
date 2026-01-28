@@ -47,6 +47,12 @@ namespace RecipentMgt.Infrastucture.Persistence
 
         public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
 
+        public virtual DbSet<UserStatistic> UserStatistics { get; set; }
+
+        public virtual DbSet<UserActivityLog> UserActivityLogs { get; set; }
+
+        public virtual DbSet<RecipeStatistic> RecipeStatistics { get; set; }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) { }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -252,6 +258,68 @@ namespace RecipentMgt.Infrastucture.Persistence
                       .HasForeignKey(x => x.UserId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
+
+            modelBuilder.Entity<RecipeStatistic>(entity =>
+            {
+                entity.HasKey(x => x.RecipeId);
+
+                entity.Property(x => x.ViewCount)
+                      .HasDefaultValue(0);
+
+                entity.Property(x => x.BookmarkCount)
+                      .HasDefaultValue(0);
+
+                entity.Property(x => x.CommentCount)
+                      .HasDefaultValue(0);
+
+                entity.Property(x => x.AvgRating)
+                      .HasDefaultValue(0);
+
+                entity.Property(x => x.RatingCount)
+                      .HasDefaultValue(0);
+
+                entity.Property(x => x.LastUpdatedAt)
+                      .HasDefaultValueSql("(getdate())");
+
+                entity.HasOne(x => x.Recipe)
+                      .WithOne(r => r.RecipeStatistic)
+                      .HasForeignKey<RecipeStatistic>(x => x.RecipeId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<UserStatistic>(entity =>
+            {
+                entity.HasKey(x => x.UserId);
+
+                entity.Property(x => x.LastUpdatedAt)
+                      .HasDefaultValueSql("(getdate())");
+
+                entity.HasOne(x => x.User)
+                      .WithOne(u => u.UserStatistic)
+                      .HasForeignKey<UserStatistic>(x => x.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<UserActivityLog>(entity =>
+            {
+                entity.HasKey(x => x.ActivityLogId);
+
+                entity.Property(x => x.ActivityType)
+                      .HasConversion<int>()
+                      .IsRequired();
+
+                entity.Property(x => x.Description)
+                      .HasMaxLength(255);
+
+                entity.Property(x => x.CreatedAt)
+                      .HasDefaultValueSql("(getdate())");
+
+                entity.HasOne(x => x.User)
+                      .WithMany(u => u.ActivityLogs)
+                      .HasForeignKey(x => x.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
 
             OnModelCreatingPartial(modelBuilder);
         }

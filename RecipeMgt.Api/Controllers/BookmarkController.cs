@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RecipeMgt.Api.Common;
+using RecipeMgt.Api.Common.Extension;
 using RecipeMgt.Application.Constant;
 using RecipeMgt.Application.Services.Bookmarks;
 using RecipentMgt.Infrastucture.Repository.Users;
@@ -47,26 +48,40 @@ namespace RecipeMgt.Api.Controllers
         [HttpPost("{recipeId}")]
         public async Task<IActionResult> AddBookmark(int recipeId)
         {
-            
-                var email = User.FindFirst(ClaimTypes.Email)?.Value;
-                if (string.IsNullOrEmpty(email))
-                {
+
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+            if (string.IsNullOrEmpty(email))
+            {
                 return Unauthorized(ApiResponseFactory.Fail(AuthenticationError.AuthenError, HttpContext));
-                }
-                var user = await _userRepository.getUserByEmail(email);
-                if (user == null)
-                {
+            }
+            var user = await _userRepository.getUserByEmail(email);
+            if (user == null)
+            {
                 return NotFound(ApiResponseFactory.Fail("", HttpContext));
-                }
-                var added = await _bookmarkService.AddBookmarkAsync(user.UserId, recipeId);
-                if (added.IsFailure)
-                {
-                    return BadRequest(ApiResponseFactory.Fail(added.Error, HttpContext));
-                }
+            }
+            var added = await _bookmarkService.AddBookmarkAsync(user.UserId, recipeId);
+            if (added.IsFailure)
+            {
+                return BadRequest(ApiResponseFactory.Fail(added.Error, HttpContext));
+            }
 
             return Ok(ApiResponseFactory.Success("Create successfully", HttpContext));
+        }
+
+        [Authorize]
+        [HttpDelete("{recipeId}")]
+        public async Task<IActionResult> RemoveBookmark([FromRoute] int recipeId)
+        {
+            var userId = HttpContext.GetUserId();
+            var result= await _bookmarkService.RemoveBookmarkAsync(userId, recipeId);
+            if (result.IsFailure)
+            {
+                return BadRequest(ApiResponseFactory.Fail(result.Error, HttpContext));
             }
-            
+            return Ok(ApiResponseFactory.Success("Remove Successfully", HttpContext));
         }
     }
+
+
+}
 

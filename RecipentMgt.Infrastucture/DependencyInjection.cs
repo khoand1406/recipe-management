@@ -10,6 +10,7 @@ using RecipentMgt.Infrastucture.Repository.Following;
 using RecipentMgt.Infrastucture.Repository.Ingredients;
 using RecipentMgt.Infrastucture.Repository.Ratings;
 using RecipentMgt.Infrastucture.Repository.RefreshTokens;
+using RecipentMgt.Infrastucture.Repository.Statistics;
 using RecipentMgt.Infrastucture.Repository.Steps;
 using RecipentMgt.Infrastucture.Repository.Users;
 
@@ -29,6 +30,7 @@ namespace RecipentMgt.Infrastucture
             services.AddScoped<IStepRepository, StepRepository>();
             services.AddScoped<IRefreshTokenRepository,  RefreshTokenRepository>();
             services.AddScoped<IIngredientRepository, IngredientRepository>();
+            services.AddScoped<IStatisticRepository, StatisticRepository>();
             services.AddScoped<IUnitOfWork, UnitOfWork.UnitOfWork>();
             return services;
         }

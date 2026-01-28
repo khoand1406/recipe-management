@@ -49,5 +49,13 @@ namespace RecipeMgt.Application.Services.Bookmarks
             }).ToList();
             return Result<List<BookmarkResponseDto>>.Success(listDTO);
         }
+
+        public async Task<Result> RemoveBookmarkAsync(int recipeId, int userId)
+        {
+            var result = await _repository.RemoveAsync(userId, recipeId);
+            if (!result) return Result.Failure("Remove Failed");
+            return Result.Success();
+
+        }
     }
 }
