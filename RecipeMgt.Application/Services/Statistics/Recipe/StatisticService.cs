@@ -17,6 +17,18 @@ namespace RecipeMgt.Application.Services.Statistics.Recipe
             _logger = logger;
         }
 
+        public async Task RecipeBookmark(int recipeId)
+        {
+            try
+            {
+                await _statisticRepository.IncreaseRecipeBookmarkAsync(recipeId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Increase Bookmark Count Failed: {RecipeId}", recipeId);
+            }
+        }
+
         public async Task RecipeComment(int recipeId, int userId)
         {
             try
@@ -55,6 +67,17 @@ namespace RecipeMgt.Application.Services.Statistics.Recipe
                     userId,
                     recipeRating
                 );
+            }
+        }
+
+        public async Task RecipeRemoveBookmark(int recipeId)
+        {
+            try
+            {
+                await _statisticRepository.DecreasRecipeBookmarkAsync(recipeId);
+            }catch(Exception ex)
+            {
+                _logger.LogError(ex, "Decrease Bookmark Count Failed: {RecipeId}", recipeId);
             }
         }
 

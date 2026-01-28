@@ -55,5 +55,16 @@ namespace RecipeMgt.Application.Services.Statistics.User
                 _logger.LogError(ex, "User Rating Failed. UserId= {UserId}", userId);
             }
         }
+
+        public async Task UserUnfollowed(int userId)
+        {
+            try
+            {
+                await _statisticRepository.DecreaseUserFollowerAsync(userId);
+            }catch(Exception ex )
+            {
+                _logger.LogError(ex, "User UnFollew Failed. UserId= {UserId}", userId);
+            }
+        }
     }
 }

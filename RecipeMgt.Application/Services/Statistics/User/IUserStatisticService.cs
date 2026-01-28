@@ -12,6 +12,8 @@ namespace RecipeMgt.Application.Services.Statistics.User
 
         Task UserFollowed(int userId);
 
+        Task UserUnfollowed(int userId);
+
         Task UserRated(int userId);
     }
 }

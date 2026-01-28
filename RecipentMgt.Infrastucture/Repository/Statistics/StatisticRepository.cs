@@ -50,7 +50,7 @@ namespace RecipentMgt.Infrastucture.Repository.Statistics
 
         public async Task IncreaseUserCommentAsync(int userId)
         {
-            await IncreaseUserCounter("RecipeCount", userId);
+            await IncreaseUserCounter("CommentCount", userId);
         }
 
         public async Task IncreaseUserFollowerAsync(int userId)
@@ -128,6 +128,37 @@ namespace RecipentMgt.Infrastucture.Repository.Statistics
                 _ => throw new ArgumentOutOfRangeException(nameof(column)),
 
             };
+        }
+
+        public async Task DecreasRecipeBookmarkAsync(int recipeId)
+        {
+            await _context.Database.ExecuteSqlRawAsync($@"Update RecipeStatistics ")
+        }
+
+
+        public async Task DecreaseUserFollowerAsync(int userId)
+        {
+            await _context.Database.ExecuteSqlRawAsync($@"UPDATE UserStatistics SET FollowCount= FollowCount-1, LastUpdatedAt= GETDATE()
+                                WHERE UserId= @userId", new SqlParameter("@userId", userId));
+        }
+
+        private async Task DecreaseCounter(RecipeStatisticColumn column, int recipeId)
+        {
+            var columnName = MapEnumString(column);
+            await _context.Database.ExecuteSqlRawAsync($@"
+    MERGE RecipeStatistics WITH (HOLDLOCK) AS target
+    USING (SELECT @recipeId AS RecipeId) AS source
+    ON target.RecipeId = source.RecipeId
+    WHEN MATCHED THEN
+        UPDATE SET 
+            {columnName} = {columnName} -1,
+            LastUpdatedAt = GETDATE()
+    WHEN NOT MATCHED THEN
+        INSERT (RecipeId, {columnName}, LastUpdatedAt)
+        VALUES (@recipeId, 1, GETDATE());
+    ",
+           new SqlParameter("@recipeId", recipeId));
+
         }
     }
 }

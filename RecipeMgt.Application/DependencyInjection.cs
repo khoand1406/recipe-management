@@ -15,6 +15,7 @@ using RecipeMgt.Application.Services.Followings;
 using RecipeMgt.Application.Services.Images;
 using RecipeMgt.Application.Services.Steps;
 using RecipeMgt.Application.Services.Ingredients;
+using RecipeMgt.Application.Services.Statistics.Recipe;
 
 namespace RecipeMgt.Application
 {
@@ -34,6 +35,7 @@ namespace RecipeMgt.Application
             services.AddScoped<IFollowingService,  FollowingService>();
             services.AddScoped<IImageService, ImageService>();
             services.AddScoped<IStepService, StepService>();
+            services.AddScoped<IStatisticService,  StatisticService>();
             services.AddScoped<IIngredientService, IngredientService>();
             
             services.AddAutoMapper(cfg => cfg.LicenseKey = configuration["AutoMapper:Key"], typeof(DishProfile));

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace RecipeMgt.Application.Services.Statistics.Recipe
 {
-    internal interface IStatisticService
+    public interface IStatisticService
     {
         public Task RecipeViewd(int recipeId);
 

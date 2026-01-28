@@ -4,6 +4,7 @@ using RecipeMgt.Api.Common;
 using RecipeMgt.Api.Common.Extension;
 using RecipeMgt.Application.Constant;
 using RecipeMgt.Application.Services.Bookmarks;
+using RecipeMgt.Application.Services.Statistics.Recipe;
 using RecipentMgt.Infrastucture.Repository.Users;
 using System.Security.Claims;
 
@@ -15,12 +16,14 @@ namespace RecipeMgt.Api.Controllers
     {
         private readonly IBookmarkService _bookmarkService;
         private readonly IUserRepository _userRepository;
+        private readonly IStatisticService _statisticService;
         private readonly ILogger<BookmarkController> _logger;
 
-        public BookmarkController(IBookmarkService bookmarkService, IUserRepository userRepository, ILogger<BookmarkController> logger)
+        public BookmarkController(IBookmarkService bookmarkService, IUserRepository userRepository, IStatisticService statisticService, ILogger<BookmarkController> logger)
         {
             _bookmarkService = bookmarkService;
             _userRepository = userRepository;
+            _statisticService = statisticService;
             _logger = logger;
         }
 
@@ -64,6 +67,8 @@ namespace RecipeMgt.Api.Controllers
             {
                 return BadRequest(ApiResponseFactory.Fail(added.Error, HttpContext));
             }
+            await _statisticService.RecipeBookmark(recipeId);
+            
 
             return Ok(ApiResponseFactory.Success("Create successfully", HttpContext));
         }
@@ -78,6 +83,7 @@ namespace RecipeMgt.Api.Controllers
             {
                 return BadRequest(ApiResponseFactory.Fail(result.Error, HttpContext));
             }
+            await _statisticService.RecipeRemoveBookmark(recipeId);
             return Ok(ApiResponseFactory.Success("Remove Successfully", HttpContext));
         }
     }
