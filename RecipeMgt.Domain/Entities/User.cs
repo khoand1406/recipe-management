@@ -18,6 +18,13 @@ public partial class User
 
     public DateTime? CreatedAt { get; set; }
 
+    public string Provider { get; set; }= string.Empty;
+
+    public string ProviderId { get; set; } = string.Empty;
+
+    public bool IsActived { get; set; }
+
+
     public virtual ICollection<Rating> Ratings { get; set; } = new List<Rating>();
 
     

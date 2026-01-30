@@ -90,5 +90,28 @@ namespace RecipentMgt.Infrastucture.Repository.Users
                 return (false, "User not found", 0);
             }
         }
+
+        public async Task<User> UpsertGoogleUserAsync(string providerId, string email, string username, string avatar)
+        {
+            var user = await _context.Users
+                .FirstOrDefaultAsync(x =>
+            x.Provider == "Google" &&
+            x.ProviderId == providerId);
+            if(user != null)
+            {
+                return user;
+            }
+            user = new User
+            {
+                Email= email,
+                FullName = username,
+                Provider= "Google",
+                ProviderId= providerId,
+                CreatedAt= DateTime.Now,
+            };
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+            return user;
+        }
     }
 }

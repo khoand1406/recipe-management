@@ -15,15 +15,15 @@ namespace RecipeMgt.Api.Controllers
     {
         private readonly IAuthServices _authServices;
         private ILogger<AuthController> _logger;
-        private readonly IValidator<Application.DTOs.Request.Auth.LoginRequest> _loginValidator;
+        private readonly IValidator<LoginRequest> _loginValidator;
         private readonly IValidator<RegisterRequest> _registerValidator;
         private readonly IValidator<ChangePasswordRequest> _changePasswordValidator;
 
         public AuthController(
            IAuthServices authServices,
            ILogger<AuthController> logger,
-           IValidator<Application.DTOs.Request.Auth.LoginRequest> loginValidator,
-           IValidator<Application.DTOs.Request.Auth.RegisterRequest> registerValidator,
+           IValidator<LoginRequest> loginValidator,
+           IValidator<RegisterRequest> registerValidator,
            IValidator<ChangePasswordRequest> changePasswordValidator)
         {
             _authServices = authServices;

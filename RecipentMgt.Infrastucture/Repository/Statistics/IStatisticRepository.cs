@@ -17,5 +17,9 @@ namespace RecipentMgt.Infrastucture.Repository.Statistics
         Task IncreaseUserCommentAsync(int userId);
         Task IncreaseUserRatingAsync(int userId);
         Task IncreaseUserFollowerAsync(int userId);
+
+        Task DecreasRecipeBookmarkAsync(int recipeId);
+
+        Task DecreaseUserFollowerAsync(int userId);
     }
 }

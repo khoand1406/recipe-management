@@ -13,6 +13,10 @@ namespace RecipeMgt.Application.Services.Statistics.Recipe
 
         public Task RecipeComment(int recipeId, int userId);
 
+        public Task RecipeBookmark(int recipeId);
+
+        public Task RecipeRemoveBookmark(int recipeId);
+
         public Task RecipeRated(int recipeId, int userId, int recipeRating);
     }
 }

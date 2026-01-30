@@ -22,5 +22,7 @@ namespace RecipentMgt.Infrastucture.Repository.Users
 
         Task<bool> deleteUser(int userId);
         Task<bool> checkDuplicateEmail(string email);
+
+        public Task<User> UpsertGoogleUserAsync(string providerId, string email, string username, string avatar) 
     }
 }

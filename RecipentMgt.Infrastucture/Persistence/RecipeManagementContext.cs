@@ -242,7 +242,9 @@ namespace RecipentMgt.Infrastucture.Persistence
                 entity.Property(e => e.PasswordHash)
                     .IsRequired()
                     .HasMaxLength(255);
-
+                entity.Property(e => e.Provider).HasMaxLength(100);
+                entity.Property(e => e.ProviderId).HasMaxLength(255);
+                entity.Property(e => e.IsActived).HasDefaultValue(false);
                 entity.HasOne(d => d.Role).WithMany(p => p.Users)
                     .HasForeignKey(d => d.RoleId)
                     .OnDelete(DeleteBehavior.ClientSetNull)

@@ -132,7 +132,7 @@ namespace RecipentMgt.Infrastucture.Repository.Statistics
 
         public async Task DecreasRecipeBookmarkAsync(int recipeId)
         {
-            await _context.Database.ExecuteSqlRawAsync($@"Update RecipeStatistics ")
+            await _context.Database.ExecuteSqlRawAsync($@"Update RecipeStatistics ");
         }
 
 

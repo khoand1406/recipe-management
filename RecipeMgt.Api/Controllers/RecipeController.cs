@@ -8,6 +8,8 @@ using RecipeMgt.Application.Services.Bookmarks;
 using RecipeMgt.Application.Services.Cloudiary;
 using RecipeMgt.Application.Services.Comments;
 using RecipeMgt.Application.Services.Recipes;
+using RecipeMgt.Application.Services.Statistics.Recipe;
+using RecipeMgt.Application.Services.Statistics.User;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -17,6 +19,8 @@ public class RecipeController : ControllerBase
     private readonly ICommentServices _commentService;
     private readonly IBookmarkService _bookmarkService;
     private readonly ICloudinaryService _cloudinaryService;
+    private readonly IStatisticService _statisticService;
+    private readonly IUserStatisticService _userStatisticService;
     private readonly IValidator<CreateRecipeRequest> _createValidator;
     private readonly IValidator<UpdateRecipeRequest> _updateValidator;
 
@@ -25,6 +29,8 @@ public class RecipeController : ControllerBase
         ICommentServices commentService,
         IBookmarkService bookmarkService,
         ICloudinaryService cloudinaryService,
+        IStatisticService statisticService,
+        IUserStatisticService userStatisticService,
         IValidator<CreateRecipeRequest> createValidator,
         IValidator<UpdateRecipeRequest> updateValidator)
     {
@@ -32,6 +38,8 @@ public class RecipeController : ControllerBase
         _commentService = commentService;
         _bookmarkService = bookmarkService;
         _cloudinaryService = cloudinaryService;
+        _statisticService = statisticService;
+        _userStatisticService = userStatisticService;
         _createValidator = createValidator;
         _updateValidator = updateValidator;
     }
@@ -40,6 +48,7 @@ public class RecipeController : ControllerBase
     public async Task<IActionResult> GetById(int id)
     {
         var result = await _recipeService.GetRecipeById(id);
+        await _statisticService.RecipeViewd(id);
         return Ok(ApiResponseFactory.Success(result, HttpContext));
     }
 
@@ -75,6 +84,8 @@ public class RecipeController : ControllerBase
         request.AuthorId = HttpContext.GetUserId();
 
         var result = await _recipeService.CreateRecipeAsync(request);
+        await _userStatisticService.UserCreatedRecipe(request.AuthorId);
+        
         return Ok(ApiResponseFactory.Success(result, HttpContext));
     }
 
@@ -116,6 +127,9 @@ public class RecipeController : ControllerBase
     {
         var userId = HttpContext.GetUserId();
         await _commentService.AddCommentAsync(userId, recipeId, content);
+        await _statisticService.RecipeComment(recipeId, userId);
+        
+        
         return Ok(ApiResponseFactory.Success("Comment added", HttpContext));
     }
 
@@ -125,6 +139,7 @@ public class RecipeController : ControllerBase
     {
         var userId = HttpContext.GetUserId();
         await _bookmarkService.AddBookmarkAsync(userId, recipeId);
+        await _statisticService.RecipeBookmark(recipeId);
         return Ok(ApiResponseFactory.Success("Bookmarked", HttpContext));
     }
 

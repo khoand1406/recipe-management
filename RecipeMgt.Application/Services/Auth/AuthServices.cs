@@ -29,14 +29,18 @@ namespace RecipeMgt.Application.Services.Auth
         private readonly IRefreshTokenRepository _refreshTokenRepository;
         private readonly ILogger<AuthServices> _logger;
         private readonly IConfiguration _configuration;
+        private readonly IJwtService _jwtService;
+        private readonly IOAuthService _ioAuthService;
 
 
-        public AuthServices(IUserRepository userRepository, ILogger<AuthServices> logger, IConfiguration configuration, IRefreshTokenRepository refreshToken)
+        public AuthServices(IUserRepository userRepository, ILogger<AuthServices> logger, IConfiguration configuration, IRefreshTokenRepository refreshToken, IJwtService jwtService, IOAuthService ioAuthService)
         {
             _userRepository = userRepository;
             _logger = logger;
             _configuration = configuration;
             _refreshTokenRepository = refreshToken;
+            _jwtService = jwtService;
+            _ioAuthService = ioAuthService;
         }
 
         public Task<ChangePasswordResponse> changePassword(ChangePasswordRequest changePasswordRequest)
@@ -127,7 +131,6 @@ namespace RecipeMgt.Application.Services.Auth
             {
                 new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Name, user.FullName),
                 new Claim("role", "user")
             };
 
@@ -170,5 +173,29 @@ namespace RecipeMgt.Application.Services.Auth
         {
             return Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
         }
+
+        public async Task<AuthResponse> LoginWithGoogleAsync(string idToken)
+        {
+            var payload = await _ioAuthService.VerifyAsync(idToken);
+
+            var user = await _userRepository.UpsertGoogleUserAsync(
+                payload.Subject,
+                payload.Email,
+                payload.Name,
+                payload.Picture
+            );
+
+            return new AuthResponse
+            {
+                AccessToken = _jwtService.GenerateJWTToken(user),
+                ExpiredAt = DateTime.UtcNow.AddMinutes(30)
+            };
+        }
+    }
+
+    public class AuthResponse
+    {
+        public string AccessToken { get; set; }
+        public DateTime ExpiredAt { get; set; }
     }
 }

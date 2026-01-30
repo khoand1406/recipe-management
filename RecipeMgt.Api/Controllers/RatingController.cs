@@ -5,6 +5,8 @@ using RecipeMgt.Api.Common;
 using RecipeMgt.Api.Common.Extension;
 using RecipeMgt.Application.DTOs.Request.Rating;
 using RecipeMgt.Application.Services.Ratings;
+using RecipeMgt.Application.Services.Statistics.Recipe;
+using RecipeMgt.Application.Services.Statistics.User;
 
 namespace RecipeMgt.Api.Controllers
 {
@@ -13,13 +15,19 @@ namespace RecipeMgt.Api.Controllers
     public class RatingController : ControllerBase
     {
         private readonly IRatingService _ratingService;
+        private readonly IUserStatisticService _userStatisticService;
+        private readonly IStatisticService _statisticService;
         private readonly IValidator<AddRatingRequest> _ratingValidator;
 
         public RatingController(
             IRatingService ratingService,
+            IUserStatisticService userStatisticService,
+            IStatisticService statisticService,
             IValidator<AddRatingRequest> validator)
         {
             _ratingService = ratingService;
+            _userStatisticService = userStatisticService;
+            _statisticService = statisticService;
             _ratingValidator = validator;
         }
 
@@ -41,6 +49,7 @@ namespace RecipeMgt.Api.Controllers
                 request, userId
             );
 
+
             if (!result.IsSuccess)
             {
                 return BadRequest(
@@ -50,6 +59,9 @@ namespace RecipeMgt.Api.Controllers
                         )
                 );
             }
+            await _userStatisticService.UserRated(userId);
+            await _statisticService.RecipeRated(recipeId: request.RecipeId, userId, recipeRating: request.Score);
+            
 
             return Ok(
                 ApiResponseFactory.Success(result.Value, HttpContext)
