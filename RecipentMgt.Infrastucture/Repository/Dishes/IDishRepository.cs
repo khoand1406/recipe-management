@@ -22,7 +22,11 @@ namespace RecipentMgt.Infrastucture.Repository.Dishes
 
         Task<List<string>> GetDishImages(int dishId);
 
+        Task<List<Dish>> GetRelateDishAsync(int dishId);
 
+        Task<List<Dish>> GetTopViewDishesAsync();
+
+        Task<List<Dish>> GetSuggestedDishAsync(int dishId);
 
     }
 }

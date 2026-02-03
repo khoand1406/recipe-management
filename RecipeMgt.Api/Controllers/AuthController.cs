@@ -78,5 +78,12 @@ namespace RecipeMgt.Api.Controllers
             return Ok(ApiResponseFactory.Success(result, HttpContext));
         }
 
+        [HttpPost("auth-google")]
+        public async Task <IActionResult> GoogleAuth([FromBody] GoogleLoginRequest request)
+        {
+            var result = await _authServices.LoginWithGoogleAsync(request.IdToken);
+            return Ok(ApiResponseFactory.Success(result, HttpContext)) ;
+        }
+
     }
 }

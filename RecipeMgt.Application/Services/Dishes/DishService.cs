@@ -13,22 +13,33 @@ using System.Threading.Tasks;
 using RecipeMgt.Application.Services.Images;
 using RecipeMgt.Domain.RequestEntity;
 using RecipeMgt.Application.DTOs;
+using RecipeMgt.Application.DTOs.Response.Recipe;
+using RecipentMgt.Infrastucture.Repository.Statistics;
+using RecipentMgt.Infrastucture.Repository.Recipes;
+using RecipentMgt.Infrastucture.Repository.Users;
 
 namespace RecipeMgt.Application.Services.Dishes
 {
     public class DishService : IDishService
     {
         private readonly IDishRepository _repo;
+        private readonly IStatisticRepository _statisticRepository;
         private readonly IMapper _mapper;
         private readonly ILogger<DishService> _logger;
         private readonly IImageService _imageService;
+        private readonly IRecipeRepository _recipeRepository;
+        private readonly IUserRepository _userRepository;
+        private const string ENTITY_TYPE = "Dish";
 
-        public DishService(IDishRepository repo, IMapper mapper, ILogger<DishService> logger, IImageService service)
+        public DishService(IDishRepository repo, IMapper mapper, ILogger<DishService> logger, IImageService service, IStatisticRepository statisticRepository, IRecipeRepository recipeRepository, IUserRepository userRepository)
         {
             _repo = repo;
             _mapper = mapper;
             _logger = logger;
             _imageService = service;
+            _statisticRepository = statisticRepository;
+            _recipeRepository = recipeRepository;
+            _userRepository = userRepository;
         }
 
         public async Task<Result<CreateDishResponse>> CreateDish(CreateDishRequest request)
@@ -96,22 +107,54 @@ namespace RecipeMgt.Application.Services.Dishes
             return Result.Success();
         }
 
-        public async Task<Result<DishDetailResponse>> GetDishDetail(int id)
+        public async Task<Result<DishDetailResponse>> GetDishDetail(int id, int userId)
         {
             var dish = await _repo.GetById(id);
             if (dish == null)
                 return Result<DishDetailResponse>.Failure("DISH_NOT_FOUND");
+            var relatedDishes = await GetRelatedDish(id);
+            var suggestedDishes= await GetSuggestedDish(id);
 
-            var response = _mapper.Map<DishDetailResponse>(dish);
-            response.ImageUrls = await _repo.GetDishImages(id);
+            _ = Task.Run(async () =>
+            {
+                await _statisticRepository.IncreaseDishViewCount(id);
+                await _userRepository.CreateUserActivityLog(userId, Domain.Enums.UserActivityType.Comment, ENTITY_TYPE, id, "");
+            });
+            
+            var response = new DishDetailResponse
+            {
+                DishId = dish.DishId,
+                DishName = dish.DishName,
+                Category = dish.Category,
+                CategoryId = dish.CategoryId,
+                Description = dish.Description,
+                Recipes = dish.Recipes.Select(x => new RecipeResponse
+                {
+                    RecipeId = x.RecipeId,
+                    Title = x.Title,
+                    DifficultyLevel = x.DifficultyLevel,
+                    AuthorId = x.AuthorId,
+                    Author = x.Author,
+                    Description = x.Description,
+                    CookingTime = x.CookingTime,
+                    CreatedAt = x.CreatedAt,
+                    UpdatedAt = x.UpdatedAt,
+                    Images = [],
+                    Servings = x.Servings
+                }).ToList(),
+                RelateDishes = relatedDishes.Value!= null ? relatedDishes.Value.ToList() : [],
+                SuggestedDishes = suggestedDishes.Value!= null? suggestedDishes.Value.ToList(): [],
 
+            };
+        response.ImageUrls = await _repo.GetDishImages(id);
             return Result<DishDetailResponse>.Success(response);
         }
 
-        public async Task<Result<PagedResponse<DishResponse>>> getDishes(int page, int pageSize, string? searchQuery, int? categoryId)
+
+        public async Task<Result<DTOs.Response.Recipe.PagedResponse<DishResponse>>> getDishes(int page, int pageSize, string? searchQuery, int? categoryId)
         {
             var result = await _repo.Search(page, pageSize, searchQuery, categoryId);
-            var mappedResult = new PagedResponse<DishResponse>
+            var mappedResult = new DTOs.Response.Recipe.PagedResponse<DishResponse>
             {
                 Items = _mapper.Map<IEnumerable<DishResponse>>(result.Items),
                 TotalItems = result.TotalItems,
@@ -119,7 +162,29 @@ namespace RecipeMgt.Application.Services.Dishes
                 Page = result.Page,
                 PageSize = pageSize,
             };
-            return Result<PagedResponse<DishResponse>>.Success(mappedResult);
+            return Result<DTOs.Response.Recipe.PagedResponse<DishResponse>>.Success(mappedResult);
+        }
+
+
+        public async Task<Result<IEnumerable<DishResponse>>> GetRelatedDish(int id)
+        {
+            var result= await _repo.GetRelateDishAsync(id);
+            var mappedResult = result.Select(item => _mapper.Map<DishResponse>(item));
+            return Result<IEnumerable<DishResponse>>.Success(mappedResult);
+        }
+
+        public async Task<Result<IEnumerable<DishResponse>>> GetSuggestedDish(int id)
+        {
+            var result = await _repo.GetSuggestedDishAsync(id);
+            var mappedResult = result.Select(item => _mapper.Map<DishResponse>(item));
+            return Result<IEnumerable<DishResponse>>.Success(mappedResult) ;
+        }
+
+        public async Task<Result<IEnumerable<DishResponse>>> GetTopViewCount()
+        {
+            var result = await _repo.GetTopViewDishesAsync();
+            var mappedResult = result.Select(item => _mapper.Map<DishResponse>(item));
+            return Result<IEnumerable<DishResponse>>.Success(mappedResult);
         }
     }
 

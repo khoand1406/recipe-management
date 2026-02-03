@@ -53,6 +53,10 @@ namespace RecipentMgt.Infrastucture.Persistence
 
         public virtual DbSet<RecipeStatistic> RecipeStatistics { get; set; }
 
+        public virtual DbSet<RelatedDish> RelatedDishes { get; set; }
+
+        public virtual DbSet<DishStatistic> DishStatistics { get; set; }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) { }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -284,8 +288,8 @@ namespace RecipentMgt.Infrastucture.Persistence
                       .HasDefaultValueSql("(getdate())");
 
                 entity.HasOne(x => x.Recipe)
-                      .WithOne(r => r.RecipeStatistic)
-                      .HasForeignKey<RecipeStatistic>(x => x.RecipeId)
+         .WithOne(r => r.RecipeStatistic)
+         .HasForeignKey<RecipeStatistic>(x => x.RecipeId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
 
@@ -320,6 +324,45 @@ namespace RecipentMgt.Infrastucture.Persistence
                       .WithMany(u => u.ActivityLogs)
                       .HasForeignKey(x => x.UserId)
                       .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<DishStatistic>(entity =>
+            {
+                entity.HasKey(x => x.DishId);
+                entity.Property(x => x.ViewCount).HasDefaultValue(0);
+                entity.Property(x => x.BookmarkCount).HasDefaultValue(0);
+                entity.Property(x => x.RecipeCount).HasDefaultValue(0);
+
+                entity.Property(x => x.LastUpdatedAt)
+                      .HasDefaultValueSql("GETDATE()");
+
+                entity.HasOne(x => x.Dish)
+                      .WithOne(d => d.Statistic)
+                      .HasForeignKey<DishStatistic>(x => x.DishId)
+                      .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            modelBuilder.Entity<RelatedDish>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+                entity.HasIndex(x => new { x.DishId, x.RelatedDishId })
+                        .IsUnique();
+
+            
+                entity.Property(x => x.LastUpdatedAt)
+                      .HasDefaultValueSql("GETDATE()");
+
+                entity.Property(x => x.RelationType).HasConversion<int>().IsRequired();
+
+                entity.HasOne(x => x.Dish)
+                      .WithMany(d => d.RelatedDishes)
+                      .HasForeignKey(x => x.DishId)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(x => x.RelateDish)
+                      .WithMany()
+                      .HasForeignKey(x => x.RelatedDishId)
+                      .OnDelete(DeleteBehavior.Restrict);
             });
 
 

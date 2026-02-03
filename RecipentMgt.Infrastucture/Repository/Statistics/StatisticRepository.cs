@@ -110,12 +110,19 @@ namespace RecipentMgt.Infrastucture.Repository.Statistics
         private async Task IncreaseUserCounter(string column, int userId)
         {
 
-            await _context.Database.ExecuteSqlRawAsync(
-                $@"UPDATE UserStatistics
-               SET {column} = {column} + 1,
-                   LastUpdatedAt = GETDATE()
-               WHERE UserId = @userId",
-                new SqlParameter("@userId", userId));
+            await _context.Database.ExecuteSqlRawAsync($@"
+MERGE UserStatistics WITH (HOLDLOCK) AS target
+USING (SELECT @userId AS UserId) AS source
+ON target.UserId = source.UserId
+WHEN MATCHED THEN
+    UPDATE SET
+        {column} = {column} + 1,
+        LastUpdatedAt = GETDATE()
+WHEN NOT MATCHED THEN
+    INSERT (UserId, {column}, LastUpdatedAt)
+    VALUES (@userId, 1, GETDATE());
+",
+    new SqlParameter("@userId", userId));
         }
 
         private static string MapEnumString(RecipeStatisticColumn column)
@@ -130,9 +137,19 @@ namespace RecipentMgt.Infrastucture.Repository.Statistics
             };
         }
 
+        private static string MapDishEnumString(DishStatisticColumn column)
+        {
+            return column switch
+            {
+                DishStatisticColumn.BookmarkCount => "BookmarkCount",
+                DishStatisticColumn.ViewCount => "ViewCount",
+                _ => throw new ArgumentOutOfRangeException(nameof(column)),
+            };
+        }
+
         public async Task DecreasRecipeBookmarkAsync(int recipeId)
         {
-            await _context.Database.ExecuteSqlRawAsync($@"Update RecipeStatistics ");
+            await this.DecreaseCounter(RecipeStatisticColumn.BookmarkCount, recipeId);
         }
 
 
@@ -159,6 +176,61 @@ namespace RecipentMgt.Infrastucture.Repository.Statistics
     ",
            new SqlParameter("@recipeId", recipeId));
 
+        }
+
+
+        private async Task IncreaseDishCounterAsync(
+    DishStatisticColumn column,
+    int dishId)
+        {
+            var columnName = MapDishEnumString(column);
+
+            await _context.Database.ExecuteSqlRawAsync($@"
+MERGE DishStatistics WITH (HOLDLOCK) AS target
+USING (SELECT @dishId AS DishId) AS source
+ON target.DishId = source.DishId
+WHEN MATCHED THEN
+    UPDATE SET
+        {columnName} = {columnName} + 1,
+        LastUpdatedAt = GETDATE()
+WHEN NOT MATCHED THEN
+    INSERT (DishId, {columnName}, LastUpdatedAt)
+    VALUES (@dishId, 1, GETDATE());
+",
+            new SqlParameter("@dishId", dishId));
+        }
+        public async Task IncreaseDishBookmarkCount(int dishId)
+        {
+            await this.IncreaseDishCounterAsync(DishStatisticColumn.BookmarkCount, dishId);
+        }
+
+        public async Task IncreaseDishViewCount(int dishId)
+        {
+            await this.IncreaseDishCounterAsync(DishStatisticColumn.ViewCount, dishId);
+        }
+
+        public async Task DecreaseDishBookmarkCount(int dishId)
+        {
+            await this.DecreaseDishCounterAsync(DishStatisticColumn.BookmarkCount, dishId);
+
+        }
+
+        private async Task DecreaseDishCounterAsync(
+    DishStatisticColumn column,
+    int dishId)
+        {
+            var columnName = MapDishEnumString(column);
+
+            await _context.Database.ExecuteSqlRawAsync($@"
+            UPDATE DishStatistics
+            SET 
+        {columnName} = CASE 
+        WHEN {columnName} > 0 THEN {columnName} - 1 
+        ELSE 0 
+    END,
+        LastUpdatedAt = GETDATE()
+            WHERE DishId = @dishId",
+            new SqlParameter("@dishId", dishId));
         }
     }
 }

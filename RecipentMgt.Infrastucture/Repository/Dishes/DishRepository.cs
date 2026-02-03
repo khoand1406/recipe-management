@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using RecipeMgt.Domain.Entities;
+using RecipeMgt.Domain.Enums;
 using RecipeMgt.Domain.RequestEntity;
 using RecipentMgt.Infrastucture.Persistence;
 using RecipentMgt.Infrastucture.Utils;
@@ -148,6 +149,8 @@ namespace RecipentMgt.Infrastucture.Repository.Dishes
             return pagedResult;
         }
 
+        
+
         public async Task<Dish?> GetById(int id)
         {
             var dish = await BaseDishQuery()
@@ -169,6 +172,35 @@ namespace RecipentMgt.Infrastucture.Repository.Dishes
                 .ToListAsync();
         }
 
+        public async Task<List<Dish>> GetRelateDishAsync(int dishId)
+        {
+            return await _context.RelatedDishes
+        .Where(rd =>
+            rd.DishId == dishId &&
+            rd.RelationType == DishRelationType.Structural)
+        .Include(rd => rd.RelateDish)
+            .ThenInclude(d => d.Statistic)
+        .Select(rd => rd.RelateDish)
+        .Take(10)
+        .ToListAsync();
+        }
+
+        public async Task<List<Dish>> GetTopViewDishesAsync()
+        {
+            return await _context.Dishes
+         .Include(d => d.Statistic)
+         .Where(d => d.Statistic != null)
+         .OrderByDescending(d => d.Statistic.ViewCount)
+         .Take(5)
+         .ToListAsync();
+        }
+
+        public async Task<List<Dish>> GetSuggestedDishAsync(int dishId)
+        {
+            return;
+        }
+
+        
         #endregion
 
         #region Helpers
@@ -177,7 +209,8 @@ namespace RecipentMgt.Infrastucture.Repository.Dishes
         {
             return _context.Dishes
                 .Include(d => d.Category)
-                .Include(d => d.Recipes);
+                .Include(d => d.Recipes)
+                .Include(d => d.Statistic);
         }
 
         private async Task LoadImagesForDishes(IEnumerable<Dish> dishes)
@@ -231,5 +264,7 @@ namespace RecipentMgt.Infrastucture.Repository.Dishes
         }
 
         #endregion
+
+
     }
 }

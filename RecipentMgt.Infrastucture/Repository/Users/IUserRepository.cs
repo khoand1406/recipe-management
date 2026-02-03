@@ -1,4 +1,5 @@
 ﻿using RecipeMgt.Domain.Entities;
+using RecipeMgt.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,6 +24,8 @@ namespace RecipentMgt.Infrastucture.Repository.Users
         Task<bool> deleteUser(int userId);
         Task<bool> checkDuplicateEmail(string email);
 
-        public Task<User> UpsertGoogleUserAsync(string providerId, string email, string username, string avatar) 
+        public Task<User> UpsertGoogleUserAsync(string providerId, string email, string username, string avatar);
+
+        public Task CreateUserActivityLog(int userId, UserActivityType action, string target, int targetId, string? description);
     }
 }

@@ -18,5 +18,7 @@ namespace RecipeMgt.Application.Services.Auth
         Task<RegisterResponse> Register(RegisterRequest registerRequest);
 
         Task<TokenResponse> Refreshtoken(string refreshToken);
+
+        Task<AuthResponse> LoginWithGoogleAsync(string idToken);
     }
 }

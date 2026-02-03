@@ -21,5 +21,11 @@ namespace RecipentMgt.Infrastucture.Repository.Statistics
         Task DecreasRecipeBookmarkAsync(int recipeId);
 
         Task DecreaseUserFollowerAsync(int userId);
+
+        Task IncreaseDishBookmarkCount(int dishId);
+
+        Task IncreaseDishViewCount(int dishId);
+
+        Task DecreaseDishBookmarkCount(int dishId);
     }
 }

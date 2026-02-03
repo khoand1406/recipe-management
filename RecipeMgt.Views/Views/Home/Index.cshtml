@@ -5,48 +5,89 @@
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-
-
 <div class="dashboard-container py-5 text-center">
     <!-- Logo + Search -->
-    <div class="search-header mb-5">
-        <img src="/images/logo-cookpad.png" alt="Cookpad Logo" class="mb-3" style="height: 60px;" />
-        <form method="get" asp-controller="Recipe" asp-action="Search" class="d-flex justify-content-center">
-            <div class="input-group" style="max-width: 600px;">
-                <span class="input-group-text bg-white border-end-0">
-                    <i class="bi bi-search text-muted"></i>
-                </span>
-                <input type="text" name="query" class="form-control border-start-0 border-end-0 shadow-sm"
-                       placeholder="Tìm tên món hay nguyên liệu">
-                <button type="submit" class="btn btn-warning fw-semibold text-white px-4">
-                    Tìm Kiếm
-                </button>
-            </div>
-        </form>
-    </div>
+    <div class="container mb-5">
+        <h4 class="fw-bold mb-3">🔥 Top lượt xem</h4>
 
-    <!-- Trending -->
-    <div class="container mt-5">
         <div class="row g-4">
-            @foreach (var category in Model)
+            @foreach (var recipe in ViewBag.TopViewedRecipes)
             {
-                <div class="col-6 col-md-4 col-lg-3">
-                    <a href="@Url.Action("ByCategory", "Dish", new { id = category.CategoryId })" class="text-decoration-none">
-                        <div class="category-card position-relative rounded overflow-hidden shadow-sm">
-                            <div class="bg-image" style="background-image: url('@category.ImageUrl');"></div>
-                            <div class="overlay d-flex align-items-end">
-                                <div class="text-white fw-semibold ps-3 pb-3">
-                                    <h6>@category.CategoryName</h6>
-                                    <small>@category.Description</small>
-                                </div>
-                            </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <img src="@recipe.ImageUrl" class="card-img-top" style="height:160px;object-fit:cover" />
+                        <div class="card-body">
+                            <h6 class="fw-semibold">@recipe.Title</h6>
+                            <small class="text-muted">
+                                <i class="bi bi-eye"></i> @recipe.ViewCount lượt xem
+                            </small>
                         </div>
-                    </a>
+                    </div>
                 </div>
             }
         </div>
     </div>
+    
+
+    <!-- Trending -->
+    <div class="container mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="fw-bold mb-0">🍱 Danh mục nổi bật</h4>
+            <div>
+                <button class="btn btn-sm btn-light" data-bs-target="#categoryCarousel" data-bs-slide="prev">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+                <button class="btn btn-sm btn-light" data-bs-target="#categoryCarousel" data-bs-slide="next">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="categoryCarousel" class="carousel slide">
+            <div class="carousel-inner">
+
+                @{
+                    var chunkSize = 4;
+                    var chunks = Model
+                    .Select((x, i) => new { x, i })
+                    .GroupBy(x => x.i / chunkSize)
+                    .Select(g => g.Select(v => v.x).ToList())
+                    .ToList();
+                }
+
+                @for (int i = 0; i < chunks.Count; i++)
+                {
+                    <div class="carousel-item @(i == 0 ? "active" : "")">
+                        <div class="row g-4">
+                            @foreach (var category in chunks[i])
+                            {
+                                <div class="col-6 col-md-3">
+                                    <a asp-controller="Dish"
+                                       asp-action="ByCategory"
+                                       asp-route-id="@category.CategoryId"
+                                       class="text-decoration-none">
+                                        <div class="category-card position-relative overflow-hidden">
+                                            <div class="bg-image"
+                                                 style="background-image:url('@category.ImageUrl')"></div>
+                                            <div class="overlay d-flex align-items-end">
+                                                <div class="text-white p-3">
+                                                    <h6 class="fw-semibold mb-0">@category.CategoryName</h6>
+                                                    <small>@category.Description</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
 </div>
+
 
 @section Styles {
     <style>

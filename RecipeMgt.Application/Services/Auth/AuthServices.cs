@@ -1,5 +1,4 @@
-﻿using Azure.Core;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using RecipeMgt.Application.Constant;
@@ -11,15 +10,10 @@ using RecipeMgt.Application.Utils;
 using RecipeMgt.Domain.Entities;
 using RecipentMgt.Infrastucture.Repository.RefreshTokens;
 using RecipentMgt.Infrastucture.Repository.Users;
-using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Runtime.InteropServices;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace RecipeMgt.Application.Services.Auth
 {

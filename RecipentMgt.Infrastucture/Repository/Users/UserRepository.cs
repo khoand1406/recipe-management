@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore.Storage.Json;
 using Microsoft.Extensions.Logging;
 using RecipeMgt.Domain.Entities;
+using RecipeMgt.Domain.Enums;
 using RecipentMgt.Infrastucture.Persistence;
 using System;
 using System.Collections.Generic;
@@ -34,6 +35,18 @@ namespace RecipentMgt.Infrastucture.Repository.Users
             await _context.Users.AddAsync(user);
             await _context.SaveChangesAsync();
             return (true, "User created successfully", user.UserId);
+        }
+
+        public async Task CreateUserActivityLog(int userId, UserActivityType action, string target, int targetId, string? description)
+        {
+            await _context.UserActivityLogs.AddAsync(new UserActivityLog {
+                UserId= userId,
+                ActivityType= action,
+                CreatedAt= DateTime.Now,
+                Description= description,
+                TargetId= targetId,
+                TargetType= target,
+            });
         }
 
         public async Task<bool> deleteUser(int userId)

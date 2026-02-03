@@ -23,6 +23,12 @@ namespace RecipeMgt.Application.DTOs.Response.Dishes
         public virtual Category? Category { get; set; }
 
         public List<string> ImageUrls { get; set; } = new();
+
+        public int ViewCount { get; set; }
+
+        public int BookmarkCount { get; set; }
+
+        
     }
 
     public class DishDetailResponse
@@ -35,13 +41,16 @@ namespace RecipeMgt.Application.DTOs.Response.Dishes
 
         public int CategoryId { get; set; }
 
-        public string CategoryName => Category?.CategoryName ?? string.Empty;
-
-        public virtual Category? Category { get; set; }
+        public Category? Category { get; set; }
 
         public List<string> ImageUrls { get; set; } = new();
 
-        public virtual ICollection<RecipeResponse> Recipes { get; set; } = new List<RecipeResponse>();
+        public ICollection<RecipeResponse> Recipes { get; set; } = new List<RecipeResponse>();
+
+        public ICollection<DishResponse> RelateDishes { get; set; } = [];
+
+        public ICollection<DishResponse> SuggestedDishes { get; set; } = [];
+
     }
 
     public class CreateDishResponse
@@ -53,19 +62,6 @@ namespace RecipeMgt.Application.DTOs.Response.Dishes
         public string Message { get; set; }= string.Empty;
     }
 
-    public class UpdateDishResponse
-    {
-        public bool Success { get; set; } = false;
-
-        public string Message { get; set; } = string.Empty;
-    }
-
-    public class DeleteDishResponse
-    {
-        public bool Success { get; set; } = false;
-
-        public string Message { get; set; } = string.Empty;
-    }
 
     
 }

@@ -16,6 +16,7 @@ using RecipeMgt.Application.Services.Images;
 using RecipeMgt.Application.Services.Steps;
 using RecipeMgt.Application.Services.Ingredients;
 using RecipeMgt.Application.Services.Statistics.Recipe;
+using RecipeMgt.Application.Services.Statistics.User;
 
 namespace RecipeMgt.Application
 {
@@ -23,7 +24,7 @@ namespace RecipeMgt.Application
     {
         public static IServiceCollection AddApplication(this IServiceCollection services, IConfiguration configuration)
         {
-            
+            services.AddScoped<IJwtService, JWTService>();
             services.AddScoped<IAuthServices, AuthServices>();
             services.AddScoped<IDishService, DishService>();
             services.AddScoped<IRecipeRepository, RecipeRepository>();
@@ -36,6 +37,8 @@ namespace RecipeMgt.Application
             services.AddScoped<IImageService, ImageService>();
             services.AddScoped<IStepService, StepService>();
             services.AddScoped<IStatisticService,  StatisticService>();
+            services.AddScoped<IUserStatisticService, UserStatisticService>();
+            services.AddScoped<IOAuthService,  OAuthService>();
             services.AddScoped<IIngredientService, IngredientService>();
             
             services.AddAutoMapper(cfg => cfg.LicenseKey = configuration["AutoMapper:Key"], typeof(DishProfile));
