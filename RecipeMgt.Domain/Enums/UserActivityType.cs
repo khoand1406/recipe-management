@@ -14,6 +14,7 @@ namespace RecipeMgt.Domain.Enums
         UpdateRecipe = 11,
         DeleteRecipe = 12,
 
+        View=19,
         Comment = 20,
         Rate = 21,
         Bookmark = 22,

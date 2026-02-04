@@ -1,22 +1,17 @@
 ﻿using AutoMapper;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using RecipeMgt.Application.DTOs.Request.Dishes;
 using RecipeMgt.Application.DTOs.Response.Dishes;
 using RecipeMgt.Domain.Entities;
 using RecipentMgt.Infrastucture.Repository.Dishes;
-using RecipentMgt.Infrastucture.Persistence;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using RecipeMgt.Application.Services.Images;
-using RecipeMgt.Domain.RequestEntity;
 using RecipeMgt.Application.DTOs;
 using RecipeMgt.Application.DTOs.Response.Recipe;
 using RecipentMgt.Infrastucture.Repository.Statistics;
 using RecipentMgt.Infrastucture.Repository.Recipes;
 using RecipentMgt.Infrastucture.Repository.Users;
+using Microsoft.Extensions.Caching.Distributed;
+using System.Text.Json;
 
 namespace RecipeMgt.Application.Services.Dishes
 {
@@ -29,9 +24,10 @@ namespace RecipeMgt.Application.Services.Dishes
         private readonly IImageService _imageService;
         private readonly IRecipeRepository _recipeRepository;
         private readonly IUserRepository _userRepository;
+        private readonly IDistributedCache _cache;
         private const string ENTITY_TYPE = "Dish";
 
-        public DishService(IDishRepository repo, IMapper mapper, ILogger<DishService> logger, IImageService service, IStatisticRepository statisticRepository, IRecipeRepository recipeRepository, IUserRepository userRepository)
+        public DishService(IDishRepository repo, IMapper mapper, ILogger<DishService> logger, IImageService service, IStatisticRepository statisticRepository, IRecipeRepository recipeRepository, IUserRepository userRepository, IDistributedCache cache)
         {
             _repo = repo;
             _mapper = mapper;
@@ -40,6 +36,7 @@ namespace RecipeMgt.Application.Services.Dishes
             _statisticRepository = statisticRepository;
             _recipeRepository = recipeRepository;
             _userRepository = userRepository;
+            _cache = cache;
         }
 
         public async Task<Result<CreateDishResponse>> CreateDish(CreateDishRequest request)
@@ -113,7 +110,7 @@ namespace RecipeMgt.Application.Services.Dishes
             if (dish == null)
                 return Result<DishDetailResponse>.Failure("DISH_NOT_FOUND");
             var relatedDishes = await GetRelatedDish(id);
-            var suggestedDishes= await GetSuggestedDish(id);
+            var suggestedDishes= await GetSuggestedDish(id, userId);
 
             _ = Task.Run(async () =>
             {
@@ -168,16 +165,40 @@ namespace RecipeMgt.Application.Services.Dishes
 
         public async Task<Result<IEnumerable<DishResponse>>> GetRelatedDish(int id)
         {
+            var cacheKey = $"related:dish:{id}";
+            var cached= await _cache.GetStringAsync(cacheKey);
+            if (cached != null)
+            {
+               var value= System.Text.Json.JsonSerializer.Deserialize<IEnumerable<DishResponse>>(cached);
+                return Result<IEnumerable<DishResponse>>.Success(value);
+            }
             var result= await _repo.GetRelateDishAsync(id);
             var mappedResult = result.Select(item => _mapper.Map<DishResponse>(item));
+            await _cache.SetStringAsync(cacheKey, 
+            System.Text.Json.JsonSerializer.Serialize(result), 
+            new DistributedCacheEntryOptions { 
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(12) 
+            });
             return Result<IEnumerable<DishResponse>>.Success(mappedResult);
         }
 
-        public async Task<Result<IEnumerable<DishResponse>>> GetSuggestedDish(int id)
+        public async Task<Result<IEnumerable<DishResponse>>> GetSuggestedDish(int id, int userId)
         {
-            var result = await _repo.GetSuggestedDishAsync(id);
+            var cacheKey = $"suggest:user:{userId}";
+            var cached = await _cache.GetStringAsync(cacheKey);
+            if(cached != null)
+            {
+                var value= JsonSerializer.Deserialize<IEnumerable<DishResponse>>(cached);
+                return Result<IEnumerable<DishResponse>>.Success(value);
+            }
+            var result= await _repo.GetSuggestedDishAsync(id, userId);
             var mappedResult = result.Select(item => _mapper.Map<DishResponse>(item));
-            return Result<IEnumerable<DishResponse>>.Success(mappedResult) ;
+            await _cache.SetStringAsync(cacheKey, 
+                JsonSerializer.Serialize(result), 
+                new DistributedCacheEntryOptions { 
+                    AbsoluteExpirationRelativeToNow = 
+                    TimeSpan.FromMinutes(30) });
+            return Result<IEnumerable<DishResponse>>.Success(mappedResult);
         }
 
         public async Task<Result<IEnumerable<DishResponse>>> GetTopViewCount()

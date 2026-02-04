@@ -195,7 +195,7 @@ namespace RecipentMgt.Infrastucture.Repository.Dishes
          .ToListAsync();
         }
 
-        public async Task<List<Dish>> GetSuggestedDishAsync(int dishId)
+        public async Task<List<Dish>> GetSuggestedDishAsync(int dishId, int userId)
         {
             return;
         }

@@ -24,7 +24,7 @@ namespace RecipeMgt.Application.Services.Dishes
 
         public Task<Result<IEnumerable<DishResponse>>> GetRelatedDish(int id);
 
-        public Task<Result<IEnumerable<DishResponse>>> GetSuggestedDish(int id);
+        public Task<Result<IEnumerable<DishResponse>>> GetSuggestedDish(int id, int userId);
 
         public Task<Result<IEnumerable<DishResponse>>> GetTopViewCount();
     }
