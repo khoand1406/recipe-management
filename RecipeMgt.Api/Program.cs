@@ -72,6 +72,8 @@ internal class Program
         builder.Services.AddValidatorsFromAssemblyContaining<UpdateRecipeRequest>();
         builder.Services.AddValidatorsFromAssemblyContaining<AddRatingValidation>();
 
+
+
         builder.Services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -117,6 +119,7 @@ internal class Program
         }
 
         app.UseHttpsRedirection();
+        app.UseCors("AllowAll");
 
         app.UseAuthentication();
         app.UseMiddleware<UserContextMiddleware>();

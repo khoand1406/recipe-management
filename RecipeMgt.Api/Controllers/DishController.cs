@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using RecipeMgt.Api.Common;
+using RecipeMgt.Api.Common.Extension;
 using RecipeMgt.Application.DTOs.Request.Dishes;
 using RecipeMgt.Application.Services.Dishes;
 
@@ -39,7 +40,8 @@ namespace RecipeMgt.Api.Controllers
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetDetail(int id)
         {
-            var result = await _dishService.GetDishDetail(id);
+            var userId = HttpContext.GetUserId();
+            var result = await _dishService.GetDishDetail(id, userId);
 
             if (result.IsFailure)
                 return NotFound(

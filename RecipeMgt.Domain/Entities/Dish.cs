@@ -17,6 +17,7 @@ public partial class Dish
 
     public virtual Category Category { get; set; }
 
+    [NotMapped]
     public List<Image>? Images { get; set; }
 
     [JsonIgnore]

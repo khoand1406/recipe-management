@@ -12,6 +12,9 @@ using RecipentMgt.Infrastucture.Repository.Recipes;
 using RecipentMgt.Infrastucture.Repository.Users;
 using Microsoft.Extensions.Caching.Distributed;
 using System.Text.Json;
+using RecipeMgt.Application.Services.Worker;
+using RecipeMgt.Application.Utils.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace RecipeMgt.Application.Services.Dishes
 {
@@ -24,10 +27,11 @@ namespace RecipeMgt.Application.Services.Dishes
         private readonly IImageService _imageService;
         private readonly IRecipeRepository _recipeRepository;
         private readonly IUserRepository _userRepository;
+        private readonly IBackgroundTaskQueue _queue;
         private readonly IDistributedCache _cache;
         private const string ENTITY_TYPE = "Dish";
 
-        public DishService(IDishRepository repo, IMapper mapper, ILogger<DishService> logger, IImageService service, IStatisticRepository statisticRepository, IRecipeRepository recipeRepository, IUserRepository userRepository, IDistributedCache cache)
+        public DishService(IDishRepository repo, IMapper mapper, ILogger<DishService> logger, IImageService service, IStatisticRepository statisticRepository, IRecipeRepository recipeRepository, IUserRepository userRepository, IDistributedCache cache, IBackgroundTaskQueue queue)
         {
             _repo = repo;
             _mapper = mapper;
@@ -36,6 +40,7 @@ namespace RecipeMgt.Application.Services.Dishes
             _statisticRepository = statisticRepository;
             _recipeRepository = recipeRepository;
             _userRepository = userRepository;
+            _queue = queue;
             _cache = cache;
         }
 
@@ -109,13 +114,15 @@ namespace RecipeMgt.Application.Services.Dishes
             var dish = await _repo.GetById(id);
             if (dish == null)
                 return Result<DishDetailResponse>.Failure("DISH_NOT_FOUND");
-            var relatedDishes = await GetRelatedDish(id);
-            var suggestedDishes= await GetSuggestedDish(id, userId);
-
-            _ = Task.Run(async () =>
+            var relatedDishesTask =  GetRelatedDish(id);
+            var suggestedDishesTask= GetSuggestedDish(id, userId);
+            await Task.WhenAll(relatedDishesTask, suggestedDishesTask);
+            _queue.Enqueue(async sp =>
             {
-                await _statisticRepository.IncreaseDishViewCount(id);
-                await _userRepository.CreateUserActivityLog(userId, Domain.Enums.UserActivityType.Comment, ENTITY_TYPE, id, "");
+                var staticRepo = sp.GetRequiredService<IStatisticRepository>();
+                var userRepo = sp.GetRequiredService<IUserRepository>();
+                await staticRepo.IncreaseDishViewCount(id);
+                await userRepo.CreateUserActivityLog(userId, Domain.Enums.UserActivityType.View, ENTITY_TYPE, id, "");
             });
             
             var response = new DishDetailResponse
@@ -139,8 +146,8 @@ namespace RecipeMgt.Application.Services.Dishes
                     Images = [],
                     Servings = x.Servings
                 }).ToList(),
-                RelateDishes = relatedDishes.Value!= null ? relatedDishes.Value.ToList() : [],
-                SuggestedDishes = suggestedDishes.Value!= null? suggestedDishes.Value.ToList(): [],
+                RelateDishes = (ICollection<DishResponse>)(relatedDishesTask.Result.Value?? []),
+                SuggestedDishes = (ICollection<DishResponse>)(suggestedDishesTask.Result.Value ?? [])
 
             };
         response.ImageUrls = await _repo.GetDishImages(id);
@@ -207,6 +214,8 @@ namespace RecipeMgt.Application.Services.Dishes
             var mappedResult = result.Select(item => _mapper.Map<DishResponse>(item));
             return Result<IEnumerable<DishResponse>>.Success(mappedResult);
         }
+
+
     }
 
 }

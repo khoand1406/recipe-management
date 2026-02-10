@@ -17,6 +17,9 @@ using RecipeMgt.Application.Services.Steps;
 using RecipeMgt.Application.Services.Ingredients;
 using RecipeMgt.Application.Services.Statistics.Recipe;
 using RecipeMgt.Application.Services.Statistics.User;
+using RecipeMgt.Application.Services.Worker;
+using RecipeMgt.Application.Utils.Worker;
+using RecipeMgt.Application.Utils.Tasks;
 
 namespace RecipeMgt.Application
 {
@@ -47,6 +50,10 @@ namespace RecipeMgt.Application
             services.AddAutoMapper(cfg => cfg.LicenseKey = configuration["AutoMapper:Key"], typeof(IngredientProfile));
             services.AddAutoMapper(cfg => cfg.LicenseKey = configuration["AutoMapper:Key"], typeof(CommentProfile));
             
+            services.AddScoped<IRelateBgJob, RelateBgJob>();
+            services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
+            services.AddHostedService<RelateDishBehaviorWorker>();
+            services.AddHostedService<BackgroundTaskWorker>();
 
             return services;
         }

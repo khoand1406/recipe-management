@@ -1,5 +1,6 @@
 ﻿using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using RecipeMgt.Domain.Entities;
 using RecipeMgt.Domain.Enums;
 using RecipentMgt.Infrastucture.Persistence;
 using System;
@@ -207,6 +208,7 @@ WHEN NOT MATCHED THEN
         public async Task IncreaseDishViewCount(int dishId)
         {
             await this.IncreaseDishCounterAsync(DishStatisticColumn.ViewCount, dishId);
+            
         }
 
         public async Task DecreaseDishBookmarkCount(int dishId)

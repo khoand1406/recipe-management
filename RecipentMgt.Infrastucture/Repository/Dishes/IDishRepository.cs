@@ -26,7 +26,7 @@ namespace RecipentMgt.Infrastucture.Repository.Dishes
 
         Task<List<Dish>> GetTopViewDishesAsync();
 
-        Task<List<Dish>> GetSuggestedDishAsync(int dishId);
+        Task<List<Dish>> GetSuggestedDishAsync(int dishId, int userId);
 
     }
 }
