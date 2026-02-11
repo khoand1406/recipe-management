@@ -15,6 +15,8 @@ public partial class Dish
 
     public int CategoryId { get; set; }
 
+    public int AuthorId { get; set; } = 0;
+
     public virtual Category Category { get; set; }
 
     [NotMapped]
@@ -26,5 +28,7 @@ public partial class Dish
     public virtual ICollection<RelatedDish> RelatedDishes { get; set;}
 
     public virtual DishStatistic Statistic { get; set; }
+
+    public virtual User Author { get; set; }
 
 }

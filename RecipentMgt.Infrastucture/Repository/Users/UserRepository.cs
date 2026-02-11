@@ -37,16 +37,18 @@ namespace RecipentMgt.Infrastucture.Repository.Users
             return (true, "User created successfully", user.UserId);
         }
 
-        public async Task CreateUserActivityLog(int userId, UserActivityType action, string target, int targetId, string? description)
+        public async Task CreateUserActivityLog(int ?userId, string? sessionId,  UserActivityType action, string target, int targetId, string? description)
         {
             await _context.UserActivityLogs.AddAsync(new UserActivityLog {
                 UserId= userId,
+                SessionId= sessionId,
                 ActivityType= action,
                 CreatedAt= DateTime.Now,
                 Description= description,
                 TargetId= targetId,
                 TargetType= target,
             });
+            await _context.SaveChangesAsync();  
         }
 
         public async Task<bool> deleteUser(int userId)

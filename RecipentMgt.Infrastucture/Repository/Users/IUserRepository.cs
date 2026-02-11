@@ -26,6 +26,6 @@ namespace RecipentMgt.Infrastucture.Repository.Users
 
         public Task<User> UpsertGoogleUserAsync(string providerId, string email, string username, string avatar);
 
-        public Task CreateUserActivityLog(int userId, UserActivityType action, string target, int targetId, string? description);
+        public Task CreateUserActivityLog(int? userId,string? sessionId, UserActivityType action, string target, int targetId, string? description);
     }
 }

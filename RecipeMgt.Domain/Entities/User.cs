@@ -25,19 +25,19 @@ public partial class User
     public bool IsActived { get; set; }
 
 
-    public virtual ICollection<Rating> Ratings { get; set; } = new List<Rating>();
+    public virtual ICollection<Rating> Ratings { get; set; } = [];
 
-    
-    public virtual ICollection<Recipe> Recipes { get; set; } = new List<Recipe>();
+    public virtual ICollection<Dish> Dishes { get; set; } = [];
+    public virtual ICollection<Recipe> Recipes { get; set; } = [];
 
-    public virtual ICollection<Bookmark> Bookmarks { get; set; } = new List<Bookmark>();
+    public virtual ICollection<Bookmark> Bookmarks { get; set; } = [];
 
-    public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
+    public virtual ICollection<Comment> Comments { get; set; } = [];
 
-    public ICollection<Following> Followers { get; set; } = new List<Following>();     
-    public ICollection<Following> FollowingUsers { get; set; } = new List<Following>();
+    public ICollection<Following> Followers { get; set; } = [];     
+    public ICollection<Following> FollowingUsers { get; set; } = [];
 
-    public ICollection<RefreshToken> RefreshTokens { get; set; }= new List<RefreshToken>();
+    public ICollection<RefreshToken> RefreshTokens { get; set; }= [];
     public virtual Role Role { get; set; }
 
     public virtual UserStatistic UserStatistic { get; set; }

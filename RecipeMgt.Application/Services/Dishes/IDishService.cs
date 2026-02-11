@@ -14,7 +14,7 @@ namespace RecipeMgt.Application.Services.Dishes
     {
         public Task<Result<PagedResponse<DishResponse>>> getDishes(int page, int pageSize, string? searchQuery, int? categoryId);
 
-        public Task<Result<DishDetailResponse>> GetDishDetail(int id, int userId);
+        public Task<Result<DishDetailResponse>> GetDishDetail(int id, int ?userId, string? sessionId);
 
         public Task<Result<CreateDishResponse>> CreateDish(CreateDishRequest dish);
 
@@ -27,5 +27,7 @@ namespace RecipeMgt.Application.Services.Dishes
         public Task<Result<IEnumerable<DishResponse>>> GetSuggestedDish(int id, int userId);
 
         public Task<Result<IEnumerable<DishResponse>>> GetTopViewCount();
+
+        public Task CalculateStructuralDish(int dishId, CancellationToken token);
     }
 }

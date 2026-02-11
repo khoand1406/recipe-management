@@ -19,6 +19,7 @@ namespace RecipeMgt.Domain.Enums
         Rate = 21,
         Bookmark = 22,
 
-        Follow = 30
+        Follow = 30,
+        CreateDish = 31
     }
 }

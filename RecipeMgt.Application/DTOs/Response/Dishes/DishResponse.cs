@@ -45,11 +45,11 @@ namespace RecipeMgt.Application.DTOs.Response.Dishes
 
         public List<string> ImageUrls { get; set; } = new();
 
-        public ICollection<RecipeResponse> Recipes { get; set; } = new List<RecipeResponse>();
+        public IEnumerable<RecipeResponse> Recipes { get; set; } = new List<RecipeResponse>();
 
-        public ICollection<DishResponse> RelateDishes { get; set; } = [];
+        public IEnumerable<DishResponse> RelateDishes { get; set; } = [];
 
-        public ICollection<DishResponse> SuggestedDishes { get; set; } = [];
+        public IEnumerable<DishResponse> SuggestedDishes { get; set; } = [];
 
     }
 

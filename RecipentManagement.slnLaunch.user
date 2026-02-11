@@ -6,11 +6,6 @@
         "Path": "RecipeMgt.Api\\RecipeMgt.Api.csproj",
         "Action": "Start",
         "DebugTarget": "https"
-      },
-      {
-        "Path": "RecipeMgt.Views\\RecipeMgt.Views.csproj",
-        "Action": "Start",
-        "DebugTarget": "https"
       }
     ]
   }

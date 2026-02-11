@@ -31,6 +31,7 @@ namespace RecipeMgt.Application.Mapper
             CreateMap<Dish, DishDetailResponse>()
              .ForMember(dest => dest.ImageUrls, opt => opt.MapFrom(d => d.Images != null ? d.Images.Select(i=> i.ImageUrl): new List<string>()));
 
+            
         }
     }
 }

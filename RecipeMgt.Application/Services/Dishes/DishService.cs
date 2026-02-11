@@ -1,20 +1,21 @@
 ﻿using AutoMapper;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using RecipeMgt.Application.DTOs;
 using RecipeMgt.Application.DTOs.Request.Dishes;
 using RecipeMgt.Application.DTOs.Response.Dishes;
-using RecipeMgt.Domain.Entities;
-using RecipentMgt.Infrastucture.Repository.Dishes;
-using RecipeMgt.Application.Services.Images;
-using RecipeMgt.Application.DTOs;
 using RecipeMgt.Application.DTOs.Response.Recipe;
-using RecipentMgt.Infrastucture.Repository.Statistics;
-using RecipentMgt.Infrastucture.Repository.Recipes;
-using RecipentMgt.Infrastucture.Repository.Users;
-using Microsoft.Extensions.Caching.Distributed;
-using System.Text.Json;
+using RecipeMgt.Application.Services.Images;
 using RecipeMgt.Application.Services.Worker;
 using RecipeMgt.Application.Utils.Tasks;
-using Microsoft.Extensions.DependencyInjection;
+using RecipeMgt.Domain.Entities;
+using RecipeMgt.Domain.Enums;
+using RecipentMgt.Infrastucture.Repository.Dishes;
+using RecipentMgt.Infrastucture.Repository.Recipes;
+using RecipentMgt.Infrastucture.Repository.Statistics;
+using RecipentMgt.Infrastucture.Repository.Users;
+using System.Text.Json;
 
 namespace RecipeMgt.Application.Services.Dishes
 {
@@ -65,6 +66,35 @@ namespace RecipeMgt.Application.Services.Dishes
                 response.Data.ImageUrls = result.Data.Images?
                     .Select(i => i.ImageUrl)
                     .ToList() ?? [];
+                if (request.AuthorId != null)
+                {
+                    _queue.Enqueue(async sp =>
+                    {
+                        var userRepo = sp.GetRequiredService<IUserRepository>();
+                        var dishService = sp.GetRequiredService<IDishService>();
+
+                        await dishService.CalculateStructuralDish(result.Data.DishId, CancellationToken.None);
+
+                        await userRepo.CreateUserActivityLog(
+                            request.AuthorId.Value,
+                            sessionId: null,
+                            UserActivityType.CreateDish,
+                            ENTITY_TYPE,
+                            result.Data.DishId,
+                            "Created new dish"
+                        );
+                    });
+                }
+                else
+                {
+                    _queue.Enqueue(async sp =>
+                    {
+                        var dishService = sp.GetRequiredService<IDishService>();
+                        await dishService.CalculateStructuralDish(result.Data.DishId, CancellationToken.None);
+
+                    });
+                }
+                   
 
                 return Result<CreateDishResponse>.Success(response);
             }
@@ -109,49 +139,91 @@ namespace RecipeMgt.Application.Services.Dishes
             return Result.Success();
         }
 
-        public async Task<Result<DishDetailResponse>> GetDishDetail(int id, int userId)
+        public async Task<Result<DishDetailResponse>> GetDishDetail(int id, int? userId, string? sessionId)
         {
             var dish = await _repo.GetById(id);
             if (dish == null)
                 return Result<DishDetailResponse>.Failure("DISH_NOT_FOUND");
-            var relatedDishesTask =  GetRelatedDish(id);
-            var suggestedDishesTask= GetSuggestedDish(id, userId);
-            await Task.WhenAll(relatedDishesTask, suggestedDishesTask);
-            _queue.Enqueue(async sp =>
+            if (userId != null)
             {
-                var staticRepo = sp.GetRequiredService<IStatisticRepository>();
-                var userRepo = sp.GetRequiredService<IUserRepository>();
-                await staticRepo.IncreaseDishViewCount(id);
-                await userRepo.CreateUserActivityLog(userId, Domain.Enums.UserActivityType.View, ENTITY_TYPE, id, "");
-            });
-            
-            var response = new DishDetailResponse
-            {
-                DishId = dish.DishId,
-                DishName = dish.DishName,
-                Category = dish.Category,
-                CategoryId = dish.CategoryId,
-                Description = dish.Description,
-                Recipes = dish.Recipes.Select(x => new RecipeResponse
+                var valueId = userId.Value;
+                var relatedDishesTask = GetRelatedDish(id);
+                var suggestedDishesTask = GetSuggestedDish(id, valueId);
+                await Task.WhenAll(relatedDishesTask, suggestedDishesTask);
+                _queue.Enqueue(async sp =>
                 {
-                    RecipeId = x.RecipeId,
-                    Title = x.Title,
-                    DifficultyLevel = x.DifficultyLevel,
-                    AuthorId = x.AuthorId,
-                    Author = x.Author,
-                    Description = x.Description,
-                    CookingTime = x.CookingTime,
-                    CreatedAt = x.CreatedAt,
-                    UpdatedAt = x.UpdatedAt,
-                    Images = [],
-                    Servings = x.Servings
-                }).ToList(),
-                RelateDishes = (ICollection<DishResponse>)(relatedDishesTask.Result.Value?? []),
-                SuggestedDishes = (ICollection<DishResponse>)(suggestedDishesTask.Result.Value ?? [])
+                    var staticRepo = sp.GetRequiredService<IStatisticRepository>();
+                    var userRepo = sp.GetRequiredService<IUserRepository>();
+                    await staticRepo.IncreaseDishViewCount(id);
+                    await userRepo.CreateUserActivityLog(userId: valueId, sessionId, Domain.Enums.UserActivityType.View, ENTITY_TYPE, id, "");
+                });
 
-            };
-        response.ImageUrls = await _repo.GetDishImages(id);
-            return Result<DishDetailResponse>.Success(response);
+                var response = new DishDetailResponse
+                {
+                    DishId = dish.DishId,
+                    DishName = dish.DishName,
+                    Category = dish.Category,
+                    CategoryId = dish.CategoryId,
+                    Description = dish.Description,
+                    Recipes = dish.Recipes.Select(x => new RecipeResponse
+                    {
+                        RecipeId = x.RecipeId,
+                        Title = x.Title,
+                        DifficultyLevel = x.DifficultyLevel,
+                        AuthorId = x.AuthorId,
+                        Author = x.Author,
+                        Description = x.Description,
+                        CookingTime = x.CookingTime,
+                        CreatedAt = x.CreatedAt,
+                        UpdatedAt = x.UpdatedAt,
+                        Images = [],
+                        Servings = x.Servings
+                    }).ToList(),
+                    RelateDishes = relatedDishesTask.Result.Value ?? [],
+                    SuggestedDishes = suggestedDishesTask.Result.Value ?? []
+
+                };
+                response.ImageUrls = await _repo.GetDishImages(id);
+                return Result<DishDetailResponse>.Success(response);
+            }
+            else
+            {
+                var relatedDishes = await GetRelatedDish(id);
+                _queue.Enqueue(async sp =>
+                {
+                    var staticRepo = sp.GetRequiredService<IStatisticRepository>();
+                    var userRepo = sp.GetRequiredService<IUserRepository>();
+                    await staticRepo.IncreaseDishViewCount(id);
+                    await userRepo.CreateUserActivityLog(userId, sessionId, UserActivityType.View, ENTITY_TYPE, id, "");
+                });
+                var dishDetailResponse = new DishDetailResponse
+                {
+                    DishId = dish.DishId,
+                    DishName = dish.DishName,
+                    Category = dish.Category,
+                    CategoryId = dish.CategoryId,
+                    Description = dish.Description,
+                    Recipes = dish.Recipes.Select(x => new RecipeResponse
+                    {
+                        RecipeId = x.RecipeId,
+                        Title = x.Title,
+                        DifficultyLevel = x.DifficultyLevel,
+                        AuthorId = x.AuthorId,
+                        Author = x.Author,
+                        Description = x.Description,
+                        CookingTime = x.CookingTime,
+                        CreatedAt = x.CreatedAt,
+                        UpdatedAt = x.UpdatedAt,
+                        Images = [],
+                        Servings = x.Servings
+                    }).ToList(),
+                    RelateDishes = relatedDishes.Value ?? [],
+                    SuggestedDishes = []
+                };
+                dishDetailResponse.ImageUrls = await _repo.GetDishImages(id);
+                return Result<DishDetailResponse>.Success(dishDetailResponse);
+            }
+                
         }
 
 
@@ -198,7 +270,7 @@ namespace RecipeMgt.Application.Services.Dishes
                 var value= JsonSerializer.Deserialize<IEnumerable<DishResponse>>(cached);
                 return Result<IEnumerable<DishResponse>>.Success(value);
             }
-            var result= await _repo.GetSuggestedDishAsync(id, userId);
+            var result= await _repo.GetSuggestedDishAsync(id);
             var mappedResult = result.Select(item => _mapper.Map<DishResponse>(item));
             await _cache.SetStringAsync(cacheKey, 
                 JsonSerializer.Serialize(result), 
@@ -215,6 +287,7 @@ namespace RecipeMgt.Application.Services.Dishes
             return Result<IEnumerable<DishResponse>>.Success(mappedResult);
         }
 
+        public async Task CalculateStructuralDish(int dishId, CancellationToken token)=> await _repo.CalculateStuctureDish(dishId, token);
 
     }
 

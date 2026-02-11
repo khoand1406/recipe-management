@@ -40,8 +40,15 @@ namespace RecipeMgt.Api.Controllers
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetDetail(int id)
         {
-            var userId = HttpContext.GetUserId();
-            var result = await _dishService.GetDishDetail(id, userId);
+            
+            var userId = HttpContext.GetOptionalUserId();
+            string? sessionId = null;
+            if (userId == null)
+            {
+                sessionId = GetOrCreateSessionId();
+            }
+
+            var result = await _dishService.GetDishDetail(id, userId, sessionId);
 
             if (result.IsFailure)
                 return NotFound(
@@ -51,12 +58,33 @@ namespace RecipeMgt.Api.Controllers
                 ApiResponseFactory.Success(result.Value, HttpContext));
         }
 
+        private string GetOrCreateSessionId()
+        {
+            const string cookieKey= "guest_session_id";
+            if(Request.Cookies.TryGetValue(cookieKey, out var sessionId))
+            {
+                return sessionId!;
+            }
+            else
+            {
+                var newSessionId = Guid.NewGuid().ToString();
+                Response.Cookies.Append(cookieKey, newSessionId, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Expires = DateTimeOffset.UtcNow.AddDays(30)
+                });
+                return newSessionId;
+            }
+        }
+
         // POST: api/dish/create
         [HttpPost("create")]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> CreateDish(
             [FromForm] CreateDishRequest request)
         {
+            var userId= HttpContext.GetOptionalUserId();
+            request.AuthorId = userId;
             var result = await _dishService.CreateDish(request);
 
             if (result.IsFailure)

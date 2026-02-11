@@ -20,6 +20,8 @@ namespace RecipeMgt.Application.DTOs.Request.Dishes
 
         public int CategoryId { get; set; }
 
+        public int? AuthorId { get; set; }
+
         public List<IFormFile>? Images { get; set; }
         // Danh sách ảnh (nếu có)
         

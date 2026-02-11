@@ -5,6 +5,7 @@ using RecipeMgt.Domain.Enums;
 using RecipeMgt.Domain.RequestEntity;
 using RecipentMgt.Infrastucture.Persistence;
 using RecipentMgt.Infrastucture.Utils;
+using System.Threading;
 
 namespace RecipentMgt.Infrastucture.Repository.Dishes
 {
@@ -195,12 +196,24 @@ namespace RecipentMgt.Infrastucture.Repository.Dishes
          .ToListAsync();
         }
 
-        public async Task<List<Dish>> GetSuggestedDishAsync(int dishId, int userId)
+        public async Task<List<Dish>> GetSuggestedDishAsync(int dishId)
         {
-            return new List<Dish>();
+            return await _context.RelatedDishes
+                .Where(rd =>
+                    rd.DishId == dishId &&
+                    rd.RelationType == DishRelationType.Behavior &&
+                    rd.RelatedDishId != dishId
+                )
+                .OrderByDescending(rd => rd.Priority)
+                .ThenByDescending(rd => rd.LastUpdatedAt)
+                .Select(rd => rd.RelateDish)
+                .Take(5)
+                .AsNoTracking()
+                .ToListAsync();
         }
 
-        
+
+
         #endregion
 
         #region Helpers
@@ -261,6 +274,48 @@ namespace RecipentMgt.Infrastucture.Repository.Dishes
 
             if (images.Any())
                 _context.Images.RemoveRange(images);
+        }
+
+        public async Task CalculateStuctureDish(int dishId, CancellationToken cancellationToken)
+        {
+            var dish = await _context.Dishes
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.DishId == dishId, cancellationToken);
+
+            if (dish == null) return;
+
+            var oldRelations = _context.RelatedDishes
+            .Where(x => x.DishId == dishId &&
+                        x.RelationType == DishRelationType.Structural);
+
+            _context.RelatedDishes.RemoveRange(oldRelations);
+
+            var candidates = await _context.Dishes
+    .Where(x => x.DishId != dishId)
+    .Select(x => new
+    {
+        Dish = x,
+        Score =
+            (x.CategoryId == dish.CategoryId ? 5 : 0) +
+            (x.AuthorId == dish.AuthorId ? 3 : 0)
+            
+    })
+    .Where(x => x.Score > 0)
+    .OrderByDescending(x => x.Score)
+    .Take(20)
+    .ToListAsync(cancellationToken);
+            foreach (var item in candidates)
+            {
+                var realtion = new RelatedDish
+                {
+                    DishId = dishId,
+                    RelatedDishId = item.Dish.DishId,
+                    RelationType = DishRelationType.Structural,
+                    Priority = item.Score,
+                    LastUpdatedAt = DateTime.UtcNow
+                };
+            }
+            
         }
 
         #endregion

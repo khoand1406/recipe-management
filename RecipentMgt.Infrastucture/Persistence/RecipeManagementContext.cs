@@ -83,6 +83,10 @@ namespace RecipentMgt.Infrastucture.Persistence
                 entity.HasOne(d => d.Category).WithMany(p => p.Dishes)
                     .HasForeignKey(d => d.CategoryId)
                     .HasConstraintName("FK__Dishes__Category__2F10007B");
+
+                entity.HasOne(d => d.Author).WithMany(p => p.Dishes).HasForeignKey(d => d.AuthorId)
+                    .OnDelete(DeleteBehavior.ClientSetNull);
+                    
             });
 
             modelBuilder.Entity<Image>(entity =>
@@ -313,6 +317,8 @@ namespace RecipentMgt.Infrastucture.Persistence
                 entity.Property(x => x.ActivityType)
                       .HasConversion<int>()
                       .IsRequired();
+
+                entity.Property(x => x.UserId);
 
                 entity.Property(x => x.Description)
                       .HasMaxLength(255);

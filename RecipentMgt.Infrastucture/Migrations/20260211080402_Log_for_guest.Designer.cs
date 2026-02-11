@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RecipentMgt.Infrastucture.Persistence;
 
@@ -11,9 +12,11 @@ using RecipentMgt.Infrastucture.Persistence;
 namespace RecipentMgt.Infrastucture.Migrations
 {
     [DbContext(typeof(RecipeManagementContext))]
-    partial class RecipeManagementContextModelSnapshot : ModelSnapshot
+    [Migration("20260211080402_Log_for_guest")]
+    partial class Log_for_guest
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

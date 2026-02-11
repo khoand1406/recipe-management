@@ -30,34 +30,83 @@ namespace RecipeMgt.Application.Services.Worker
             try
             {
                 var formTime = DateTime.UtcNow.AddMinutes(-30);
-                var activities = await db.UserActivityLogs.Where(x => x.CreatedAt >= formTime).Where(x => x.ActivityType == Domain.Enums.UserActivityType.View
-                || x.ActivityType == Domain.Enums.UserActivityType.Bookmark).OrderBy(x => x.CreatedAt).ToListAsync(cancellationToken);
-                var groupByUser = activities.GroupBy(x => x.UserId);
-                foreach (var item in groupByUser)
-                {
-                    var dishIds = item
-                    .Where(x => x.TargetType == "Dish")
-                    .Select(x => x.TargetId!.Value)
-                    .Distinct()
-                    .ToList();
-                    for (int i = 0; i < dishIds.Count; i++)
+                var activities = await db.UserActivityLogs.Where(x => x.CreatedAt >= formTime)
+                    .Where(x => x.ActivityType == UserActivityType.View
+                            || x.ActivityType == UserActivityType.Bookmark 
+                            && x.TargetType!.Equals(Entity_Type, StringComparison.OrdinalIgnoreCase))
+                    .Select(x=> new
                     {
-                        for (int j = 1; j < dishIds.Count; j++)
+                        ActionKey= x.UserId != null ? $"user_{x.UserId}": $"session_{x.SessionId}",
+                        DishId= x.TargetId!.Value, 
+                    })
+                    .ToListAsync(cancellationToken);
+
+                var groupByUser = activities.GroupBy(x => x.ActionKey)
+                    .Select(x => x.Select(x => x.DishId).Distinct().ToList())
+                    .Where(list => list.Count>1 )
+                    .ToList();
+
+                var relationCounter = new Dictionary<(int, int), int>();
+                foreach(var item in groupByUser)
+                {
+                    for(var i= 0; i< item.Count; i++)
+                    {
+                        for(var j= i+1; j< item.Count; j++)
                         {
-                            var weight = CalculateWeight(item);
-                            await UpsertRelateDishAsync(db, dishIds[i], dishIds[j], weight, cancellationToken);
-                            await UpsertRelateDishAsync(db, dishIds[j], dishIds[i], weight, cancellationToken);
+                            var pair_1= (item[i],  item[j]);
+                            var pair_2 = (item[j], item[i]);
+                            relationCounter[pair_1] = relationCounter.GetValueOrDefault(pair_1) + 1;
+                            relationCounter[pair_2] = relationCounter.GetValueOrDefault(pair_2) + 1;
                         }
                     }
                 }
-                await db.SaveChangesAsync();
+                if (relationCounter.Count == 0) {  return; }
+
+                var dishIdsSet = relationCounter.Keys.SelectMany(x => new[] { x.Item1, x.Item2 })
+                                 .Distinct().ToList();
+
+                var existingRelation= await db.RelatedDishes.Where(x=> dishIdsSet.Contains(x.DishId) 
+                                        && dishIdsSet.Contains(x.RelatedDishId) 
+                                        && x.RelationType==DishRelationType.Behavior)
+                                        .ToListAsync(cancellationToken);
+
+                foreach(var item in relationCounter)
+                {
+                    var (dishId, relatedDishId) = item.Key;
+                    var weight = item.Value;
+
+                    var existing = existingRelation
+                .FirstOrDefault(x =>
+                    x.DishId == dishId &&
+                    x.RelatedDishId == relatedDishId &&
+                    x.RelationType == DishRelationType.Behavior);
+                    if (existing != null)
+                    {
+                        existing.Priority += weight;
+                        existing.LastUpdatedAt = DateTime.UtcNow;
+                    }
+                    else
+                    {
+                        db.RelatedDishes.Add(new RelatedDish
+                        {
+                            DishId= dishId,
+                            RelatedDishId= relatedDishId,
+                            RelationType= DishRelationType.Behavior,
+                            Priority= weight,
+                            LastUpdatedAt= DateTime.UtcNow
+                        });
+                    }
+                }
+
+
+                await db.SaveChangesAsync(cancellationToken);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message, "Background Job Run Failed");
             }
         }
-
+    
         private static int CalculateWeight(IEnumerable<UserActivityLog> logs)
         {
             var score = 0;
@@ -66,8 +115,8 @@ namespace RecipeMgt.Application.Services.Worker
             {
                 score += log.ActivityType switch
                 {
-                    UserActivityType.View => 1,
-                    UserActivityType.Bookmark => 5,
+                    UserActivityType.View => 5,
+                    UserActivityType.Bookmark => 10,
                     _ => 0
                 };
             }

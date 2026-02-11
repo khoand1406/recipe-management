@@ -11,12 +11,14 @@ namespace RecipeMgt.Domain.Entities
     {
         public int ActivityLogId { get; set; }
 
-        public int UserId { get; set; }
+        public int? UserId { get; set; }
+
+        public string? SessionId { get; set; }
 
         public UserActivityType ActivityType { get; set; }
 
-        public string? TargetType { get; set; } // Recipe, Comment, User
-        public int? TargetId { get; set; }
+        public string TargetType { get; set; }
+        public int TargetId { get; set; }
 
         public string? Description { get; set; }
 

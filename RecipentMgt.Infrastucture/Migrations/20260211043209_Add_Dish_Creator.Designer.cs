@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RecipentMgt.Infrastucture.Persistence;
 
@@ -11,9 +12,11 @@ using RecipentMgt.Infrastucture.Persistence;
 namespace RecipentMgt.Infrastucture.Migrations
 {
     [DbContext(typeof(RecipeManagementContext))]
-    partial class RecipeManagementContextModelSnapshot : ModelSnapshot
+    [Migration("20260211043209_Add_Dish_Creator")]
+    partial class Add_Dish_Creator
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -624,16 +627,13 @@ namespace RecipentMgt.Infrastucture.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<string>("SessionId")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int?>("TargetId")
                         .HasColumnType("int");
 
                     b.Property<string>("TargetType")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("UserId")
+                    b.Property<int>("UserId")
                         .HasColumnType("int");
 
                     b.HasKey("ActivityLogId");
@@ -898,7 +898,8 @@ namespace RecipentMgt.Infrastucture.Migrations
                     b.HasOne("RecipeMgt.Domain.Entities.User", "User")
                         .WithMany("ActivityLogs")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });
