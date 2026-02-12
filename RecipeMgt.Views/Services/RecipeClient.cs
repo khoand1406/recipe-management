@@ -2,8 +2,9 @@ using RecipeMgt.Views.Models.Response;
 using System.Text.Json;
 using System.Net.Http.Headers;
 using System.Text;
+using RecipeMgt.Views.Models;
 
-namespace RecipeMgt.Views.Models.RequestModel
+namespace RecipeMgt.Views.Services
 {
     public class RecipeClient
     {

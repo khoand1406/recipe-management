@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using RecipeMgt.Views.Models.RequestModel;
+using RecipeMgt.Views.Services;
 
 namespace RecipeMgt.Views.Controllers
 {

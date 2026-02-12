@@ -2,7 +2,7 @@ using RecipeMgt.Views.Models.Response;
 using System.Net.Http.Headers;
 using System.Text.Json;
 
-namespace RecipeMgt.Views.Models.RequestModel
+namespace RecipeMgt.Views.Services
 {
     public class BookmarkClient
     {

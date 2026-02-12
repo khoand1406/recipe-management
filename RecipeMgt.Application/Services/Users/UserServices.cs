@@ -66,6 +66,12 @@ namespace RecipeMgt.Application.Services.Users
             var follows= await _followRepo.GetFollowingUsers(userId);
             return _mapper.Map<List<UserResponseDTO>>(follows);    
         }
+
+        public async Task<List<UserResponseDTO>> GetTopContributors()
+        {
+            var topContributors = await _userRepo.GetTopContributors();
+            return _mapper.Map<List<UserResponseDTO>>(topContributors);
+        }
     }
 
 }

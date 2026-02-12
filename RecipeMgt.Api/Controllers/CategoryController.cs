@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using RecipeMgt.Application.DTOs.Response.Dishes;
 using RecipentMgt.Infrastucture.Repository.Categories;
 
 namespace RecipeMgt.Api.Controllers
@@ -19,6 +20,20 @@ namespace RecipeMgt.Api.Controllers
         public async Task<IActionResult> Get()
         {
             var result= await repository.GetAll();
+            var mappedResult = result.Select(c => new CategoryDTO
+            {
+                CategoryId = c.CategoryId,
+                CategoryName = c.CategoryName,
+                Description = c.Description,
+                ImageUrl = c.ImageUrl,
+                Dishes = c.Dishes.Select(d => new DishBasicResponse
+                {
+                    DishId = d.DishId,
+                    DishName = d.DishName,
+                    Images = d.Images?.Select(i => i.ImageUrl).ToArray(),
+                    CategoryId = d.CategoryId,
+                }).ToList()
+            });
             return Ok(result);
         }
     }

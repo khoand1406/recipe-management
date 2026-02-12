@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using RecipeMgt.Views.Interface;
 using RecipeMgt.Views.Models;
-using RecipeMgt.Views.Models.RequestModel;
+using RecipeMgt.Views.Models.ViewModels;
+using RecipeMgt.Views.Services;
 using System.Diagnostics;
 
 namespace RecipeMgt.Views.Controllers
@@ -8,21 +10,31 @@ namespace RecipeMgt.Views.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-        private readonly DashboardClient _client;
-        private readonly IConfiguration _configuration;
+        private readonly IDashboardClient _client;
 
-        public HomeController(ILogger<HomeController> logger, IConfiguration configuration)
+        public HomeController(ILogger<HomeController> logger, IDashboardClient client)
         {
             _logger = logger;
-            _configuration = configuration;
-            var apiBaseUrl = _configuration["ApiSettings:BaseUrl"];
-            _client = new DashboardClient(apiBaseUrl);
+            _client = client;
         }
 
         public async Task<IActionResult> Index()
         {
-            var categories = await _client.GetCategoriesAsync();
-            return View(categories);
+
+            var categories= _client.GetCategoriesAsync();
+            var topDishes= _client.GetTopDishViewAsync();
+            var topUsers= _client.GetTopContributorAsync();
+
+            await Task.WhenAll(categories, topDishes, topUsers);
+
+            var models = new HomeViewModel
+            {
+                Categories = categories.Result,
+                TopDishes = topDishes.Result,
+                TopUsers = topUsers.Result
+
+            };
+            return View(models);
         }
 
         public IActionResult Privacy()

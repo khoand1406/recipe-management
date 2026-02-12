@@ -14,8 +14,9 @@ namespace RecipeMgt.Application.Services.Users
         Task<bool> IsFollowingAsync(int followerId, int followingId);
         Task<List<UserResponseDTO>> GetFollowersAsync(int userId);
         Task<List<UserResponseDTO>> GetFollowingAsync(int userId);
+        Task<List<UserResponseDTO>> GetTopContributors();
 
         // RATING (User - Recipe)
-        
+
     }
 }

@@ -2,7 +2,7 @@ using RecipeMgt.Views.Models.Response;
 using System.Text.Json;
 using System.Text;
 
-namespace RecipeMgt.Views.Models.RequestModel
+namespace RecipeMgt.Views.Services
 {
     public class IngredientClient
     {

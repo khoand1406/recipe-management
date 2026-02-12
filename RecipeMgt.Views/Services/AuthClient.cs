@@ -2,8 +2,9 @@
 using System.Text.Json;
 using System.Text;
 using RecipeMgt.Views.Models.Response;
+using RecipeMgt.Views.Models;
 
-namespace RecipeMgt.Views.Models.RequestModel
+namespace RecipeMgt.Views.Services
 {
     public class AuthClient
     {

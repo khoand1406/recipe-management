@@ -29,5 +29,6 @@ namespace RecipeMgt.Application.Services.Dishes
         public Task<Result<IEnumerable<DishResponse>>> GetTopViewCount();
 
         public Task CalculateStructuralDish(int dishId, CancellationToken token);
+        Task<Result<IEnumerable<DishResponse>>> GetTopViewDishes();
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using RecipeMgt.Api.Common;
 using RecipeMgt.Api.Common.Extension;
+using RecipeMgt.Application.DTOs.Response.User;
 using RecipeMgt.Application.Services.Statistics.User;
 using RecipeMgt.Application.Services.Users;
 
@@ -21,6 +22,7 @@ namespace RecipeMgt.Api.Controllers
             _userStatisticService = userStatisticService;
         }
 
+        [Authorize]
         [HttpGet("me/followers")]
         public async Task<IActionResult> GetFollowers()
         {
@@ -79,6 +81,13 @@ namespace RecipeMgt.Api.Controllers
             var followerId= HttpContext.GetUserId();
             var result = await _userService.IsFollowingAsync(followerId, followingId);
             return Ok(ApiResponseFactory.Success(new { isFollowing = result }, HttpContext));
+        }
+
+        [HttpGet("top-contributors")]
+        public async Task<IActionResult> GetTopContributors()
+        {
+            var topContributors = await _userService.GetTopContributors();
+            return Ok(ApiResponseFactory.Success<List<UserResponseDTO>>(topContributors, HttpContext));
         }
     }
 }

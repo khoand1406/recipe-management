@@ -354,7 +354,6 @@ namespace RecipentMgt.Infrastucture.Persistence
                 entity.HasIndex(x => new { x.DishId, x.RelatedDishId })
                         .IsUnique();
 
-            
                 entity.Property(x => x.LastUpdatedAt)
                       .HasDefaultValueSql("GETDATE()");
 

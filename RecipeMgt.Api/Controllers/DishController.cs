@@ -58,6 +58,19 @@ namespace RecipeMgt.Api.Controllers
                 ApiResponseFactory.Success(result.Value, HttpContext));
         }
 
+        [HttpGet("top-view")]
+        public async Task<IActionResult> GetTopViewDishes()
+        {
+            var result = await _dishService.GetTopViewCount();
+            if (result.IsFailure)
+                return BadRequest(
+                    ApiResponseFactory.Fail(result.Error, HttpContext));
+            return Ok(
+                ApiResponseFactory.Success(result.Value, HttpContext));
+        }
+
+
+
         private string GetOrCreateSessionId()
         {
             const string cookieKey= "guest_session_id";

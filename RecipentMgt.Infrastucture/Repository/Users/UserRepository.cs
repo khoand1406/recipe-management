@@ -66,6 +66,17 @@ namespace RecipentMgt.Infrastucture.Repository.Users
             }
         }
 
+        public async Task<List<User>> GetTopContributors()
+        {
+            var topContributor= await _context.Users
+                .Include(u=> u.UserStatistic)
+                .OrderBy(u=> u.UserStatistic.RecipeCount)
+                .Take(5)
+                .ToListAsync();
+            return topContributor;
+        }
+
+
         public async Task<User> getUserAsync(int userId)
         {
             var userFound = await _context.Users.FindAsync(userId);

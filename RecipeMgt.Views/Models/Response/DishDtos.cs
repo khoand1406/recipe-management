@@ -1,13 +1,26 @@
+using RecipeMgt.Domain.Entities;
+
 namespace RecipeMgt.Views.Models.Response
 {
     public class DishResponse
     {
         public int DishId { get; set; }
-        public string DishName { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
+
+        public string DishName { get; set; }
+
+        public string Description { get; set; }
+
         public int CategoryId { get; set; }
-        public string CategoryName { get; set; } = string.Empty;
+
+        public string CategoryName => Category?.CategoryName ?? string.Empty;
+
+        public virtual Category? Category { get; set; }
+
         public List<string> ImageUrls { get; set; } = new();
+
+        public int ViewCount { get; set; }
+
+        public int BookmarkCount { get; set; }
     }
 
     public class DishDetailResponse

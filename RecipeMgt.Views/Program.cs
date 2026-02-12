@@ -1,9 +1,24 @@
+using Microsoft.Extensions.Options;
+using RecipeMgt.Views.Common.Config;
+using RecipeMgt.Views.Interface;
+using RecipeMgt.Views.Services;
+using System.Runtime.Intrinsics.Arm;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddSession();
 builder.Services.AddHttpContextAccessor();
+
+builder.Services.Configure<ApiSettings>(builder.Configuration.GetSection("ApiSettings"));
+builder.Services.AddHttpClient<IDashboardClient, DashboardClient>((serviceProvider, client)=>
+{
+    var settings = serviceProvider.GetRequiredService<IOptions<ApiSettings>>().Value;
+    client.BaseAddress = new Uri(settings.BaseUrl);
+});
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

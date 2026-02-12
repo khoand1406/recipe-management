@@ -17,8 +17,8 @@ namespace RecipeMgt.Domain.Entities
 
         public UserActivityType ActivityType { get; set; }
 
-        public string TargetType { get; set; }
-        public int TargetId { get; set; }
+        public string ?TargetType { get; set; }
+        public int? TargetId { get; set; }
 
         public string? Description { get; set; }
 

@@ -1,4 +1,4 @@
-@model List<RecipeMgt.Views.Models.Response.CategoryDto>
+@model RecipeMgt.Views.Models.ViewModels.HomeViewModel
 
 @{
     ViewData["Title"] = "Dashboard";
@@ -6,20 +6,19 @@
 }
 
 <div class="dashboard-container py-5 text-center">
-    <!-- Logo + Search -->
     <div class="container mb-5">
         <h4 class="fw-bold mb-3">🔥 Top lượt xem</h4>
 
         <div class="row g-4">
-            @foreach (var recipe in ViewBag.TopViewedRecipes)
+            @foreach (var dish in Model.TopDishes)
             {
                 <div class="col-md-3">
                     <div class="card border-0 shadow-sm h-100">
-                        <img src="@recipe.ImageUrl" class="card-img-top" style="height:160px;object-fit:cover" />
+                        <img src="@dish.ImageUrls[0]" class="card-img-top" style="height:160px;object-fit:cover" />
                         <div class="card-body">
-                            <h6 class="fw-semibold">@recipe.Title</h6>
+                            <h6 class="fw-semibold">@dish.DishName</h6>
                             <small class="text-muted">
-                                <i class="bi bi-eye"></i> @recipe.ViewCount lượt xem
+                                <i class="bi bi-eye"></i> @dish.BookmarkCount lượt xem
                             </small>
                         </div>
                     </div>
@@ -27,6 +26,7 @@
             }
         </div>
     </div>
+
     
 
     <!-- Trending -->

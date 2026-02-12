@@ -20,9 +20,20 @@ namespace RecipentMgt.Infrastucture.Repository.Categories
 
         public async Task<ICollection<Category>> GetAll()
         {
-            return await _context.Categories.ToListAsync();
+            return await _context.Categories.Include(c=> c.Dishes).Select(c => new Category
+            {
+                CategoryId = c.CategoryId,
+                CategoryName = c.CategoryName,
+                Description = c.Description,
+                ImageUrl = c.ImageUrl,
+                Dishes = c.Dishes.Select(d => new Dish
+                {
+                    DishId = d.DishId,
+                    DishName = d.DishName,
+                    Images = d.Images,
+                    CategoryId = d.CategoryId
+                }).OrderBy(x=> x.DishId).Take(10).ToList()
+            }).ToListAsync();
         }
-
-
     }
 }

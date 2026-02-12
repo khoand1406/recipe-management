@@ -289,6 +289,10 @@ namespace RecipeMgt.Application.Services.Dishes
 
         public async Task CalculateStructuralDish(int dishId, CancellationToken token)=> await _repo.CalculateStuctureDish(dishId, token);
 
+        public Task<Result<IEnumerable<DishResponse>>> GetTopViewDishes()
+        {
+            throw new NotImplementedException();
+        }
     }
 
 }

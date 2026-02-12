@@ -1,4 +1,6 @@
-﻿namespace RecipeMgt.Views.Models.Response
+﻿using RecipeMgt.Application.DTOs.Response.Dishes;
+
+namespace RecipeMgt.Views.Models.Response
 {
     public class CategoryDto
     {
@@ -9,5 +11,7 @@
         public string Description { get; set; }
 
         public string ImageUrl { get; set; }
+
+        public List<DishBasicResponse> Dishes { get; set; } = [];
     }
 }

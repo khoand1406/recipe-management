@@ -65,7 +65,7 @@ namespace RecipeMgt.Application.Services.Worker
                 var dishIdsSet = relationCounter.Keys.SelectMany(x => new[] { x.Item1, x.Item2 })
                                  .Distinct().ToList();
 
-                var existingRelation= await db.RelatedDishes.Where(x=> dishIdsSet.Contains(x.DishId) 
+                var existingRelation = await db.RelatedDishes.Where(x => dishIdsSet.Contains(x.DishId)
                                         && dishIdsSet.Contains(x.RelatedDishId) 
                                         && x.RelationType==DishRelationType.Behavior)
                                         .ToListAsync(cancellationToken);
