@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using RecipeMgt.Views.Models.RequestModel;
+using RecipeMgt.Views.Interface;
 using RecipeMgt.Views.Models.Response;
+using RecipeMgt.Views.Services;
 using System.Net.Http.Headers;
 using System.Text;
 
@@ -9,15 +10,12 @@ namespace RecipeMgt.Views.Controllers
     public class DishController : Controller
     {
         private readonly ILogger<DishController> _logger;
-        private readonly DishClient _dishClient;
-        private readonly IConfiguration _configuration;
+        private readonly IDishClient _dishClient;
 
-        public DishController(ILogger<DishController> logger, IConfiguration configuration)
+        public DishController(ILogger<DishController> logger, IDishClient dishClient)
         {
             _logger = logger;
-            _configuration = configuration;
-            var apiBaseUrl = _configuration["ApiSettings:BaseUrl"];
-            _dishClient = new DishClient(apiBaseUrl);
+            _dishClient = dishClient;
         }
 
         [HttpGet]

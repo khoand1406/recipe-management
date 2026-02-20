@@ -17,6 +17,11 @@ builder.Services.AddHttpClient<IDashboardClient, DashboardClient>((serviceProvid
     var settings = serviceProvider.GetRequiredService<IOptions<ApiSettings>>().Value;
     client.BaseAddress = new Uri(settings.BaseUrl);
 });
+builder.Services.AddHttpClient<IDishClient, DishClient>((serviceProvider, client) =>
+{
+    var settings = serviceProvider.GetRequiredService<IOptions<ApiSettings>>().Value;
+    client.BaseAddress = new Uri(settings.BaseUrl);
+});
 
 
 var app = builder.Build();

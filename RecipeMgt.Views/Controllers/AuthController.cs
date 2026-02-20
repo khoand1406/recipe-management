@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using RecipeMgt.Views.Models.RequestModel;
 using Microsoft.Extensions.Configuration;
+using RecipeMgt.Views.Services;
 
 namespace RecipeMgt.Views.Controllers
 {
@@ -38,7 +38,6 @@ namespace RecipeMgt.Views.Controllers
                
                 Console.WriteLine(result.Data.Token);
                 Console.WriteLine(result.Data?.User?.FullName);
-                // Lưu token và thông tin người dùng vào Session
                 HttpContext.Session.SetString("JwtToken", result.Data?.Token?? "");
                 HttpContext.Session.SetString("UserName", result.Data?.User?.FullName?? "");
                 HttpContext.Session.SetString("UserEmail", result.Data?.User?.Email?? "");
