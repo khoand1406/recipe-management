@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using RecipeMgt.Views.Interface;
+using RecipeMgt.Views.Models;
 using RecipeMgt.Views.Models.Response;
 using RecipeMgt.Views.Services;
 using System.Net.Http.Headers;
@@ -25,7 +26,7 @@ namespace RecipeMgt.Views.Controllers
             return View(dishes);
         }
 
-        [HttpGet]
+        [HttpGet("{id}")]
         public async Task<IActionResult> ByCategory(int id)
         {
             var dishes = await _dishClient.GetByCategoryAsync(id);
@@ -87,8 +88,8 @@ namespace RecipeMgt.Views.Controllers
         [HttpDelete]
         public async Task<IActionResult> Delete(int id)
         {
-            var resp = await _dishClient.DeleteAsync(id);
-            return Json(resp);
+             await _dishClient.DeleteAsync(id);
+            return View();
         }
     }
 }

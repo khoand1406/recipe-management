@@ -65,14 +65,5 @@ namespace RecipeMgt.Views.Models.Response
         public int TotalPages { get; set; }
     }
 
-    public class CommentResposneDTO
-    {
-        public int CommentId { get; set; }
-        public int RecipeId { get; set; }
-        public int UserId { get; set; }
-        public string UserName { get; set; } = string.Empty;
-        public string? UserAvatar { get; set; }
-        public string Content { get; set; } = string.Empty;
-        public DateTime CreatedAt { get; set; }
-    }
+    
 }

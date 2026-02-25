@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using RecipeMgt.Views.Interface;
 using RecipeMgt.Views.Services;
 
 namespace RecipeMgt.Views.Controllers
@@ -6,15 +7,13 @@ namespace RecipeMgt.Views.Controllers
     public class CommentController : Controller
     {
         private readonly ILogger<CommentController> _logger;
-        private readonly CommentClient _commentClient;
-        private readonly IConfiguration _configuration;
+        private readonly ICommentClient _commentClient;
+        
 
-        public CommentController(ILogger<CommentController> logger, IConfiguration configuration)
+        public CommentController(ILogger<CommentController> logger, ICommentClient commentClient)
         {
+            _commentClient = commentClient;
             _logger = logger;
-            _configuration = configuration;
-            var apiBaseUrl = _configuration["ApiSettings:BaseUrl"];
-            _commentClient = new CommentClient(apiBaseUrl);
         }
 
         [HttpGet]

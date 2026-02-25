@@ -8,8 +8,6 @@ namespace RecipeMgt.Views.Interface
 
         Task<List<DishResponse>> GetByCategoryAsync(int categoryId);
 
-
-
         Task<DishDetailResponse> GetDetailAsync(int id);
 
         Task<CreateDishResponse> CreateAsync(MultipartFormDataContent form);

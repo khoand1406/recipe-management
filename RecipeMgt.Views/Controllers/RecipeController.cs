@@ -7,29 +7,28 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using RecipeMgt.Views.Services;
+using RecipeMgt.Views.Interface;
 
 namespace RecipeMgt.Views.Controllers
 {
     public class RecipeController : Controller
     {
         private readonly ILogger<RecipeController> _logger;
-        private readonly DashboardClient _client;
-        private readonly RecipeClient _recipeClient;
-        private readonly StepClient _stepClient;
-        private readonly IngredientClient _ingredientClient;
-        private readonly CommentClient _commentClient;
-        private readonly IConfiguration _configuration;
+        private readonly IDashboardClient _client;
+        private readonly IRecipeClient _recipeClient;
+        private readonly IStepClient _stepClient;
+        private readonly IIngredientClient _ingredientClient;
+        private readonly ICommentClient _commentClient;
+        
 
-        public RecipeController(ILogger<RecipeController> logger, IConfiguration configuration)
+        public RecipeController(ILogger<RecipeController> logger, IDashboardClient client, IRecipeClient recipeClient, IStepClient stepClient, IIngredientClient ingredientClient, ICommentClient commentClient)
         {
             _logger = logger;
-            _configuration = configuration;
-            var apiBaseUrl = _configuration["ApiSettings:BaseUrl"];
-            _client = new DashboardClient(apiBaseUrl);
-            _recipeClient = new RecipeClient(apiBaseUrl);
-            _stepClient = new StepClient(apiBaseUrl);
-            _ingredientClient = new IngredientClient(apiBaseUrl);
-            _commentClient = new CommentClient(apiBaseUrl);
+            _client = client;
+            _recipeClient = recipeClient;
+            _stepClient = stepClient;
+            _ingredientClient = ingredientClient;
+            _commentClient = commentClient;
         }
 
         public async Task<IActionResult> Index()

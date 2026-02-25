@@ -2,18 +2,19 @@ using RecipeMgt.Views.Models.Response;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text;
+using RecipeMgt.Views.Interface;
 
 namespace RecipeMgt.Views.Services
 {
-    public class CommentClient
+    public class CommentClient:ICommentClient
     {
         private readonly HttpClient _httpClient;
-        private readonly string _baseUrl;
+        private readonly JsonSerializerOptions _options;
 
-        public CommentClient(string baseUrl)
+        public CommentClient(HttpClient httpClient)
         {
-            _baseUrl = baseUrl.TrimEnd('/');
-            _httpClient = new HttpClient();
+            _httpClient = httpClient;
+            _options= new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         }
 
         public void SetBearerToken(string? token)
@@ -30,10 +31,10 @@ namespace RecipeMgt.Views.Services
 
         public async Task<List<CommentResponseDTO>> GetCommentsByRecipeIdAsync(int recipeId)
         {
-            var resp = await _httpClient.GetAsync($"{_baseUrl}/api/recipe/{recipeId}/comments");
+            var resp = await _httpClient.GetAsync($"/api/recipe/{recipeId}/comments");
             resp.EnsureSuccessStatusCode();
             var json = await resp.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<List<CommentResponseDTO>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+            return JsonSerializer.Deserialize<List<CommentResponseDTO>>(json, _options)
                    ?? new List<CommentResponseDTO>();
         }
 
@@ -43,7 +44,7 @@ namespace RecipeMgt.Views.Services
             {
                 var jsonContent = JsonSerializer.Serialize(content);
                 var httpContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-                var resp = await _httpClient.PostAsync($"{_baseUrl}/api/recipe/{recipeId}/comment", httpContent);
+                var resp = await _httpClient.PostAsync($"/api/recipe/{recipeId}/comment", httpContent);
                 
                 if (resp.IsSuccessStatusCode)
                 {

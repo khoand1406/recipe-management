@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using RecipeMgt.Views.Interface;
 using RecipeMgt.Views.Services;
 
 namespace RecipeMgt.Views.Controllers
@@ -6,15 +7,13 @@ namespace RecipeMgt.Views.Controllers
     public class IngredientController : Controller
     {
         private readonly ILogger<IngredientController> _logger;
-        private readonly IngredientClient _ingredientClient;
-        private readonly IConfiguration _configuration;
+        private readonly IIngredientClient _ingredientClient;
+        
 
-        public IngredientController(ILogger<IngredientController> logger, IConfiguration configuration)
+        public IngredientController(ILogger<IngredientController> logger, IIngredientClient client)
         {
             _logger = logger;
-            _configuration = configuration;
-            var apiBaseUrl = _configuration["ApiSettings:BaseUrl"];
-            _ingredientClient = new IngredientClient(apiBaseUrl);
+            _ingredientClient = client;
         }
 
         [HttpGet]

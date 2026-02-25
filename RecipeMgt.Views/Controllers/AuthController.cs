@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using RecipeMgt.Views.Interface;
 using RecipeMgt.Views.Services;
 
 namespace RecipeMgt.Views.Controllers
@@ -7,15 +8,13 @@ namespace RecipeMgt.Views.Controllers
     public class AuthController : Controller
     {
 
-        private readonly AuthClient _authClient;
-        private readonly IConfiguration _configuration;
-
-        public AuthController(IConfiguration configuration)
+        private readonly IAuthClient _authClient;
+        
+        public AuthController(IAuthClient authClient)
         {
-            _configuration = configuration;
-            var apiBaseUrl = _configuration["ApiSettings:BaseUrl"];
-            _authClient = new AuthClient(apiBaseUrl);
+            _authClient = authClient;
         }
+
         [HttpGet]
         public IActionResult Login()
         {
@@ -24,6 +23,12 @@ namespace RecipeMgt.Views.Controllers
 
         [HttpGet]
         public IActionResult Register()
+        {
+            return View();
+        }
+
+        [HttpGet]
+        public IActionResult ChangePassword()
         {
             return View();
         }
@@ -61,6 +66,28 @@ namespace RecipeMgt.Views.Controllers
                 TempData["RegisterSuccess"] = "Đăng ký thành công! Vui lòng đăng nhập lại";
                 return RedirectToAction("Login", "Auth");
 
+            }
+            else
+            {
+                ViewBag.Error = result.Message;
+                return View();
+            }
+        }
+
+        [HttpPatch]
+
+        public async Task<IActionResult> ChangePassword(string email, string currentPassword, string newPassword)
+        {
+            var token = HttpContext.Session.GetString("JwtToken");
+            if (string.IsNullOrEmpty(token))
+            {
+                return RedirectToAction("Login");
+            }
+            var result = await _authClient.ChangePasswordAsync(email, currentPassword,newPassword, token);
+            if (result.Success)
+            {
+                TempData["ChangePasswordSuccess"] = "Đổi mật khẩu thành công!";
+                return RedirectToAction("Index", "Home");
             }
             else
             {

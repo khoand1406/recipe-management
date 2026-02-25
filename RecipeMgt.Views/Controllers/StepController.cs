@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using RecipeMgt.Views.Interface;
 using RecipeMgt.Views.Services;
 
 namespace RecipeMgt.Views.Controllers
@@ -6,15 +7,13 @@ namespace RecipeMgt.Views.Controllers
     public class StepController : Controller
     {
         private readonly ILogger<StepController> _logger;
-        private readonly StepClient _stepClient;
-        private readonly IConfiguration _configuration;
+        private readonly IStepClient _stepClient;
+        
 
-        public StepController(ILogger<StepController> logger, IConfiguration configuration)
+        public StepController(ILogger<StepController> logger, IStepClient stepClient)
         {
             _logger = logger;
-            _configuration = configuration;
-            var apiBaseUrl = _configuration["ApiSettings:BaseUrl"];
-            _stepClient = new StepClient(apiBaseUrl);
+            _stepClient = stepClient;
         }
 
         [HttpGet]

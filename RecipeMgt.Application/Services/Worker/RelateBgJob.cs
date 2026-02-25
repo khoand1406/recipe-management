@@ -15,9 +15,13 @@ namespace RecipeMgt.Application.Services.Worker
     public class RelateBgJob : IRelateBgJob
     {
         private readonly IServiceScopeFactory _serviceScopeFactory;
-        private ILogger<RelateBgJob> _logger;
+        private readonly ILogger<RelateBgJob> _logger;
+
         private const string Entity_Type = "Dish";
-        public RelateBgJob(IServiceScopeFactory serviceScopeFactory, ILogger<RelateBgJob> logger)
+
+        public RelateBgJob(
+            IServiceScopeFactory serviceScopeFactory,
+            ILogger<RelateBgJob> logger)
         {
             _serviceScopeFactory = serviceScopeFactory;
             _logger = logger;
@@ -27,107 +31,91 @@ namespace RecipeMgt.Application.Services.Worker
         {
             using var scope = _serviceScopeFactory.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<RecipeManagementContext>();
+
             try
             {
-                var formTime = DateTime.UtcNow.AddMinutes(-30);
-                var activities = await db.UserActivityLogs.Where(x => x.CreatedAt >= formTime)
-                    .Where(x => x.ActivityType == UserActivityType.View
-                            || x.ActivityType == UserActivityType.Bookmark 
-                            && x.TargetType!.Equals(Entity_Type, StringComparison.OrdinalIgnoreCase))
-                    .Select(x=> new
-                    {
-                        ActionKey= x.UserId != null ? $"user_{x.UserId}": $"session_{x.SessionId}",
-                        DishId= x.TargetId!.Value, 
-                    })
-                    .ToListAsync(cancellationToken);
+                var fromTime = DateTime.UtcNow.AddMinutes(-30);
 
-                var groupByUser = activities.GroupBy(x => x.ActionKey)
-                    .Select(x => x.Select(x => x.DishId).Distinct().ToList())
-                    .Where(list => list.Count>1 )
+                var baseQuery = db.UserActivityLogs
+    .Where(x => x.CreatedAt >= fromTime)
+    .Where(x =>
+        (x.ActivityType == UserActivityType.View ||
+         x.ActivityType == UserActivityType.Bookmark)
+        && x.TargetType == Entity_Type
+    )
+    .Select(x => new
+    {
+        x.UserId,
+        x.SessionId,
+        DishId = x.TargetId!.Value
+    });
+
+                var relations = await (
+    from a in baseQuery
+    from b in baseQuery
+    where
+        (
+            (a.UserId != null && a.UserId == b.UserId) ||
+            (a.UserId == null && b.UserId == null && a.SessionId == b.SessionId)
+        )
+        && a.DishId < b.DishId
+    group 1 by new
+    {
+        DishId = a.DishId,
+        RelatedDishId = b.DishId
+    } into g
+    select new
+    {
+        DishId = g.Key.DishId,
+        RelatedDishId = g.Key.RelatedDishId,
+        Weight = g.Count()
+    }
+).ToListAsync(cancellationToken);
+
+                if (relations.Count == 0)
+                    return;
+
+               
+                var dishIds = relations
+                    .SelectMany(x => new[] { x.DishId, x.RelatedDishId })
+                    .Distinct()
                     .ToList();
 
-                var relationCounter = new Dictionary<(int, int), int>();
-                foreach(var item in groupByUser)
+                var existingRelations = await db.RelatedDishes
+                    .Where(x =>
+                        dishIds.Contains(x.DishId) &&
+                        dishIds.Contains(x.RelatedDishId) &&
+                        x.RelationType == DishRelationType.Behavior
+                    )
+                    .ToListAsync(cancellationToken);
+
+                
+                foreach (var r in relations)
                 {
-                    for(var i= 0; i< item.Count; i++)
-                    {
-                        for(var j= i+1; j< item.Count; j++)
-                        {
-                            var pair_1= (item[i],  item[j]);
-                            var pair_2 = (item[j], item[i]);
-                            relationCounter[pair_1] = relationCounter.GetValueOrDefault(pair_1) + 1;
-                            relationCounter[pair_2] = relationCounter.GetValueOrDefault(pair_2) + 1;
-                        }
-                    }
+                    Upsert(existingRelations, db, r.DishId, r.RelatedDishId, r.Weight);
+                    Upsert(existingRelations, db, r.RelatedDishId, r.DishId, r.Weight);
                 }
-                if (relationCounter.Count == 0) {  return; }
-
-                var dishIdsSet = relationCounter.Keys.SelectMany(x => new[] { x.Item1, x.Item2 })
-                                 .Distinct().ToList();
-
-                var existingRelation = await db.RelatedDishes.Where(x => dishIdsSet.Contains(x.DishId)
-                                        && dishIdsSet.Contains(x.RelatedDishId) 
-                                        && x.RelationType==DishRelationType.Behavior)
-                                        .ToListAsync(cancellationToken);
-
-                foreach(var item in relationCounter)
-                {
-                    var (dishId, relatedDishId) = item.Key;
-                    var weight = item.Value;
-
-                    var existing = existingRelation
-                .FirstOrDefault(x =>
-                    x.DishId == dishId &&
-                    x.RelatedDishId == relatedDishId &&
-                    x.RelationType == DishRelationType.Behavior);
-                    if (existing != null)
-                    {
-                        existing.Priority += weight;
-                        existing.LastUpdatedAt = DateTime.UtcNow;
-                    }
-                    else
-                    {
-                        db.RelatedDishes.Add(new RelatedDish
-                        {
-                            DishId= dishId,
-                            RelatedDishId= relatedDishId,
-                            RelationType= DishRelationType.Behavior,
-                            Priority= weight,
-                            LastUpdatedAt= DateTime.UtcNow
-                        });
-                    }
-                }
-
 
                 await db.SaveChangesAsync(cancellationToken);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex.Message, "Background Job Run Failed");
+                _logger.LogError(ex, "RelateBgJob failed");
             }
         }
-    
-        private static int CalculateWeight(IEnumerable<UserActivityLog> logs)
+
+        private static void Upsert(
+            List<RelatedDish> existing,
+            RecipeManagementContext db,
+            int dishId,
+            int relatedDishId,
+            int weight)
         {
-            var score = 0;
+            var entity = existing.FirstOrDefault(x =>
+                x.DishId == dishId &&
+                x.RelatedDishId == relatedDishId &&
+                x.RelationType == DishRelationType.Behavior);
 
-            foreach (var log in logs)
-            {
-                score += log.ActivityType switch
-                {
-                    UserActivityType.View => 5,
-                    UserActivityType.Bookmark => 10,
-                    _ => 0
-                };
-            }
-
-            return score;
-        }
-
-        private static async Task UpsertRelateDishAsync(RecipeManagementContext db, int dishId, int relateDishId, int weight, CancellationToken cancellationToken)
-        {
-            var entity = await db.RelatedDishes.FirstOrDefaultAsync(x => x.DishId == dishId && x.RelatedDishId == relateDishId
-            && x.RelationType.Equals(DishRelationType.Behavior), cancellationToken);
             if (entity != null)
             {
                 entity.Priority += weight;
@@ -135,12 +123,13 @@ namespace RecipeMgt.Application.Services.Worker
             }
             else
             {
-                db.RelatedDishes.Add(new RelatedDish { 
-                    DishId= dishId, 
-                    LastUpdatedAt = DateTime.UtcNow, 
-                    RelatedDishId= relateDishId, 
-                    RelationType= DishRelationType.Behavior, 
-                    Priority= weight 
+                db.RelatedDishes.Add(new RelatedDish
+                {
+                    DishId = dishId,
+                    RelatedDishId = relatedDishId,
+                    RelationType = DishRelationType.Behavior,
+                    Priority = weight,
+                    LastUpdatedAt = DateTime.UtcNow
                 });
             }
         }

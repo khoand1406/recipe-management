@@ -2,6 +2,13 @@
 {
     public static class Endpoints
     {
+        public const string AuthLoginEndpoint = "/api/auth/login";
+        public const string AuthRegisterEndpoint = "/api/auth/register";
+        public const string AuthLogoutEndpoint = "/api/auth/logout";
+        public const string AuthRefreshTokenEndpoint = "/api/auth/refresh-token";
+        public const string AuthUserChangePasswordEndpoint = "/api/auth/change-password";
+
+
         public const string ApiCategoryEndpoint = "/api/category";
 
         public const string ApiDishEndpoint = "/api/dish";

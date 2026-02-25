@@ -48,7 +48,7 @@
 
                 @{
                     var chunkSize = 4;
-                    var chunks = Model
+                    var chunks = Model.Categories
                     .Select((x, i) => new { x, i })
                     .GroupBy(x => x.i / chunkSize)
                     .Select(g => g.Select(v => v.x).ToList())

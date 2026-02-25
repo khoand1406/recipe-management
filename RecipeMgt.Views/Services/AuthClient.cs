@@ -3,37 +3,32 @@ using System.Text.Json;
 using System.Text;
 using RecipeMgt.Views.Models.Response;
 using RecipeMgt.Views.Models;
+using RecipeMgt.Views.Interface;
+using RecipeMgt.Views.Common.Constant;
 
 namespace RecipeMgt.Views.Services
 {
-    public class AuthClient
+    public class AuthClient: IAuthClient
     {
         private readonly HttpClient _httpClient;
-        private readonly string _baseUrl;
-        private string _jwtToken;
+        private readonly JsonSerializerOptions _options;
+        
 
-        public AuthClient(string baseUrl)
+        public AuthClient(HttpClient httpClient)
         {
-            _baseUrl = baseUrl.TrimEnd('/');
-            _httpClient = new HttpClient();
+            _httpClient = httpClient;
+            _options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         }
+
         public async Task<ApiResponse<LoginResponse>> LoginAsync(string email, string password)
         {
             var payload = new { email, password };
             var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
-            var response = await _httpClient.PostAsync($"{_baseUrl}/api/auth/login", content);
+            var response = await _httpClient.PostAsync(Endpoints.AuthLoginEndpoint, content);
             var json = await response.Content.ReadAsStringAsync();
-
-            var result = JsonSerializer.Deserialize<ApiResponse<LoginResponse>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-            if (result?.Success == true && !string.IsNullOrEmpty(result.Data?.Token))
-            {
-                _jwtToken = result.Data.Token;
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _jwtToken);
-            }
-
-            return result;
+            return JsonSerializer.Deserialize<ApiResponse<LoginResponse>>(json, _options)
+                   ?? ApiResponse<LoginResponse>.Fail("Invalid server response", null, "SERVER_ERROR", (int?)StatusCode.INTERNAL_SERVER_ERROR);
         }
 
         public async Task<ApiResponse<RegisterResponse>> RegisterAsync(string email, string password, string username)
@@ -43,34 +38,34 @@ namespace RecipeMgt.Views.Services
            
             var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
-            var response = await _httpClient.PostAsync($"{_baseUrl}/api/auth/register", content);
+            var response = await _httpClient.PostAsync(Endpoints.AuthRegisterEndpoint, content);
             var json = await response.Content.ReadAsStringAsync();
 
-            return JsonSerializer.Deserialize<ApiResponse<RegisterResponse>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            return JsonSerializer.Deserialize<ApiResponse<RegisterResponse>>(json, _options)?? ApiResponse<RegisterResponse>.Fail("Internal server response", null, "SERVER_ERROR", (int?)StatusCode.INTERNAL_SERVER_ERROR);
         }
 
-        public async Task<ApiResponse<ChangePasswordResponse>> ChangePasswordAsync(string email, string oldPassword, string newPassword)
+        public async Task<ApiResponse<ChangePasswordResponse>> ChangePasswordAsync(string email, string oldPassword, string newPassword, string jwtToken)
         {
             var payload = new { email, oldPassword, newPassword };
             var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
-            var request = new HttpRequestMessage(HttpMethod.Patch, $"{_baseUrl}/api/auth/change-password")
+            var request = new HttpRequestMessage(HttpMethod.Patch,Endpoints.AuthUserChangePasswordEndpoint)
             {
                 Content = content
             };
 
-            if (!string.IsNullOrEmpty(_jwtToken))
+            if (!string.IsNullOrEmpty(jwtToken))
             {
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _jwtToken);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", jwtToken);
             }
 
             var response = await _httpClient.SendAsync(request);
             var json = await response.Content.ReadAsStringAsync();
 
-            return JsonSerializer.Deserialize<ApiResponse<ChangePasswordResponse>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            return JsonSerializer.Deserialize<ApiResponse<ChangePasswordResponse>>(json, _options)?? ApiResponse<ChangePasswordResponse>.Fail("Internal Server Reponse", null, "SERVER_ERROR", (int?)StatusCode.INTERNAL_SERVER_ERROR);
         }
 
-        public string GetToken() => _jwtToken;
+        
     }
 }
 
