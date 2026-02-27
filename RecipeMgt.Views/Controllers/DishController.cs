@@ -26,7 +26,7 @@ namespace RecipeMgt.Views.Controllers
             return View(dishes);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public async Task<IActionResult> ByCategory(int id)
         {
             var dishes = await _dishClient.GetByCategoryAsync(id);
@@ -34,7 +34,7 @@ namespace RecipeMgt.Views.Controllers
             return View(dishes);
         }
 
-        [HttpGet]
+        [HttpGet()]
         public async Task<IActionResult> Detail(int id)
         {
             var dish = await _dishClient.GetDetailAsync(id);

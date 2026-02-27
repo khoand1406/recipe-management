@@ -1,6 +1,7 @@
 using Azure;
 using RecipeMgt.Views.Common.Constant;
 using RecipeMgt.Views.Interface;
+using RecipeMgt.Views.Models;
 using RecipeMgt.Views.Models.Response;
 using System.Net.Http.Headers;
 using System.Text.Json;
@@ -12,10 +13,10 @@ namespace RecipeMgt.Views.Services
         private readonly HttpClient _httpClient;
         private readonly JsonSerializerOptions _jsonOptions;
 
-        public DishClient(HttpClient httpClient, JsonSerializerOptions options)
+        public DishClient(HttpClient httpClient)
         {
             _httpClient = httpClient;
-            _jsonOptions = options;
+            _jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         }
 
         public async Task<List<DishResponse>> GetAllAsync()
@@ -23,8 +24,8 @@ namespace RecipeMgt.Views.Services
             var resp = await _httpClient.GetAsync(Endpoints.ApiDishEndpoint);
             resp.EnsureSuccessStatusCode();
             var json = await resp.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<List<DishResponse>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
-                   ?? new List<DishResponse>();
+            return JsonSerializer.Deserialize<List<DishResponse>>(json, _jsonOptions)
+                   ?? [];
         }
 
         public async Task<List<DishResponse>> GetByCategoryAsync(int categoryId)
@@ -32,16 +33,16 @@ namespace RecipeMgt.Views.Services
             var resp = await _httpClient.GetAsync(Endpoints.ApiDishByCategoryEndpoint);
             resp.EnsureSuccessStatusCode();
             var json = await resp.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<List<DishResponse>>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
-                   ?? new List<DishResponse>();
+            return JsonSerializer.Deserialize<List<DishResponse>>(json, _jsonOptions)
+                   ?? [];
         }
 
-        public async Task<DishDetailResponse?> GetDetailAsync(int dishId)
+        public async Task<ApiResponse<DishDetailResponse?>> GetDetailAsync(int dishId)
         {
             var resp = await _httpClient.GetAsync(Endpoints.ApiDishDetailEndpoint);
-            if (!resp.IsSuccessStatusCode) return null;
+            if (!resp.IsSuccessStatusCode) return ApiResponse<DishDetailResponse?>.Fail("Error fetch detail data", null, "INTERNAL_SERVER_ERROR", 500);
             var json = await resp.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<DishDetailResponse>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            return JsonSerializer.Deserialize<ApiResponse<DishDetailResponse?>>(json, _jsonOptions)!;
         }
 
         public async Task<CreateDishResponse> CreateAsync(MultipartFormDataContent form)
@@ -54,7 +55,7 @@ namespace RecipeMgt.Views.Services
                 throw new ApplicationException($"API Error: {error}");
             }
             var json = await resp.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<CreateDishResponse>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            var result = JsonSerializer.Deserialize<CreateDishResponse>(json, _jsonOptions);
             if (result == null)
             {
                 throw new ApplicationException($"API Error: {result?.Message ?? "Unknown error"}");
@@ -70,14 +71,14 @@ namespace RecipeMgt.Views.Services
             };
             var resp = await _httpClient.SendAsync(req);
             var json = await resp.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<UpdateDishResponse>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+            return JsonSerializer.Deserialize<UpdateDishResponse>(json, _jsonOptions)!;
         }
 
         public async Task<DeleteDishResponse> DeleteAsync(int dishId)
         {
             var resp = await _httpClient.DeleteAsync(Endpoints.ApiDishDeleteEndpoint);
             var json = await resp.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<DeleteDishResponse>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+            return JsonSerializer.Deserialize<DeleteDishResponse>(json, _jsonOptions)!;
         }
 
         Task IDishClient.DeleteAsync(int id)

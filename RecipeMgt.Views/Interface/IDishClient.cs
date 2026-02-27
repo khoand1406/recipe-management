@@ -1,4 +1,5 @@
-﻿using RecipeMgt.Views.Models.Response;
+﻿using RecipeMgt.Views.Models;
+using RecipeMgt.Views.Models.Response;
 
 namespace RecipeMgt.Views.Interface
 {
@@ -8,7 +9,7 @@ namespace RecipeMgt.Views.Interface
 
         Task<List<DishResponse>> GetByCategoryAsync(int categoryId);
 
-        Task<DishDetailResponse> GetDetailAsync(int id);
+        Task<ApiResponse<DishDetailResponse>> GetDetailAsync(int id);
 
         Task<CreateDishResponse> CreateAsync(MultipartFormDataContent form);
 

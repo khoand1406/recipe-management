@@ -1,0 +1,496 @@
+﻿/* ── Reset & Base ───────────────────────────────── */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    --brand: #f59e0b;
+    --brand-dark: #d97706;
+    --brand-light: #fef3c7;
+    --text: #0f172a;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+    --bg: #f8fafc;
+    --surface: #ffffff;
+    --danger: #ef4444;
+    --radius: 12px;
+    --transition: .2s cubic-bezier(.4,0,.2,1);
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+/* ── Card Wrapper ───────────────────────────────── */
+.auth-card {
+    display: flex;
+    width: 100%;
+    max-width: 900px;
+    min-height: 560px;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 24px 64px rgba(0,0,0,.12);
+}
+
+/* ── Left Panel (Decorative) ────────────────────── */
+.auth-panel {
+    flex: 1;
+    background: linear-gradient(145deg, #f59e0b 0%, #ef4444 60%, #ec4899 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+    .auth-panel::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.06'%3E%3Ccircle cx='30' cy='30' r='30'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+
+    .auth-panel::after {
+        content: '';
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        background: rgba(255,255,255,.08);
+        border-radius: 50%;
+        bottom: -100px;
+        right: -80px;
+    }
+
+.panel-logo {
+    width: 64px;
+    height: 64px;
+    background: rgba(255,255,255,.2);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255,255,255,.35);
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    z-index: 1;
+}
+
+.panel-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #fff;
+    text-align: center;
+    margin-bottom: .75rem;
+    position: relative;
+    z-index: 1;
+}
+
+.panel-subtitle {
+    font-size: .875rem;
+    color: rgba(255,255,255,.8);
+    text-align: center;
+    line-height: 1.7;
+    position: relative;
+    z-index: 1;
+}
+
+.panel-features {
+    margin-top: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+    position: relative;
+    z-index: 1;
+}
+
+.panel-feature {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    color: rgba(255,255,255,.9);
+    font-size: .825rem;
+}
+
+    .panel-feature i {
+        width: 26px;
+        height: 26px;
+        background: rgba(255,255,255,.2);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: .85rem;
+        flex-shrink: 0;
+    }
+
+/* ── Right Panel (Form) ─────────────────────────── */
+.auth-form-wrap {
+    flex: 1.1;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 2.5rem 2.75rem;
+    overflow-y: auto;
+}
+
+.form-header {
+    margin-bottom: 1.75rem;
+}
+
+    .form-header h1 {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: var(--text);
+        margin-bottom: .3rem;
+    }
+
+    .form-header p {
+        font-size: .875rem;
+        color: var(--text-muted);
+    }
+
+/* ── Social Buttons ─────────────────────────────── */
+.social-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .75rem;
+    margin-bottom: 1.5rem;
+}
+
+.btn-social {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    padding: .65rem 1rem;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    font-size: .825rem;
+    font-weight: 500;
+    color: var(--text);
+    cursor: pointer;
+    transition: all var(--transition);
+    text-decoration: none;
+}
+
+    .btn-social:hover {
+        border-color: #cbd5e1;
+        background: var(--bg);
+        box-shadow: 0 2px 8px rgba(0,0,0,.07);
+        transform: translateY(-1px);
+        color: var(--text);
+    }
+
+    .btn-social:active {
+        transform: translateY(0);
+    }
+
+    .btn-social svg {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+    }
+
+/* ── Divider ────────────────────────────────────── */
+.divider {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-muted);
+    font-size: .78rem;
+}
+
+    .divider::before,
+    .divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--border);
+    }
+
+/* ── Floating Label Inputs ──────────────────────── */
+.field {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.field-input {
+    width: 100%;
+    padding: .85rem 1rem .85rem 2.75rem;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: .875rem;
+    font-family: 'Inter', sans-serif;
+    color: var(--text);
+    background: var(--surface);
+    outline: none;
+    transition: all var(--transition);
+}
+
+    .field-input:focus {
+        border-color: var(--brand);
+        box-shadow: 0 0 0 3px rgba(245,158,11,.13);
+    }
+
+    .field-input.is-error {
+        border-color: var(--danger);
+        box-shadow: 0 0 0 3px rgba(239,68,68,.1);
+    }
+
+.field-icon {
+    position: absolute;
+    left: .9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 1rem;
+    pointer-events: none;
+    transition: color var(--transition);
+}
+
+.field-input:focus ~ .field-icon {
+    color: var(--brand-dark);
+}
+
+/* Password toggle */
+.field-toggle {
+    position: absolute;
+    right: .9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0;
+    font-size: 1rem;
+    transition: color var(--transition);
+}
+
+    .field-toggle:hover {
+        color: var(--text);
+    }
+
+.field-label {
+    display: block;
+    font-size: .78rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: .35rem;
+    letter-spacing: .01em;
+}
+
+/* ── Extras Row ─────────────────────────────────── */
+.extras-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+}
+
+.check-label {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    font-size: .8rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    user-select: none;
+}
+
+    .check-label input[type="checkbox"] {
+        accent-color: var(--brand-dark);
+        width: 15px;
+        height: 15px;
+    }
+
+.forgot-link {
+    font-size: .8rem;
+    color: var(--brand-dark);
+    text-decoration: none;
+    font-weight: 500;
+    transition: opacity var(--transition);
+}
+
+    .forgot-link:hover {
+        opacity: .75;
+    }
+
+/* ── Submit Button ──────────────────────────────── */
+.btn-submit {
+    width: 100%;
+    padding: .85rem;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+    color: #fff;
+    font-size: .9rem;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all var(--transition);
+    box-shadow: 0 4px 14px rgba(245,158,11,.35);
+    position: relative;
+    overflow: hidden;
+}
+
+    .btn-submit:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(245,158,11,.45);
+    }
+
+    .btn-submit:active {
+        transform: translateY(0);
+    }
+
+    .btn-submit:disabled {
+        opacity: .7;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    /* Ripple */
+    .btn-submit::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: rgba(255,255,255,0);
+        transition: background .1s;
+    }
+
+    .btn-submit:active::after {
+        background: rgba(255,255,255,.1);
+    }
+
+/* ── Error / Alert ──────────────────────────────── */
+.alert-error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    padding: .75rem 1rem;
+    font-size: .825rem;
+    color: #dc2626;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-bottom: 1rem;
+}
+
+.field-error {
+    font-size: .75rem;
+    color: var(--danger);
+    margin-top: .3rem;
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+}
+
+/* ── Register Link ──────────────────────────────── */
+.register-link {
+    text-align: center;
+    margin-top: 1.25rem;
+    font-size: .825rem;
+    color: var(--text-muted);
+}
+
+    .register-link a {
+        color: var(--brand-dark);
+        font-weight: 600;
+        text-decoration: none;
+        transition: opacity var(--transition);
+    }
+
+        .register-link a:hover {
+            opacity: .75;
+        }
+
+/* ── Shake animation ────────────────────────────── */
+@keyframes shake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+
+    20% {
+        transform: translateX(-6px);
+    }
+
+    40% {
+        transform: translateX(6px);
+    }
+
+    60% {
+        transform: translateX(-4px);
+    }
+
+    80% {
+        transform: translateX(4px);
+    }
+}
+
+.shake {
+    animation: shake .4s ease;
+}
+
+/* ── Loading spinner ────────────────────────────── */
+.spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin .6s linear infinite;
+    display: inline-block;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ── Responsive ─────────────────────────────────── */
+@media (max-width: 768px) {
+    .auth-card {
+        flex-direction: column;
+        max-width: 440px;
+        min-height: unset;
+        border-radius: 20px;
+    }
+
+    .auth-panel {
+        padding: 2rem 1.5rem;
+    }
+
+    .panel-features {
+        display: none;
+    }
+
+    .auth-form-wrap {
+        padding: 2rem 1.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .social-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .auth-form-wrap {
+        padding: 1.75rem 1.25rem;
+    }
+}

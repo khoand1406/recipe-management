@@ -1,172 +1,347 @@
 @model RecipeMgt.Views.Models.ViewModels.HomeViewModel
 
 @{
-    ViewData["Title"] = "Dashboard";
+    ViewData["Title"] = "Trang chủ";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="dashboard-container py-5 text-center">
-    <div class="container mb-5">
-        <h4 class="fw-bold mb-3">🔥 Top lượt xem</h4>
+<section class="hero-section">
+    <div class="hero-bg"></div>
+    <div class="hero-overlay"></div>
 
-        <div class="row g-4">
-            @foreach (var dish in Model.TopDishes)
-            {
-                <div class="col-md-3">
-                    <div class="card border-0 shadow-sm h-100">
-                        <img src="@dish.ImageUrls.FirstOrDefault()" class="card-img-top" style="height:160px;object-fit:cover" />
-                        <div class="card-body">
-                            <h6 class="fw-semibold">@dish.DishName</h6>
-                            <small class="text-muted">
-                                <i class="bi bi-eye"></i> @dish.BookmarkCount lượt xem
-                            </small>
-                        </div>
-                    </div>
-                </div>
-            }
+    <div class="container hero-content">
+        <div class="hero-badge">
+            <i class="bi bi-fire"></i> Cộng đồng nấu ăn #1 Việt Nam
+        </div>
+
+        <h1 class="hero-title">
+            Nấu ngon mỗi ngày<br>
+            <span class="hero-highlight">cùng CookPad</span>
+        </h1>
+
+        <p class="hero-sub">
+            Khám phá hàng ngàn công thức từ các đầu bếp đam mê khắp Việt Nam
+        </p>
+
+        <!-- Search -->
+        <form method="get"
+              asp-controller="Recipe"
+              asp-action="Search"
+              class="hero-search">
+            <i class="bi bi-search hero-search-icon"></i>
+            <input type="text"
+                   name="query"
+                   class="hero-search-input"
+                   placeholder="Tìm món ăn, nguyên liệu, đầu bếp..." />
+            <button type="submit" class="hero-search-btn">
+                Tìm kiếm
+            </button>
+        </form>
+
+        <!-- Quick tags -->
+        <div class="hero-tags">
+            <span class="hero-tag-label">Phổ biến:</span>
+            <a href="/Recipe/Search?query=Phở" class="hero-tag">🍜 Phở</a>
+            <a href="/Recipe/Search?query=Bún bò" class="hero-tag">🌶️ Bún bò</a>
+            <a href="/Recipe/Search?query=Bánh mì" class="hero-tag">🥖 Bánh mì</a>
+            <a href="/Recipe/Search?query=Cơm tấm" class="hero-tag">🍚 Cơm tấm</a>
         </div>
     </div>
 
-    
+    <!-- Scroll cue -->
+    <div class="hero-scroll-cue">
+        <i class="bi bi-chevron-double-down"></i>
+    </div>
+</section>
 
-    <!-- Trending -->
-    <div class="container mt-5">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="fw-bold mb-0">🍱 Danh mục nổi bật</h4>
-            <div>
-                <button class="btn btn-sm btn-light" data-bs-target="#categoryCarousel" data-bs-slide="prev">
-                    <i class="bi bi-chevron-left"></i>
-                </button>
-                <button class="btn btn-sm btn-light" data-bs-target="#categoryCarousel" data-bs-slide="next">
-                    <i class="bi bi-chevron-right"></i>
-                </button>
+<!-- ══════════════════════════════════════
+     STATS BAR
+══════════════════════════════════════ -->
+<section class="stats-bar">
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-item">
+                <i class="bi bi-journal-richtext stat-icon"></i>
+                <div>
+                    <div class="stat-num" data-target="12400">0</div>
+                    <div class="stat-label">Công thức</div>
+                </div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <i class="bi bi-people-fill stat-icon"></i>
+                <div>
+                    <div class="stat-num" data-target="8500">0</div>
+                    <div class="stat-label">Đầu bếp</div>
+                </div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <i class="bi bi-grid-fill stat-icon"></i>
+                <div>
+                    <div class="stat-num" data-target="48">0</div>
+                    <div class="stat-label">Danh mục</div>
+                </div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <i class="bi bi-star-fill stat-icon"></i>
+                <div>
+                    <div class="stat-num" data-target="96000">0</div>
+                    <div class="stat-label">Đánh giá</div>
+                </div>
             </div>
         </div>
+    </div>
+</section>
 
-        <div id="categoryCarousel" class="carousel slide">
-            <div class="carousel-inner">
+<!-- ══════════════════════════════════════
+     CATEGORY PILLS
+══════════════════════════════════════ -->
+<section class="section-gap">
+    <div class="container">
+        <div class="section-header reveal">
+            <div>
+                <div class="section-eyebrow">Danh mục</div>
+                <h2 class="section-title">🍱 Khám phá theo chủ đề</h2>
+            </div>
+            <a asp-controller="Dish" asp-action="Index" class="btn-text-link">
+                Xem tất cả <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
 
-                @{
-                    var chunkSize = 4;
-                    var chunks = Model.Categories
-                    .Select((x, i) => new { x, i })
-                    .GroupBy(x => x.i / chunkSize)
-                    .Select(g => g.Select(v => v.x).ToList())
-                    .ToList();
-                }
-
-                @for (int i = 0; i < chunks.Count; i++)
+        <!-- Horizontal scroll pills -->
+        <div class="category-pills-wrap reveal">
+            <div class="category-pills" id="categoryPills">
+                @foreach (var category in Model.Categories)
                 {
-                    <div class="carousel-item @(i == 0 ? "active" : "")">
-                        <div class="row g-4">
-                            @foreach (var category in chunks[i])
+                    <a asp-controller="Dish"
+                       asp-action="ByCategory"
+                       asp-route-id="@category.CategoryId"
+                       class="category-pill"
+                       style="--pill-bg: url('@category.ImageUrl')">
+                        <div class="pill-img"></div>
+                        <div class="pill-overlay"></div>
+                        <span class="pill-name">@category.CategoryName</span>
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section-gap bg-tinted">
+    <div class="container">
+        <div class="section-header reveal">
+            <div>
+                <div class="section-eyebrow">Nổi bật</div>
+                <h2 class="section-title">🔥 Top lượt xem</h2>
+            </div>
+            <a asp-controller="Recipe" asp-action="Index" class="btn-text-link">
+                Xem thêm <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+
+        <div class="recipe-grid">
+            @{
+                bool isFirst = true;
+            }
+            @foreach (var dish in Model.TopDishes)
+            {
+                <div class="recipe-card reveal @(isFirst ? "recipe-card--featured" : "")">
+                    <a asp-controller="Dish"
+                       asp-action="Detail"
+                       asp-route-id="@dish.DishId"
+                       class="recipe-card-inner">
+
+                        <!-- Image -->
+                        <div class="recipe-img-wrap">
+                            <img src="@dish.ImageUrls.FirstOrDefault()"
+                                 alt="@dish.DishName"
+                                 class="recipe-img"
+                                 loading="lazy" />
+                            <div class="recipe-img-overlay"></div>
+
+                            <!-- Badges -->
+                            <div class="recipe-badges">
+                                @if (isFirst)
+                                {
+                                    <span class="badge-hot">
+                                        <i class="bi bi-fire"></i> Hot #1
+                                    </span>
+                                }
+                                <span class="badge-bookmark">
+                                    <i class="bi bi-bookmark-heart"></i>
+                                </span>
+                            </div>
+
+                            <!-- Quick info overlay -->
+                            @if (isFirst)
                             {
-                                <div class="col-6 col-md-3">
-                                    <a asp-controller="Dish"
-                                       asp-action="ByCategory"
-                                       asp-route-id="@category.CategoryId"
-                                       class="text-decoration-none">
-                                        <div class="category-card position-relative overflow-hidden">
-                                            <div class="bg-image"
-                                                 style="background-image:url('@category.ImageUrl')"></div>
-                                            <div class="overlay d-flex align-items-end">
-                                                <div class="text-white p-3">
-                                                    <h6 class="fw-semibold mb-0">@category.CategoryName</h6>
-                                                    <small>@category.Description</small>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </a>
+                                <div class="recipe-quick-info">
+                                    <span><i class="bi bi-clock"></i> 30 phút</span>
+                                    <span><i class="bi bi-people"></i> 2 người</span>
                                 </div>
                             }
                         </div>
-                    </div>
-                }
-            </div>
+
+                        <!-- Body -->
+                        <div class="recipe-body">
+                            <h3 class="recipe-name">@dish.DishName</h3>
+
+                            <!-- Star rating (static demo) -->
+                            <div class="recipe-rating">
+                                <span class="stars">★★★★★</span>
+                                <span class="rating-count">(4.8)</span>
+                            </div>
+
+                            <div class="recipe-meta">
+                                <span class="meta-chip">
+                                    <i class="bi bi-eye"></i>
+                                    @dish.BookmarkCount.ToString("N0") lượt xem
+                                </span>
+                                <span class="meta-chip meta-chip--warm">
+                                    <i class="bi bi-clock"></i> 30 phút
+                                </span>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                isFirst = false;
+            }
         </div>
     </div>
+</section>
 
-</div>
+<section class="section-gap">
+    <div class="container">
+        <div class="section-header reveal">
+            <div>
+                <div class="section-eyebrow">Mới nhất</div>
+                <h2 class="section-title">✨ Công thức mới hôm nay</h2>
+            </div>
+            <a asp-controller="Recipe" asp-action="Index" class="btn-text-link">
+                Xem tất cả <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
 
-
-@section Styles {
-    <style>
-        .dashboard-container {
-            background-color: #fff;
-            min-height: calc(100vh - 80px);
-        }
-
-        .input-group {
-            border-radius: 50px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .trending-card {
-            height: 140px;
-            cursor: pointer;
-            transition: transform 0.25s ease, box-shadow 0.25s ease;
-        }
-
-            .trending-card:hover {
-                transform: translateY(-4px);
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        <div class="list-recipe-grid reveal">
+            @foreach (var dish in Model.TopDishes.Take(4))
+            {
+                <a asp-controller="Dish"
+                   asp-action="Detail"
+                   asp-route-id="@dish.DishId"
+                   class="list-recipe-card">
+                    <div class="list-recipe-img-wrap">
+                        <img src="@dish.ImageUrls.FirstOrDefault()"
+                             alt="@dish.DishName"
+                             loading="lazy" />
+                    </div>
+                    <div class="list-recipe-info">
+                        <h4 class="list-recipe-name">@dish.DishName</h4>
+                        <div class="list-recipe-meta">
+                            <span><i class="bi bi-clock"></i> 30 phút</span>
+                            <span><i class="bi bi-eye"></i> @dish.BookmarkCount lượt xem</span>
+                        </div>
+                        <div class="stars" style="font-size:.8rem">★★★★☆</div>
+                    </div>
+                    <i class="bi bi-chevron-right list-recipe-arrow"></i>
+                </a>
             }
+        </div>
+    </div>
+</section>
 
-            .trending-card img {
-                object-fit: cover;
-                transition: transform 0.3s ease;
-            }
+<section class="cta-section reveal">
+    <div class="cta-bg"></div>
+    <div class="container cta-content">
+        <div class="cta-emoji">🍽️</div>
+        <h2 class="cta-title">Bạn có công thức bí truyền?</h2>
+        <p class="cta-sub">
+            Chia sẻ với cộng đồng hơn <strong>8.500</strong> đầu bếp đang chờ đón!
+        </p>
+        <div class="cta-actions">
+            <a asp-controller="Recipe" asp-action="Create" class="cta-btn-primary">
+                <i class="bi bi-plus-circle-fill"></i> Đăng công thức ngay
+            </a>
+            <a asp-controller="Auth" asp-action="Register" class="cta-btn-secondary">
+                Tham gia miễn phí
+            </a>
+        </div>
+    </div>
+</section>
 
-            .trending-card:hover img {
-                transform: scale(1.05);
-            }
+@section Scripts {
+    <script>
+        // ── Scroll reveal ────────────────────────────────
+        const revealEls = document.querySelectorAll('.reveal');
+        const observer  = new IntersectionObserver((entries) => {
+            entries.forEach((entry, i) => {
+                if (entry.isIntersecting) {
+                    // Stagger delay based on sibling index
+                    const siblings = [...entry.target.parentElement.querySelectorAll('.reveal')];
+                    const idx      = siblings.indexOf(entry.target);
+                    entry.target.style.transitionDelay = (idx * 60) + 'ms';
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.12 });
 
-        .overlay {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.5), rgba(0,0,0,0.1));
-            transition: background 0.3s ease;
+        revealEls.forEach(el => observer.observe(el));
+
+
+        const counters = document.querySelectorAll('.stat-num');
+        const cObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) return;
+                const el     = entry.target;
+                const target = +el.dataset.target;
+                const duration = 1600;
+                const step   = target / (duration / 16);
+                let current  = 0;
+
+                const tick = () => {
+                    current += step;
+                    if (current < target) {
+                        el.textContent = Math.floor(current).toLocaleString('vi-VN');
+                        requestAnimationFrame(tick);
+                    } else {
+                        el.textContent = target.toLocaleString('vi-VN') + '+';
+                    }
+                };
+                tick();
+                cObserver.unobserve(el);
+            });
+        }, { threshold: 0.5 });
+
+        counters.forEach(el => cObserver.observe(el));
+
+        // ── Category pills drag scroll ───────────────────
+        const pills   = document.getElementById('categoryPills');
+        let isDown    = false, startX, scrollLeft;
+
+        if (pills) {
+            pills.addEventListener('mousedown', e => {
+                isDown     = true;
+                startX     = e.pageX - pills.offsetLeft;
+                scrollLeft = pills.scrollLeft;
+                pills.style.cursor = 'grabbing';
+            });
+
+            ['mouseleave','mouseup'].forEach(ev =>
+                pills.addEventListener(ev, () => { isDown = false; pills.style.cursor = 'grab'; })
+            );
+
+            pills.addEventListener('mousemove', e => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - pills.offsetLeft;
+                pills.scrollLeft = scrollLeft - (x - startX) * 1.2;
+            });
+
+            pills.style.cursor = 'grab';
         }
-
-            .overlay:hover {
-                background: linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0.2));
-            }
-
-        .fw-semibold {
-            font-weight: 600 !important;
-        }
-
-        .category-card {
-            height: 180px;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-            .category-card:hover {
-                transform: translateY(-4px);
-                box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-            }
-
-        .bg-image {
-            position: absolute;
-            inset: 0;
-            background-size: cover;
-            background-position: center;
-            z-index: 1;
-        }
-
-        .overlay {
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.6), rgba(0,0,0,0.1));
-            z-index: 2;
-            transition: background 0.3s ease;
-        }
-
-            .overlay:hover {
-                background: linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0.2));
-            }
-    </style>
+    </script>
 }
