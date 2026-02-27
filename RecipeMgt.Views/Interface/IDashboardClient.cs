@@ -1,13 +1,14 @@
-﻿using RecipeMgt.Views.Models.Response;
+﻿using RecipeMgt.Views.Models;
+using RecipeMgt.Views.Models.Response;
 
 namespace RecipeMgt.Views.Interface
 {
     public interface IDashboardClient
     {
-        Task<List<CategoryDto>> GetCategoriesAsync();
-        Task<List<DishResponse>> GetDishResponsesAsync();
-        Task<List<DishResponse>> GetTopDishViewAsync();
-        Task<List<DishResponse>> GetLatestDishesAsync();
-        Task<List<UserResponse>> GetTopContributorAsync();
+        Task<ApiResponse<List<CategoryDto>>> GetCategoriesAsync();
+        Task<ApiResponse<List<DishResponse>>> GetDishResponsesAsync();
+        Task<ApiResponse<List<DishResponse>>> GetTopDishViewAsync();
+        Task<ApiResponse<List<DishResponse>>> GetLatestDishesAsync();
+        Task<ApiResponse<List<UserResponse>>> GetTopContributorAsync();
     }
 }

@@ -14,7 +14,7 @@
             {
                 <div class="col-md-3">
                     <div class="card border-0 shadow-sm h-100">
-                        <img src="@dish.ImageUrls[0]" class="card-img-top" style="height:160px;object-fit:cover" />
+                        <img src="@dish.ImageUrls.FirstOrDefault()" class="card-img-top" style="height:160px;object-fit:cover" />
                         <div class="card-body">
                             <h6 class="fw-semibold">@dish.DishName</h6>
                             <small class="text-muted">

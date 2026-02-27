@@ -25,13 +25,14 @@ namespace RecipeMgt.Views.Controllers
             var topDishes= _client.GetTopDishViewAsync();
             var topUsers= _client.GetTopContributorAsync();
 
+
             await Task.WhenAll(categories, topDishes, topUsers);
 
             var models = new HomeViewModel
             {
-                Categories = categories.Result,
-                TopDishes = topDishes.Result,
-                TopUsers = topUsers.Result
+                Categories = categories.Result.Data?? [],
+                TopDishes = topDishes.Result.Data ?? [],
+                TopUsers = topUsers.Result.Data ?? []
 
             };
             return View(models);

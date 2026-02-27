@@ -20,6 +20,7 @@ using RecipeMgt.Application.Services.Statistics.User;
 using RecipeMgt.Application.Services.Worker;
 using RecipeMgt.Application.Utils.Worker;
 using RecipeMgt.Application.Utils.Tasks;
+using RecipeMgt.Application.Services.Users;
 
 namespace RecipeMgt.Application
 {
@@ -40,6 +41,7 @@ namespace RecipeMgt.Application
             services.AddScoped<IImageService, ImageService>();
             services.AddScoped<IStepService, StepService>();
             services.AddScoped<IStatisticService,  StatisticService>();
+            services.AddScoped<IUserService, UserService>();
             services.AddScoped<IUserStatisticService, UserStatisticService>();
             services.AddScoped<IOAuthService,  OAuthService>();
             services.AddScoped<IIngredientService, IngredientService>();

@@ -11,6 +11,7 @@ using RecipeMgt.Application.Services.Worker;
 using RecipeMgt.Application.Utils.Tasks;
 using RecipeMgt.Domain.Entities;
 using RecipeMgt.Domain.Enums;
+using RecipentMgt.Infrastucture.Repository.Categories;
 using RecipentMgt.Infrastucture.Repository.Dishes;
 using RecipentMgt.Infrastucture.Repository.Recipes;
 using RecipentMgt.Infrastucture.Repository.Statistics;
@@ -21,6 +22,7 @@ namespace RecipeMgt.Application.Services.Dishes
 {
     public class DishService : IDishService
     {
+        private readonly ICategoryRepository _categoryRepository;
         private readonly IDishRepository _repo;
         private readonly IStatisticRepository _statisticRepository;
         private readonly IMapper _mapper;
@@ -32,9 +34,10 @@ namespace RecipeMgt.Application.Services.Dishes
         private readonly IDistributedCache _cache;
         private const string ENTITY_TYPE = "Dish";
 
-        public DishService(IDishRepository repo, IMapper mapper, ILogger<DishService> logger, IImageService service, IStatisticRepository statisticRepository, IRecipeRepository recipeRepository, IUserRepository userRepository, IDistributedCache cache, IBackgroundTaskQueue queue)
+        public DishService(ICategoryRepository categoryRepository,IDishRepository repo, IMapper mapper, ILogger<DishService> logger, IImageService service, IStatisticRepository statisticRepository, IRecipeRepository recipeRepository, IUserRepository userRepository, IDistributedCache cache, IBackgroundTaskQueue queue)
         {
             _repo = repo;
+            _categoryRepository = categoryRepository;
             _mapper = mapper;
             _logger = logger;
             _imageService = service;
@@ -292,6 +295,26 @@ namespace RecipeMgt.Application.Services.Dishes
         public Task<Result<IEnumerable<DishResponse>>> GetTopViewDishes()
         {
             throw new NotImplementedException();
+        }
+
+        public async Task<Result<IEnumerable<CategoryDTO>>> GetCategoriesWithDishes()
+        {
+            var result = await _categoryRepository.GetAll();
+            var mappedResult = result.Select(item => new CategoryDTO
+            {
+                CategoryId = item.CategoryId,
+                CategoryName = item.CategoryName,
+                Description = item.Description,
+                ImageUrl = item.ImageUrl,
+                Dishes = item.Dishes.Select(d => new DishBasicResponse
+                {
+                    DishId = d.DishId,
+                    DishName = d.DishName,
+                    Images = d.Images?.Select(i => i.ImageUrl).ToArray(),
+                    CategoryId = d.CategoryId,
+                }).Take(10).ToList()
+            });
+            return Result<IEnumerable<CategoryDTO>>.Success(mappedResult);
         }
     }
 

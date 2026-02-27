@@ -22,7 +22,7 @@
 
 
         public const string ApiUserEndpoint = "/api/user";
-        public const string ApiTopContributorEndpoint = "/api/user/top-contributor";
+        public const string ApiTopContributorEndpoint = "/api/user/top-contributors";
         
         
 
