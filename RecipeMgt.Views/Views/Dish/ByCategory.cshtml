@@ -1,78 +1,514 @@
-@model List<RecipeMgt.Views.Models.Response.DishResponse>
+﻿@using RecipeMgt.Views.Models.ViewModels
+@model CategoryDishViewModel
+
 
 @{
     ViewData["Title"] = "Dishes by Category";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
-<div class="container py-5">
-    <div class="mb-4">
-        <a href="@Url.Action("Index", "Home")" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left"></i> Back to Categories
-        </a>
-    </div>
-
-    <h2 class="mb-4">Dishes</h2>
-
-    @if (Model == null || !Model.Any())
-    {
-        <div class="alert alert-info">
-            <i class="bi bi-info-circle"></i> No dishes found in this category.
+<section class="container py-4 py-lg-5">
+    <!-- Category Hero -->
+    <div class="cat-hero mb-5">
+        <div class="cat-hero-img">
+            <img src="@Model.CategoryImage" alt="@Model." />
+            <div class="cat-hero-overlay"></div>
         </div>
-    }
-    else
+        <div class="cat-hero-body">
+            <span class="cat-badge">Danh mục</span>
+            <h1 class="cat-hero-title">@Model.CategoryName</h1>
+            <p class="cat-hero-desc">@Model.Description</p>
+            <span class="cat-hero-count">
+                <i class="bi bi-journal-text"></i>
+                @Model.TotalCount  Mon An
+            </span>
+        </div>
+    </div>
+    <!-- Toolbar: Sort + Filter chips -->
+    @* <div class="toolbar mb-4">
+        <!-- Filter chips -->
+        <div class="filter-chips">
+            <a href="?cat=@Model.CategoryId"
+               class="chip @(Model.Sort == null ? "chip-active" : "")">
+                Tất cả
+            </a>
+            <a href="?cat=@Model.CategoryId&sort=newest"
+               class="chip @(Model.Sort == "newest" ? "chip-active" : "")">
+                <i class="bi bi-clock-history"></i> Mới nhất
+            </a>
+            <a href="?cat=@Model.CategoryId&sort=popular"
+               class="chip @(Model.Sort == "popular" ? "chip-active" : "")">
+                <i class="bi bi-fire"></i> Phổ biến
+            </a>
+            <a href="?cat=@Model.CategoryId&sort=quick"
+               class="chip @(Model.Sort == "quick" ? "chip-active" : "")">
+                <i class="bi bi-lightning-charge"></i> Nấu nhanh
+            </a>
+        </div> *@
+        <!-- Sort dropdown -->
+        <div class="dropdown ms-auto">
+            <button class="sort-btn" data-bs-toggle="dropdown">
+                <i class="bi bi-sliders2"></i>
+                Sắp xếp
+                <i class="bi bi-chevron-down" style="font-size:.7rem"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                    <a class="dropdown-item"
+                       href="?cat=@Model.CategoryId&order=az">
+                        <i class="bi bi-sort-alpha-down"></i> A → Z
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item"
+                       href="?cat=@Model.CategoryId&order=rating">
+                        <i class="bi bi-star"></i> Đánh giá cao nhất
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item"
+                       href="?cat=@Model.CategoryId&order=time-asc">
+                        <i class="bi bi-hourglass-split"></i> Thời gian tăng dần
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <!-- Recipe Grid -->
+    @if (Model.Dishes.Any())
     {
         <div class="row g-4">
-            @foreach (var dish in Model)
+            @foreach (var recipe in Model.Dishes)
             {
-                <div class="col-12 col-md-6 col-lg-4">
-                    <div class="card dish-card h-100 shadow-sm">
-                        @if (dish.ImageUrls != null && dish.ImageUrls.Any())
-                        {
-                            <img src="@dish.ImageUrls.First()" class="card-img-top" alt="@dish.DishName" style="height: 200px; object-fit: cover;">
-                        }
-                        else
-                        {
-                            <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center" style="height: 200px;">
-                                <i class="bi bi-image text-white" style="font-size: 3rem;"></i>
+                <div class="col-6 col-md-4 col-xl-3">
+                    <a asp-controller="Recipe"
+                       asp-action="Detail"
+                       asp-route-id="@recipe.Id"
+                       class="recipe-card">
+                        <!-- Thumbnail -->
+                        <div class="recipe-thumb">
+                            <img src="@recipe.ImageUrl" alt="@recipe.Title" loading="lazy" />
+                            <!-- Badges -->
+                            @if (recipe.IsNew)
+                            {
+                                <span class="thumb-badge badge-new">Mới</span>
+                            }
+                            @if (recipe.CookTime <= 20)
+                            {
+                                <span class="thumb-badge badge-quick">
+                                    <i class="bi bi-lightning-charge-fill"></i> Nhanh
+                                </span>
+                            }
+                            <!-- Bookmark -->
+                            <button class="thumb-bookmark"
+                                    onclick="event.preventDefault()">
+                                <i class="bi bi-bookmark@(recipe.IsBookmarked ? "-fill" : "")"></i>
+                            </button>
+                        </div>
+                        <!-- Info -->
+                        <div class="recipe-info">
+                            <h3 class="recipe-title">@recipe.Title</h3>
+                            <!-- Author -->
+                            <div class="recipe-author">
+                                <img src="@recipe.AuthorAvatar"
+                                     class="author-avatar"
+                                     alt="@recipe.AuthorName" />
+                                <span>@recipe.AuthorName</span>
                             </div>
-                        }
-                        <div class="card-body">
-                            <h5 class="card-title">@dish.DishName</h5>
-                            <p class="card-text text-muted small">@dish.Description</p>
-                            <span class="badge bg-primary">@dish.CategoryName</span>
+                            <!-- Stats -->
+                            <div class="recipe-stats">
+                                <span>
+                                    <i class="bi bi-clock"></i>
+                                    @recipe.CookTime phút
+                                </span>
+                                <span>
+                                    <i class="bi bi-star-fill text-warning"></i>
+                                    @recipe.Rating.ToString("0.0")
+                                </span>
+                                <span>
+                                    <i class="bi bi-heart"></i>
+                                    @recipe.Likes
+                                </span>
+                            </div>
                         </div>
-                        <div class="card-footer bg-white border-0">
-                            <a href="@Url.Action("Detail", "Dish", new { id = dish.DishId })" class="btn btn-warning w-100 text-white fw-semibold">
-                                View Recipes
-                            </a>
-                        </div>
-                    </div>
+                    </a>
                 </div>
             }
         </div>
+        <!-- Pagination -->
+        @if (Model.TotalPages > 1)
+        {
+            <nav class="d-flex justify-content-center mt-5">
+                <ul class="custom-pagination">
+                    <li class="@(Model.CurrentPage == 1 ? "disabled" : "")">
+                        <a href="?cat=@Model.CategoryId&page=@(Model.CurrentPage - 1)">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <li class="@(i == Model.CurrentPage ? "active" : "")">
+                            <a href="?cat=@Model.CategoryId&page=@i">@i</a>
+                        </li>
+                    }
+                    <li class="@(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                        <a href="?cat=@Model.CategoryId&page=@(Model.CurrentPage + 1)">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        }
     }
-</div>
-
+    else
+    {
+        <div class="empty-state">
+            <div class="empty-icon">🍽️</div>
+            <h4>Chưa có công thức nào</h4>
+            <p>Danh mục này chưa có bài viết. Hãy là người đầu tiên chia sẻ!</p>
+            <a asp-controller="Recipe" asp-action="Create" class="btn-signup mt-2">
+                <i class="bi bi-plus-lg"></i> Thêm công thức
+            </a>
+        </div>
+    }
+</section>
 @section Styles {
     <style>
-        .dish-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            border-radius: 12px;
+        /* ── Category Hero ──────────────────────────── */
+        .cat-hero {
+            position: relative;
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            min-height: 220px;
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .cat-hero-img {
+            position: absolute;
+            inset: 0;
+        }
+
+            .cat-hero-img img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+        .cat-hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient( to top, rgba(0,0,0,.72) 0%, rgba(0,0,0,.25) 55%, transparent 100% );
+        }
+
+        .cat-hero-body {
+            position: relative;
+            z-index: 2;
+            padding: 1.75rem 2rem;
+            color: #fff;
+        }
+
+        .cat-badge {
+            font-size: .7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            background: rgba(255,255,255,.2);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255,255,255,.25);
+            border-radius: 50px;
+            padding: .25rem .75rem;
+            display: inline-block;
+            margin-bottom: .6rem;
+        }
+
+        .cat-hero-title {
+            font-size: clamp(1.6rem, 4vw, 2.4rem);
+            font-weight: 800;
+            margin: 0 0 .4rem;
+            line-height: 1.1;
+        }
+
+        .cat-hero-desc {
+            font-size: .875rem;
+            opacity: .85;
+            margin: 0 0 .75rem;
+            max-width: 480px;
+        }
+
+        .cat-hero-count {
+            font-size: .8rem;
+            opacity: .8;
+            display: flex;
+            align-items: center;
+            gap: .35rem;
+        }
+        /* ── Toolbar ────────────────────────────────── */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: .6rem;
+        }
+
+        .filter-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .5rem;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+            padding: .4rem 1rem;
+            border-radius: 50px;
+            border: 1.5px solid var(--border);
+            background: var(--surface);
+            font-size: .8rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: all var(--transition);
+        }
+
+            .chip:hover {
+                border-color: var(--brand);
+                color: var(--brand-dark);
+                background: var(--brand-light);
+            }
+
+        .chip-active {
+            border-color: var(--brand);
+            background: var(--brand-light);
+            color: var(--brand-dark);
+            font-weight: 600;
+        }
+
+        .sort-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            padding: .4rem 1rem;
+            border-radius: 50px;
+            border: 1.5px solid var(--border);
+            background: var(--surface);
+            font-size: .8rem;
+            font-weight: 500;
+            color: var(--text);
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+            .sort-btn:hover {
+                border-color: var(--brand);
+                color: var(--brand-dark);
+            }
+        /* ── Recipe Card ────────────────────────────── */
+        .recipe-card {
+            display: block;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            text-decoration: none;
+            color: var(--text);
+            box-shadow: var(--shadow-sm);
+            transition: transform .18s ease, box-shadow .18s ease;
+            height: 100%;
+        }
+
+            .recipe-card:hover {
+                transform: translateY(-4px);
+                box-shadow: var(--shadow-md);
+            }
+
+        .recipe-thumb {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4/3;
+            overflow: hidden;
+            background: var(--bg);
+        }
+
+            .recipe-thumb img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                transition: transform .35s ease;
+            }
+
+        .recipe-card:hover .recipe-thumb img {
+            transform: scale(1.05);
+        }
+
+        .thumb-badge {
+            position: absolute;
+            top: .6rem;
+            left: .6rem;
+            font-size: .68rem;
+            font-weight: 700;
+            padding: .2rem .55rem;
+            border-radius: 50px;
+        }
+
+        .badge-new {
+            background: var(--brand);
+            color: #fff;
+        }
+
+        .badge-quick {
+            background: #10b981;
+            color: #fff;
+            top: 2.2rem;
+        }
+
+        .thumb-bookmark {
+            position: absolute;
+            top: .55rem;
+            right: .55rem;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,.85);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .9rem;
+            color: var(--text);
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+            .thumb-bookmark:hover {
+                background: #fff;
+                color: var(--brand-dark);
+            }
+
+        .recipe-info {
+            padding: .8rem .9rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: .5rem;
+        }
+
+        .recipe-title {
+            font-size: .9rem;
+            font-weight: 600;
+            line-height: 1.35;
+            margin: 0;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
             overflow: hidden;
         }
 
-        .dish-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15) !important;
+        .recipe-author {
+            display: flex;
+            align-items: center;
+            gap: .45rem;
+            font-size: .775rem;
+            color: var(--text-muted);
         }
 
-        .card-img-top {
-            transition: transform 0.3s ease;
+        .author-avatar {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1.5px solid var(--border);
         }
 
-        .dish-card:hover .card-img-top {
-            transform: scale(1.05);
+        .recipe-stats {
+            display: flex;
+            gap: .75rem;
+            font-size: .75rem;
+            color: var(--text-muted);
+            flex-wrap: wrap;
         }
-    </style>
+
+            .recipe-stats span {
+                display: flex;
+                align-items: center;
+                gap: .25rem;
+            }
+        /* ── Pagination ─────────────────────────────── */
+        .custom-pagination {
+            display: flex;
+            align-items: center;
+            gap: .35rem;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+            .custom-pagination li a {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 38px;
+                height: 38px;
+                border-radius: 10px;
+                border: 1.5px solid var(--border);
+                background: var(--surface);
+                font-size: .85rem;
+                font-weight: 500;
+                color: var(--text);
+                text-decoration: none;
+                transition: all var(--transition);
+            }
+
+                .custom-pagination li a:hover {
+                    border-color: var(--brand);
+                    color: var(--brand-dark);
+                    background: var(--brand-light);
+                }
+
+            .custom-pagination li.active a {
+                background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+                border-color: transparent;
+                color: #fff;
+                box-shadow: 0 2px 8px rgba(245,158,11,.35);
+            }
+
+            .custom-pagination li.disabled a {
+                opacity: .35;
+                pointer-events: none;
+            }
+        /* ── Empty State ────────────────────────────── */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 1rem;
+            color: var(--text-muted);
+        }
+
+        .empty-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h4 {
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: .4rem;
+        }
+
+        .empty-state p {
+            font-size: .875rem;
+        }
+        /* ── Responsive tweaks ──────────────────────── */
+        @@media (max-width: 576px) {
+            .cat-hero-body
+
+        {
+            padding: 1.25rem 1.25rem;
+        }
+
+        .toolbar {
+            gap: .4rem;
+        }
+
+        }</style>
 }

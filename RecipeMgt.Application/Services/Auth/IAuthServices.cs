@@ -17,8 +17,20 @@ namespace RecipeMgt.Application.Services.Auth
 
         Task<RegisterResponse> Register(RegisterRequest registerRequest);
 
+        Task<ResetPasswordResponse> ResetPassword(ResetPasswordRequest request);
+
         Task<TokenResponse> Refreshtoken(string refreshToken);
 
         Task<AuthResponse> LoginWithGoogleAsync(string idToken);
+
+        Task<AuthResponse> LoginWithAzureAsync(string idToken);
+    }
+
+    public class ResetPasswordRequest
+    {
+    }
+
+    public class ResetPasswordResponse
+    {
     }
 }

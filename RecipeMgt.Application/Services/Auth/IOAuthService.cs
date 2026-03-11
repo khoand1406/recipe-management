@@ -10,5 +10,7 @@ namespace RecipeMgt.Application.Services.Auth
     public interface IOAuthService
     {
         Task<GoogleJsonWebSignature.Payload> VerifyAsync(string IdToken);
+
+        
     }
 }

@@ -10,4 +10,9 @@ namespace RecipeMgt.Application.DTOs.Request.Auth
     {
         public string IdToken { get; set; } = string.Empty;
     }
+
+    public class AzureLoginRequest
+    {
+        public string IdToken { get; set; } = string.Empty;
+    }
 }

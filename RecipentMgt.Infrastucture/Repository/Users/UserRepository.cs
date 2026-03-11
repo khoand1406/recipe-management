@@ -117,6 +117,27 @@ namespace RecipentMgt.Infrastucture.Repository.Users
             }
         }
 
+        public async Task<User> UpsertAzureUserAsync(string email, string? name)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.Email.Equals((email)));
+            if (user == null)
+            {
+                user = new User
+                {
+                    Email = email,
+                    FullName = name ?? "Default Name",
+                    Provider= "Azure",
+                    ProviderId= Guid.NewGuid().ToString(),
+                    CreatedAt = DateTime.Now,
+                };
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+                return user;
+            }
+            else return user;
+            
+        }
+
         public async Task<User> UpsertGoogleUserAsync(string providerId, string email, string username, string avatar)
         {
             var user = await _context.Users

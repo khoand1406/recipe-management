@@ -99,8 +99,7 @@
             <div class="divider">hoặc đăng ký bằng email</div>
 
             <!-- Register Form -->
-            <form asp-controller="Auth"
-                  asp-action="Register"
+            <form action="@Url.RouteUrl("AuthRegister")"
                   method="post"
                   id="registerForm"
                   novalidate>

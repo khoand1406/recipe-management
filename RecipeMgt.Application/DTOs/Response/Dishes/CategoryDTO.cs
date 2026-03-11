@@ -8,7 +8,7 @@ namespace RecipeMgt.Application.DTOs.Response.Dishes
 {
     public class CategoryDTO
     {
-        public int CategoryId;
+        public int CategoryId { get; set; }
 
         public string CategoryName { get; set; }
 
@@ -24,6 +24,5 @@ namespace RecipeMgt.Application.DTOs.Response.Dishes
         public int DishId { get; set; }
         public string DishName { get; set; }
         public string[]? Images { get; set; }
-        public int CategoryId { get; set; }
     }
 }

@@ -28,5 +28,6 @@ namespace RecipentMgt.Infrastucture.Repository.Users
 
         public Task CreateUserActivityLog(int? userId,string? sessionId, UserActivityType action, string target, int targetId, string? description);
         Task<List<User>> GetTopContributors();
+        Task<User> UpsertAzureUserAsync(string email, string? name);
     }
 }

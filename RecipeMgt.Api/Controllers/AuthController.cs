@@ -39,7 +39,7 @@ namespace RecipeMgt.Api.Controllers
             var validation = await _loginValidator.ValidateAsync(request);
             if (!validation.IsValid)
                 return BadRequest(ApiResponseFactory.Fail(validation, HttpContext));
-
+            
             var result = await _authServices.Login(request);
 
             return Ok(ApiResponseFactory.Success(result, HttpContext));
@@ -84,6 +84,14 @@ namespace RecipeMgt.Api.Controllers
             var result = await _authServices.LoginWithGoogleAsync(request.IdToken);
             return Ok(ApiResponseFactory.Success(result, HttpContext)) ;
         }
+
+        [HttpPost("auth-azure")]
+        public async Task <IActionResult> AzureAuth([FromBody] AzureLoginRequest request)
+        {
+            var result = await _authServices.LoginWithAzureAsync(request.IdToken);
+            return Ok(ApiResponseFactory.Success(result, HttpContext));
+        }
+
 
     }
 }

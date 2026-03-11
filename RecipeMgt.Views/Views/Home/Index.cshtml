@@ -24,27 +24,14 @@
         </p>
 
         <!-- Search -->
-        <form method="get"
-              asp-controller="Recipe"
-              asp-action="Search"
-              class="hero-search">
-            <i class="bi bi-search hero-search-icon"></i>
-            <input type="text"
-                   name="query"
-                   class="hero-search-input"
-                   placeholder="Tìm món ăn, nguyên liệu, đầu bếp..." />
-            <button type="submit" class="hero-search-btn">
-                Tìm kiếm
-            </button>
-        </form>
-
+        
         <!-- Quick tags -->
         <div class="hero-tags">
             <span class="hero-tag-label">Phổ biến:</span>
-            <a href="/Recipe/Search?query=Phở" class="hero-tag">🍜 Phở</a>
-            <a href="/Recipe/Search?query=Bún bò" class="hero-tag">🌶️ Bún bò</a>
-            <a href="/Recipe/Search?query=Bánh mì" class="hero-tag">🥖 Bánh mì</a>
-            <a href="/Recipe/Search?query=Cơm tấm" class="hero-tag">🍚 Cơm tấm</a>
+            <a href="/Recipe/Search?query=Phở" class="hero-tag">Phở</a>
+            <a href="/Recipe/Search?query=Bún bò" class="hero-tag">Bún bò</a>
+            <a href="/Recipe/Search?query=Bánh mì" class="hero-tag">Bánh mì</a>
+            <a href="/Recipe/Search?query=Cơm tấm" class="hero-tag">Cơm tấm</a>
         </div>
     </div>
 
@@ -103,7 +90,7 @@
         <div class="section-header reveal">
             <div>
                 <div class="section-eyebrow">Danh mục</div>
-                <h2 class="section-title">🍱 Khám phá theo chủ đề</h2>
+                <h2 class="section-title">Khám phá theo chủ đề</h2>
             </div>
             <a asp-controller="Dish" asp-action="Index" class="btn-text-link">
                 Xem tất cả <i class="bi bi-arrow-right"></i>
@@ -135,7 +122,7 @@
         <div class="section-header reveal">
             <div>
                 <div class="section-eyebrow">Nổi bật</div>
-                <h2 class="section-title">🔥 Top lượt xem</h2>
+                <h2 class="section-title">Top lượt xem</h2>
             </div>
             <a asp-controller="Recipe" asp-action="Index" class="btn-text-link">
                 Xem thêm <i class="bi bi-arrow-right"></i>
@@ -219,7 +206,7 @@
         <div class="section-header reveal">
             <div>
                 <div class="section-eyebrow">Mới nhất</div>
-                <h2 class="section-title">✨ Công thức mới hôm nay</h2>
+                <h2 class="section-title">Công thức mới hôm nay</h2>
             </div>
             <a asp-controller="Recipe" asp-action="Index" class="btn-text-link">
                 Xem tất cả <i class="bi bi-arrow-right"></i>

@@ -5,6 +5,7 @@ using RecipeMgt.Views.Services;
 
 namespace RecipeMgt.Views.Controllers
 {
+    [Route("[controller]")]
     public class AuthController : Controller
     {
 
@@ -15,13 +16,13 @@ namespace RecipeMgt.Views.Controllers
             _authClient = authClient;
         }
 
-        [HttpGet]
+        [HttpGet("Login")]
         public IActionResult Login()
         {
             return View();
         }
 
-        [HttpGet]
+        [HttpGet("Register")]
         public IActionResult Register()
         {
             return View();
@@ -33,7 +34,7 @@ namespace RecipeMgt.Views.Controllers
             return View();
         }
 
-        [HttpPost]
+        [HttpPost("Login", Name = "AuthLogin")]
         public async Task<IActionResult> Login(string email, string password)
         {
             var result = await _authClient.LoginAsync(email, password);
@@ -51,12 +52,24 @@ namespace RecipeMgt.Views.Controllers
             }
             else
             {
-                ViewBag.Error = result?.Message;
+                if (result?.Message == "BAD_CREDENTIALS")
+                {
+                    ViewBag.Error = "Email or password is incorrect";
+                }
+                else if (result?.Message == "Validation failed")
+                {
+                    ViewBag.Error = string.Join(", ", result?.Errors ?? []);
+                }
+                else
+                {
+                    ViewBag.Error = result?.Message ?? "Login failed";
+                }
+
                 return View();
             }
         }
 
-        [HttpPost]
+        [HttpPost("Register", Name = "AuthRegister")]
 
         public async Task<IActionResult> Register(string email, string password, string username)
         {
@@ -64,7 +77,7 @@ namespace RecipeMgt.Views.Controllers
             if (result.Success)
             {
                 TempData["RegisterSuccess"] = "Đăng ký thành công! Vui lòng đăng nhập lại";
-                return RedirectToAction("Login", "Auth");
+                return Redirect("/Auth/Login");
 
             }
             else
@@ -74,7 +87,7 @@ namespace RecipeMgt.Views.Controllers
             }
         }
 
-        [HttpPatch]
+        [HttpPost]
 
         public async Task<IActionResult> ChangePassword(string email, string currentPassword, string newPassword)
         {

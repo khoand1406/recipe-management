@@ -185,6 +185,29 @@ namespace RecipeMgt.Application.Services.Auth
                 ExpiredAt = DateTime.UtcNow.AddMinutes(30)
             };
         }
+
+        public async Task<AuthResponse> LoginWithAzureAsync(string idToken)
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var token = handler.ReadJwtToken(idToken);
+            var email = token.Claims.FirstOrDefault(c => c.Type == "preferred_username")?.Value ?? token.Claims.FirstOrDefault(c => c.Type == "Email")?.Value;
+            var name = token.Claims.FirstOrDefault(c => c.Type == "name")?.Value;
+            if (email == null)
+            {
+                throw new AuthenticationException("AZURE AUTH FAILED");
+            }
+            var user = await _userRepository.UpsertAzureUserAsync(email, name);
+            return new AuthResponse
+            {
+                AccessToken = _jwtService.GenerateJWTToken(user),
+                ExpiredAt = DateTime.UtcNow.AddMinutes(30)
+            };
+        }
+
+        public Task<ResetPasswordResponse> ResetPassword(ResetPasswordRequest request)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class AuthResponse

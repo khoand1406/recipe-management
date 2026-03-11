@@ -311,7 +311,7 @@ namespace RecipeMgt.Application.Services.Dishes
                     DishId = d.DishId,
                     DishName = d.DishName,
                     Images = d.Images?.Select(i => i.ImageUrl).ToArray(),
-                    CategoryId = d.CategoryId,
+                    
                 }).Take(10).ToList()
             });
             return Result<IEnumerable<CategoryDTO>>.Success(mappedResult);

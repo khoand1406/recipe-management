@@ -64,6 +64,14 @@
                 </div>
             }
 
+            @if (TempData["RegisterSuccess"] != null)
+            {
+                <div class="alert-success">
+                    <i class="bi bi-exclamation-circle-fill"></i>
+                    @TempData["RegisterSuccess"]
+                </div>
+            }
+
             <!-- ── Social Login ── -->
             <div class="social-grid">
 
@@ -96,11 +104,7 @@
             <div class="divider">hoặc đăng nhập bằng email</div>
 
             <!-- ── Email / Password Form ── -->
-            <form asp-controller="Auth"
-                  asp-action="Login"
-                  method="post"
-                  id="loginForm"
-                  novalidate>
+            <form action="@Url.RouteUrl("AuthLogin")" method="post" id="loginForm" novalidate>
 
                 <!-- Email -->
                 <div class="field">
@@ -167,13 +171,14 @@
             <!-- Register -->
             <div class="register-link">
                 Chưa có tài khoản?
-                <a asp-controller="Auth" asp-action="Register">Tạo tài khoản miễn phí</a>
+                <a href="/Auth/Register">Tạo tài khoản miễn phí</a>
             </div>
         </div>
     </div>
 
     <!-- Scripts -->
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/login.js"></script> 
+    <script src="~/js/login.js">
+    </script>
 </body>
 </html>

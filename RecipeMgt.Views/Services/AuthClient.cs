@@ -27,6 +27,7 @@ namespace RecipeMgt.Views.Services
 
             var response = await _httpClient.PostAsync(Endpoints.AuthLoginEndpoint, content);
             var json = await response.Content.ReadAsStringAsync();
+
             return JsonSerializer.Deserialize<ApiResponse<LoginResponse>>(json, _options)
                    ?? ApiResponse<LoginResponse>.Fail("Invalid server response", null, "SERVER_ERROR", (int?)StatusCode.INTERNAL_SERVER_ERROR);
         }

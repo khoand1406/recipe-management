@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using RecipeMgt.Views.Interface;
 using RecipeMgt.Views.Models;
 using RecipeMgt.Views.Models.Response;
+using RecipeMgt.Views.Models.ViewModels;
 using RecipeMgt.Views.Services;
 using System.Net.Http.Headers;
 using System.Text;
@@ -12,11 +13,13 @@ namespace RecipeMgt.Views.Controllers
     {
         private readonly ILogger<DishController> _logger;
         private readonly IDishClient _dishClient;
+        private readonly IDashboardClient _dashboardClient;
 
-        public DishController(ILogger<DishController> logger, IDishClient dishClient)
+        public DishController(ILogger<DishController> logger, IDishClient dishClient, IDashboardClient dashboardClient)
         {
             _logger = logger;
             _dishClient = dishClient;
+            _dashboardClient = dashboardClient;
         }
 
         [HttpGet]
@@ -27,11 +30,44 @@ namespace RecipeMgt.Views.Controllers
         }
 
         [HttpGet("{id:int}")]
-        public async Task<IActionResult> ByCategory(int id)
+        public async Task<IActionResult> ByCategory(
+     int? id,
+     int page = 1,
+     string? searchQuery = null)
         {
-            var dishes = await _dishClient.GetByCategoryAsync(id);
-            ViewBag.CategoryId = id;
-            return View(dishes);
+            var dishesTask = _dishClient.GetDishesAsync(page, 10, searchQuery, id);
+            var categoryTask = _dashboardClient.GetCategoriesAsync();
+
+            await Task.WhenAll(dishesTask, categoryTask);
+
+            var dishesResult = await dishesTask;
+            var categories = await categoryTask;
+
+            var category = categories?.Data?
+                .FirstOrDefault(x => x.CategoryId == id);
+
+            if (dishesResult == null)
+            {
+                return View(new CategoryDishViewModel());
+            }
+
+            var response = new CategoryDishViewModel
+            {
+                CategoryId = id,
+                SearchQuery = searchQuery,
+
+                CategoryName = category?.CategoryName,
+                CategoryImage = category?.ImageUrl ?? "",
+                Description = category?.Description ?? "",
+
+                Dishes = dishesResult.Items.ToList(),
+
+                CurrentPage = dishesResult.Page,
+                TotalPages = dishesResult.TotalPages,
+                TotalCount = dishesResult.TotalItems
+            };
+
+            return View(response);
         }
 
         [HttpGet()]
