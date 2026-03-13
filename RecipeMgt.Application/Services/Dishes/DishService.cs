@@ -65,7 +65,11 @@ namespace RecipeMgt.Application.Services.Dishes
                 if (!result.Success || result.Data == null)
                     return Result<CreateDishResponse>.Failure(result.Message);
 
-                var response = _mapper.Map<CreateDishResponse>(result.Data);
+                var response = new CreateDishResponse
+                {
+                    Success = true,
+                    Data = _mapper.Map<DishResponse>(result.Data)
+                };
                 response.Data.ImageUrls = result.Data.Images?
                     .Select(i => i.ImageUrl)
                     .ToList() ?? [];
@@ -230,18 +234,45 @@ namespace RecipeMgt.Application.Services.Dishes
         }
 
 
-        public async Task<Result<DTOs.Response.Recipe.PagedResponse<DishResponse>>> getDishes(int page, int pageSize, string? searchQuery, int? categoryId)
+        public async Task<Result<DTOs.Response.Recipe.PagedResponse<CategoryDishResponse>>> getDishes(int page, int pageSize, string? searchQuery, int? categoryId)
         {
             var result = await _repo.Search(page, pageSize, searchQuery, categoryId);
-            var mappedResult = new DTOs.Response.Recipe.PagedResponse<DishResponse>
+
+            var images = await _repo.LoadImageForAuthor(result.Items);
+            var categoryImage = "";
+           
+            if (categoryId != null)
             {
-                Items = _mapper.Map<IEnumerable<DishResponse>>(result.Items),
+                categoryImage = await _repo.LoadImageForCategory((int)categoryId);
+            }
+
+            var avatarDict= images?.ToDictionary(i=> i.EntityId, i=> i.ImageUrl) ?? [];
+
+
+            var mapped = result.Items.Select(x => new CategoryDishResponse
+            {
+                DishId = x.DishId,
+                CategoryId = x.CategoryId,
+                Description = x.Description,
+                BookmarkCount = x.Statistic?.BookmarkCount ?? 0,
+                ViewCount = x.Statistic?.ViewCount ?? 0,
+                CreatorName = x.Author?.FullName ?? "",
+                Category = x.Category,
+                DishName = x.DishName,
+                ImageUrls = x.Images?.Select(image => image.ImageUrl).ToList() ?? [],
+                CategoryImage = categoryImage,
+                CreatorAvatar = avatarDict.GetValueOrDefault(x.AuthorId, "")
+            });
+
+            var mappedResult = new PagedResponse<CategoryDishResponse>
+            {
+                Items = mapped,
+                Page = result.Page,
+                PageSize = result.PageSize,
                 TotalItems = result.TotalItems,
                 TotalPages = result.TotalPages,
-                Page = result.Page,
-                PageSize = pageSize,
             };
-            return Result<DTOs.Response.Recipe.PagedResponse<DishResponse>>.Success(mappedResult);
+            return Result<DTOs.Response.Recipe.PagedResponse<CategoryDishResponse>>.Success(mappedResult);
         }
 
 
@@ -300,19 +331,16 @@ namespace RecipeMgt.Application.Services.Dishes
         public async Task<Result<IEnumerable<CategoryDTO>>> GetCategoriesWithDishes()
         {
             var result = await _categoryRepository.GetAll();
+            var categoryDict = await _categoryRepository.GetDishCount();
+            var authorDict = await _categoryRepository.GetAuthorCount();
             var mappedResult = result.Select(item => new CategoryDTO
             {
                 CategoryId = item.CategoryId,
                 CategoryName = item.CategoryName,
                 Description = item.Description,
                 ImageUrl = item.ImageUrl,
-                Dishes = item.Dishes.Select(d => new DishBasicResponse
-                {
-                    DishId = d.DishId,
-                    DishName = d.DishName,
-                    Images = d.Images?.Select(i => i.ImageUrl).ToArray(),
-                    
-                }).Take(10).ToList()
+                DishesCount= categoryDict.GetValueOrDefault(item.CategoryId),
+                AuthorCount= authorDict.GetValueOrDefault(item.CategoryId)
             });
             return Result<IEnumerable<CategoryDTO>>.Success(mappedResult);
         }

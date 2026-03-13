@@ -29,7 +29,7 @@ namespace RecipeMgt.Views.Controllers
             return View(dishes);
         }
 
-        [HttpGet("{id:int}")]
+        [HttpGet("ByCategory/{id:int}")]
         public async Task<IActionResult> ByCategory(
      int? id,
      int page = 1,

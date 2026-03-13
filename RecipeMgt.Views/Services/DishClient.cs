@@ -28,13 +28,31 @@ namespace RecipeMgt.Views.Services
                    ?? [];
         }
 
-        public async Task<List<DishResponse>> GetByCategoryAsync(int categoryId)
+        public async Task<PagedResponse<CategoryDishResponse>> GetDishesAsync(
+    int page,
+    int pageSize,
+    string? searchQuery,
+    int? categoryId)
         {
-            var resp = await _httpClient.GetAsync(Endpoints.ApiDishByCategoryEndpoint);
+            var url = $"/api/dish?page={page}&pageSize={pageSize}";
+
+            if (!string.IsNullOrEmpty(searchQuery))
+                url += $"&searchQuery={searchQuery}";
+
+            if (categoryId.HasValue)
+                url += $"&categoryId={categoryId}";
+
+            var resp = await _httpClient.GetAsync(url);
+
             resp.EnsureSuccessStatusCode();
+
             var json = await resp.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<List<DishResponse>>(json, _jsonOptions)
-                   ?? [];
+
+            var result= JsonSerializer.Deserialize<ApiResponse<PagedResponse<CategoryDishResponse>>>(
+                json,
+                _jsonOptions
+            )!;
+            return result.Data!;
         }
 
         public async Task<ApiResponse<DishDetailResponse?>> GetDetailAsync(int dishId)

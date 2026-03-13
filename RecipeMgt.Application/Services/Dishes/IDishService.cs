@@ -14,7 +14,9 @@ namespace RecipeMgt.Application.Services.Dishes
     {
 
         public Task<Result<IEnumerable<CategoryDTO>>> GetCategoriesWithDishes();
-        public Task<Result<PagedResponse<DishResponse>>> getDishes(int page, int pageSize, string? searchQuery, int? categoryId);
+
+        
+        public Task<Result<PagedResponse<CategoryDishResponse>>> getDishes(int page, int pageSize, string? searchQuery, int? categoryId);
 
         public Task<Result<DishDetailResponse>> GetDishDetail(int id, int ?userId, string? sessionId);
 

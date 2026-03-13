@@ -8,10 +8,14 @@ namespace RecipeMgt.Views.Models.Response
 
         public string CategoryName { get; set; }
 
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
-        public string ImageUrl { get; set; }
+        public string? ImageUrl { get; set; }
 
-        public List<DishBasicResponse> Dishes { get; set; } = [];
+        public int DishesCount { get; set; }
+
+        public int AuthorCount { get; set; }
     }
-}
+
+    }
+

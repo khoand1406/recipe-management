@@ -7,7 +7,7 @@ namespace RecipeMgt.Views.Interface
     {
         Task<List<DishResponse>> GetAllAsync();
 
-        Task<PagedResponse<DishResponse>> GetDishesAsync(int page, int pageSize, string search, int categoryId);
+        Task<PagedResponse<CategoryDishResponse>> GetDishesAsync(int page, int pageSize, string? search, int? categoryId);
 
         Task<ApiResponse<DishDetailResponse>> GetDetailAsync(int id);
 

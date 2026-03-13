@@ -16,7 +16,11 @@ namespace RecipeMgt.Application.DTOs.Response.Dishes
 
         public string? ImageUrl { get; set; }
 
-        public List<DishBasicResponse> Dishes { get; set; } = [];
+        public int DishesCount { get; set; }
+
+        public int AuthorCount { get; set; }
+
+
     }
 
     public class DishBasicResponse

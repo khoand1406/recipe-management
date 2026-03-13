@@ -1,0 +1,226 @@
+﻿@{
+    ViewData["Title"] = "Danh mục - CookPad";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@model List<RecipeMgt.Views.Models.Response.CategoryDto>
+
+<section class="container py-4 py-lg-5">
+
+    <!-- Page Header -->
+    <div class="page-header mb-5">
+        <h1 class="page-title">Khám phá danh mục</h1>
+        <p class="page-subtitle">Tìm kiếm công thức theo phong cách ẩm thực yêu thích của bạn</p>
+    </div>
+
+    <div class="row g-4 g-lg-5 align-items-start">
+
+        <!-- ── Cột trái: Featured Image Review ── -->
+        <div class="col-12 col-lg-5 sticky-col">
+            <div class="feature-panel" id="featurePanel">
+
+                <!-- Default state -->
+                <div class="feature-default" id="featureDefault">
+                    <div class="feature-img-wrap">
+                        <img src="/images/categories/hero-default.jpg"
+                             alt="CookPad Categories"
+                             class="feature-img" />
+                        <div class="feature-overlay"></div>
+                    </div>
+                    <div class="feature-body">
+                        <p class="feature-hint">
+                            <i class="bi bi-hand-index-thumb"></i>
+                            Hover vào danh mục để xem trước
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Dynamic state (shown on hover) -->
+                <div class="feature-dynamic" id="featureDynamic" style="display:none;">
+                    <div class="feature-img-wrap">
+                        <img src="" alt="" class="feature-img" id="featureImg" />
+                        <div class="feature-overlay"></div>
+                    </div>
+                    <div class="feature-body">
+                        <span class="feature-badge" id="featureBadge"></span>
+                        <h2 class="feature-title" id="featureTitle"></h2>
+                        <p class="feature-desc" id="featureDesc"></p>
+                        <div class="feature-stats">
+                            <div class="fstat">
+                                <span class="fstat-num" id="featureCount">0</span>
+                                <span class="fstat-label">Công thức</span>
+                            </div>
+                            <div class="fstat-divider"></div>
+                            <div class="fstat">
+                                <span class="fstat-num" id="featureAuthors">0</span>
+                                <span class="fstat-label">Đầu bếp</span>
+                            </div>
+                            <div class="fstat-divider"></div>
+                            <div class="fstat">
+                                <span class="fstat-num" id="featureAvgTime">0</span>
+                                <span class="fstat-label">Phút TB</span>
+                            </div>
+                        </div>
+                        <a href="#" class="feature-cta" id="featureCta">
+                            Xem tất cả <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ── Cột phải: Category List ── -->
+        <div class="col-12 col-lg-7">
+
+            <!-- Search categories -->
+            <div class="cat-search-wrap mb-4">
+                <div class="search-form">
+                    <i class="bi bi-search"></i>
+                    <input type="text"
+                           class="search-input"
+                           placeholder="Tìm danh mục..."
+                           id="catSearchInput" />
+                </div>
+            </div>
+
+            <!-- Category stack -->
+            <div class="cat-list" id="catList">
+
+                @foreach (var cat in Model)
+                {
+                    <a href="/Category/@cat.CategoryId"
+                       class="cat-item"
+                       data-img="@cat.ImageUrl"
+                       data-title="@cat.CategoryName"
+                       data-desc="@cat.Description"
+                       data-count="@cat.RecipeCount"
+                       data-authors="@cat.AuthorCount"
+                       data-avgtime="@cat.AvgCookTime"
+                       data-badge="@cat.Tag"
+                       data-href="/Category/@cat.Slug">
+
+                        <div class="cat-item-thumb">
+                            <img src="@cat.ImageUrl"
+                                 alt="@cat.Name"
+                                 loading="lazy" />
+                        </div>
+
+                        <div class="cat-item-body">
+                            <div class="cat-item-top">
+                                <span class="cat-item-name">@cat.Name</span>
+                                @if (!string.IsNullOrEmpty(cat.Tag))
+                                {
+                                    <span class="cat-tag">@cat.Tag</span>
+                                }
+                            </div>
+                            <p class="cat-item-desc">@cat.Description</p>
+                            <div class="cat-item-meta">
+                                <span>
+                                    <i class="bi bi-journal-text"></i>
+                                    @cat.RecipeCount công thức
+                                </span>
+                                <span>
+                                    <i class="bi bi-clock"></i>
+                                    TB @cat.AvgCookTime phút
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="cat-item-arrow">
+                            <i class="bi bi-chevron-right"></i>
+                        </div>
+
+                    </a>
+                }
+
+                <!-- No results -->
+                <div class="cat-empty d-none" id="catEmpty">
+                    <span>😕</span>
+                    <p>Không tìm thấy danh mục nào</p>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</section>
+
+
+
+@section Scripts {
+    <script>
+        const items       = document.querySelectorAll('.cat-item');
+        const fDefault    = document.getElementById('featureDefault');
+        const fDynamic    = document.getElementById('featureDynamic');
+        const fImg        = document.getElementById('featureImg');
+        const fTitle      = document.getElementById('featureTitle');
+        const fDesc       = document.getElementById('featureDesc');
+        const fCount      = document.getElementById('featureCount');
+        const fAuthors    = document.getElementById('featureAuthors');
+        const fAvgTime    = document.getElementById('featureAvgTime');
+        const fBadge      = document.getElementById('featureBadge');
+        const fCta        = document.getElementById('featureCta');
+        const searchInput = document.getElementById('catSearchInput');
+        const catEmpty    = document.getElementById('catEmpty');
+
+        let hideTimer = null;
+
+        function showFeature(item) {
+            clearTimeout(hideTimer);
+            const d = item.dataset;
+
+            fImg.src       = d.img;
+            fTitle.textContent  = d.title;
+            fDesc.textContent   = d.desc;
+            fCount.textContent  = d.count;
+            fAuthors.textContent = d.authors;
+            fAvgTime.textContent = d.avgtime;
+            fCta.href      = d.href;
+
+            if (d.badge) {
+                fBadge.textContent = d.badge;
+                fBadge.style.display = 'inline-block';
+            } else {
+                fBadge.style.display = 'none';
+            }
+
+            fDefault.style.display = 'none';
+            fDynamic.style.display = 'flex';
+
+            items.forEach(i => i.classList.remove('is-active'));
+            item.classList.add('is-active');
+        }
+
+        function hideFeature() {
+            hideTimer = setTimeout(() => {
+                fDynamic.style.display = 'none';
+                fDefault.style.display = 'flex';
+                items.forEach(i => i.classList.remove('is-active'));
+            }, 180);
+        }
+
+        items.forEach(item => {
+            item.addEventListener('mouseenter', () => showFeature(item));
+            item.addEventListener('mouseleave', hideFeature);
+            item.addEventListener('focus', () => showFeature(item));
+            item.addEventListener('blur', hideFeature);
+        });
+
+        // Live search filter
+        searchInput.addEventListener('input', () => {
+            const q = searchInput.value.toLowerCase().trim();
+            let visible = 0;
+
+            items.forEach(item => {
+                const name = item.dataset.title.toLowerCase();
+                const desc = item.dataset.desc.toLowerCase();
+                const match = name.includes(q) || desc.includes(q);
+                item.style.display = match ? '' : 'none';
+                if (match) visible++;
+            });
+
+            catEmpty.classList.toggle('d-none', visible > 0);
+        });
+    </script>
+}
+

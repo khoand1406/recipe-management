@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using RecipeMgt.Api.Common;
 using RecipeMgt.Api.Common.Extension;
 using RecipeMgt.Application.DTOs.Request.Dishes;
@@ -91,12 +92,13 @@ namespace RecipeMgt.Api.Controllers
         }
 
         // POST: api/dish/create
+        [Authorize]
         [HttpPost("create")]
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> CreateDish(
             [FromForm] CreateDishRequest request)
         {
-            var userId= HttpContext.GetOptionalUserId();
+            var userId= HttpContext.GetUserId();
             request.AuthorId = userId;
             var result = await _dishService.CreateDish(request);
 

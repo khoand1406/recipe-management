@@ -52,4 +52,31 @@ namespace RecipeMgt.Views.Models.Response
         public bool Success { get; set; }
         public string Message { get; set; } = string.Empty;
     }
+
+    public class CategoryDishResponse
+    {
+        public int DishId { get; set; }
+
+        public string DishName { get; set; }
+
+        public string Description { get; set; }
+
+        public int CategoryId { get; set; }
+
+        public string CategoryName => Category?.CategoryName ?? string.Empty;
+
+        public virtual Category? Category { get; set; }
+
+        public List<string> ImageUrls { get; set; } = new();
+
+        public int ViewCount { get; set; }
+
+        public int BookmarkCount { get; set; }
+
+        public string CreatorName { get; set; } = string.Empty;
+
+        public string CreatorAvatar { get; set; } = string.Empty;
+
+        public string CategoryImage { get; set; } = string.Empty;
+    }
 }

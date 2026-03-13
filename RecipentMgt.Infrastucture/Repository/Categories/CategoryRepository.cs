@@ -20,20 +20,32 @@ namespace RecipentMgt.Infrastucture.Repository.Categories
 
         public async Task<ICollection<Category>> GetAll()
         {
-            return await _context.Categories.Include(c=> c.Dishes).Select(c => new Category
+            return await _context.Categories.ToListAsync();
+        }
+
+        public async Task<Dictionary<int, int>> GetAuthorCount()
+        {
+            var result = await _context.Dishes
+        .GroupBy(d => d.CategoryId)
+        .Select(g => new
+        {
+            CategoryId = g.Key,
+            AuthorCount = g.Select(x => x.AuthorId).Distinct().Count()
+        })
+        .ToDictionaryAsync(x => x.CategoryId, x => x.AuthorCount);
+            return result;
+
+        }
+
+        public async Task<Dictionary<int, int>> GetDishCount()
+        {
+            var categoryDict= new Dictionary<int, int>();
+            var queryResult= await _context.Categories.Include(x=> x.Dishes).ToListAsync();
+            foreach (var category in queryResult)
             {
-                CategoryId = c.CategoryId,
-                CategoryName = c.CategoryName,
-                Description = c.Description,
-                ImageUrl = c.ImageUrl,
-                Dishes = c.Dishes.Select(d => new Dish
-                {
-                    DishId = d.DishId,
-                    DishName = d.DishName,
-                    Images = d.Images,
-                    CategoryId = d.CategoryId
-                }).OrderBy(x=> x.DishId).Take(10).ToList()
-            }).ToListAsync();
+                categoryDict.Add(category.CategoryId, category.Dishes.Count);
+            }
+            return categoryDict;
         }
     }
 }

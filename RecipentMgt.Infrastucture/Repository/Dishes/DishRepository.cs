@@ -212,7 +212,11 @@ namespace RecipentMgt.Infrastucture.Repository.Dishes
                 .ToListAsync();
         }
 
-
+        public async Task<string> LoadImageForCategory(int categoryId)
+        {
+            var image=  await _context.Images.SingleOrDefaultAsync(x=> x.EntityId == categoryId && x.EntityType.Equals("Category")) ;
+            return image?.ImageUrl ?? "";
+        }
 
         #endregion
 
@@ -223,6 +227,7 @@ namespace RecipentMgt.Infrastucture.Repository.Dishes
             return _context.Dishes
                 .Include(d => d.Category)
                 .Include(d => d.Recipes)
+                .Include(d=> d.Author)
                 .Include(d => d.Statistic);
         }
 
@@ -241,6 +246,15 @@ namespace RecipentMgt.Infrastucture.Repository.Dishes
                     .Where(i => i.EntityId == dish.DishId)
                     .ToList();
             }
+        }
+
+        public async Task<List<Image>> LoadImageForAuthor(IEnumerable<Dish> dishes) {
+            var authorIds= dishes.Select(d=> d.AuthorId).ToList();
+            var images= await _context.Images.AsNoTracking()
+                        .Where(image=> image.EntityType=="User" 
+                        && authorIds.Contains(image.EntityId))
+                        .ToListAsync();
+            return images;
         }
 
         private async Task<List<Image>> GetDishImagesInternal(int dishId)
@@ -279,44 +293,50 @@ namespace RecipentMgt.Infrastucture.Repository.Dishes
         public async Task CalculateStuctureDish(int dishId, CancellationToken cancellationToken)
         {
             var dish = await _context.Dishes
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.DishId == dishId, cancellationToken);
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.DishId == dishId, cancellationToken);
 
             if (dish == null) return;
 
             var oldRelations = _context.RelatedDishes
-            .Where(x => x.DishId == dishId &&
-                        x.RelationType == DishRelationType.Structural);
+                .Where(x => x.DishId == dishId &&
+                            x.RelationType == DishRelationType.Structural);
 
             _context.RelatedDishes.RemoveRange(oldRelations);
 
             var candidates = await _context.Dishes
-    .Where(x => x.DishId != dishId)
-    .Select(x => new
-    {
-        Dish = x,
-        Score =
-            (x.CategoryId == dish.CategoryId ? 5 : 0) +
-            (x.AuthorId == dish.AuthorId ? 3 : 0)
-            
-    })
-    .Where(x => x.Score > 0)
-    .OrderByDescending(x => x.Score)
-    .Take(20)
-    .ToListAsync(cancellationToken);
-            foreach (var item in candidates)
-            {
-                var realtion = new RelatedDish
+                .AsNoTracking()
+                .Where(x =>
+                    x.DishId != dishId &&
+                    (x.CategoryId == dish.CategoryId ||
+                     x.AuthorId == dish.AuthorId))
+                .Select(x => new
                 {
-                    DishId = dishId,
-                    RelatedDishId = item.Dish.DishId,
-                    RelationType = DishRelationType.Structural,
-                    Priority = item.Score,
-                    LastUpdatedAt = DateTime.UtcNow
-                };
-            }
-            
+                    x.DishId,
+                    Score =
+                        (x.CategoryId == dish.CategoryId ? 5 : 0) +
+                        (x.AuthorId == dish.AuthorId ? 3 : 0)
+                })
+                .Where(x => x.Score > 0)
+                .OrderByDescending(x => x.Score)
+                .Take(20)
+                .ToListAsync(cancellationToken);
+
+            var relations = candidates.Select(item => new RelatedDish
+            {
+                DishId = dishId,
+                RelatedDishId = item.DishId,
+                RelationType = DishRelationType.Structural,
+                Priority = item.Score,
+                LastUpdatedAt = DateTime.UtcNow
+            });
+
+            await _context.RelatedDishes.AddRangeAsync(relations, cancellationToken);
+
+            await _context.SaveChangesAsync(cancellationToken);
         }
+
+
 
         #endregion
 

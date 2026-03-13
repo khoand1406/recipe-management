@@ -22,6 +22,8 @@ namespace RecipentMgt.Infrastucture.Repository.Dishes
 
         Task<List<string>> GetDishImages(int dishId);
 
+        Task<List<Image>> LoadImageForAuthor(IEnumerable<Dish> dishes);
+
         Task<List<Dish>> GetRelateDishAsync(int dishId);
 
         Task<List<Dish>> GetTopViewDishesAsync();
@@ -29,6 +31,6 @@ namespace RecipentMgt.Infrastucture.Repository.Dishes
         Task<List<Dish>> GetSuggestedDishAsync(int dishId);
 
         public Task CalculateStuctureDish(int dishId, CancellationToken token);
-
+        Task<string> LoadImageForCategory(int categoryId);
     }
 }

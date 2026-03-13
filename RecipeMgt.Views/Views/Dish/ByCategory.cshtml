@@ -3,7 +3,7 @@
 
 
 @{
-    ViewData["Title"] = "Dishes by Category";
+    ViewData["Title"] = "Danh sách Món";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
@@ -78,18 +78,18 @@
     @if (Model.Dishes.Any())
     {
         <div class="row g-4">
-            @foreach (var recipe in Model.Dishes)
+            @foreach (var dish in Model.Dishes)
             {
                 <div class="col-6 col-md-4 col-xl-3">
                     <a asp-controller="Recipe"
                        asp-action="Detail"
-                       asp-route-id="@recipe.Id"
+                       asp-route-id="@dish.DishId"
                        class="recipe-card">
                         <!-- Thumbnail -->
                         <div class="recipe-thumb">
-                            <img src="@recipe.ImageUrl" alt="@recipe.Title" loading="lazy" />
+                            <img src="@dish.ImageUrls.FirstOrDefault()" alt="@dish.DishName" loading="lazy" />
                             <!-- Badges -->
-                            @if (recipe.IsNew)
+                            @* @if (dish.vie)
                             {
                                 <span class="thumb-badge badge-new">Mới</span>
                             }
@@ -98,38 +98,38 @@
                                 <span class="thumb-badge badge-quick">
                                     <i class="bi bi-lightning-charge-fill"></i> Nhanh
                                 </span>
-                            }
+                            } *@
                             <!-- Bookmark -->
                             <button class="thumb-bookmark"
                                     onclick="event.preventDefault()">
-                                <i class="bi bi-bookmark@(recipe.IsBookmarked ? "-fill" : "")"></i>
+                                <i class="bi bi-bookmark@(dish.BookmarkCount)"></i>
                             </button>
                         </div>
                         <!-- Info -->
                         <div class="recipe-info">
-                            <h3 class="recipe-title">@recipe.Title</h3>
+                            <h3 class="recipe-title">@dish.DishName</h3>
                             <!-- Author -->
                             <div class="recipe-author">
-                                <img src="@recipe.AuthorAvatar"
+                                <img src="@dish.CreatorAvatar"
                                      class="author-avatar"
-                                     alt="@recipe.AuthorName" />
-                                <span>@recipe.AuthorName</span>
+                                     alt="@dish.CreatorName" />
+                                <span>@dish.CreatorName</span>
                             </div>
                             <!-- Stats -->
-                            <div class="recipe-stats">
+                            @* <div class="recipe-stats">
                                 <span>
                                     <i class="bi bi-clock"></i>
-                                    @recipe.CookTime phút
+                                    @dish.CookTime phút
                                 </span>
                                 <span>
                                     <i class="bi bi-star-fill text-warning"></i>
-                                    @recipe.Rating.ToString("0.0")
+                                    @dish.Rating.ToString("0.0")
                                 </span>
                                 <span>
                                     <i class="bi bi-heart"></i>
-                                    @recipe.Likes
+                                    @dish.Likes
                                 </span>
-                            </div>
+                            </div> *@
                         </div>
                     </a>
                 </div>

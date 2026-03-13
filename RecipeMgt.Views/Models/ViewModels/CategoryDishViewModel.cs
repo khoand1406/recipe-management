@@ -10,7 +10,7 @@ namespace RecipeMgt.Views.Models.ViewModels
 
         public string? SearchQuery { get; set; }
 
-        public List<DishResponse> Dishes { get; set; } = new();
+        public List<CategoryDishResponse> Dishes { get; set; } = new();
 
         public int CurrentPage { get; set; }
 
@@ -18,5 +18,6 @@ namespace RecipeMgt.Views.Models.ViewModels
 
         public int TotalCount { get; set; }
         public string CategoryImage { get; internal set; }
+        public string Description { get; internal set; }
     }
 }
