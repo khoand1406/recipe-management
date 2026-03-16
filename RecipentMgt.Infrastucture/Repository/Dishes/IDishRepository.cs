@@ -32,5 +32,7 @@ namespace RecipentMgt.Infrastucture.Repository.Dishes
 
         public Task CalculateStuctureDish(int dishId, CancellationToken token);
         Task<string> LoadImageForCategory(int categoryId);
+        Task<int> CountAsync();
+        Task <List<DishChartResponse>>GetChartCreateMonthly();
     }
 }

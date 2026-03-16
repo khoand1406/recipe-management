@@ -211,7 +211,20 @@ namespace RecipentMgt.Infrastucture.Repository.Dishes
                 .AsNoTracking()
                 .ToListAsync();
         }
+        public async Task<List<DishChartResponse>> GetChartCreateMonthly()
+        {
+            return await _context.Dishes.GroupBy(d => new { d.CreatedDate.Year, d.CreatedDate.Month })
+                .Select(g => new DishChartResponse
+                {
+                    Month= g.Key.Month,
+                    RecipeCount = g.Count(),
 
+                }).OrderBy(x=> x.Month).ToListAsync();
+        }
+        public async Task<int> CountAsync()
+        {
+            return await _context.Dishes.CountAsync();
+        }
         public async Task<string> LoadImageForCategory(int categoryId)
         {
             var image=  await _context.Images.SingleOrDefaultAsync(x=> x.EntityId == categoryId && x.EntityType.Equals("Category")) ;
@@ -336,10 +349,11 @@ namespace RecipentMgt.Infrastucture.Repository.Dishes
             await _context.SaveChangesAsync(cancellationToken);
         }
 
-
+        
 
         #endregion
 
-
+        
     }
+    
 }

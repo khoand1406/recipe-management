@@ -80,6 +80,10 @@ namespace RecipentMgt.Infrastucture.Persistence
                     .IsRequired()
                     .HasMaxLength(150);
 
+                entity.Property(e => e.CreatedDate)
+                .IsRequired()
+                .HasDefaultValueSql("GETDATE()");
+
                 entity.HasOne(d => d.Category).WithMany(p => p.Dishes)
                     .HasForeignKey(d => d.CategoryId)
                     .HasConstraintName("FK__Dishes__Category__2F10007B");
@@ -241,6 +245,11 @@ namespace RecipentMgt.Infrastucture.Persistence
                 entity.Property(e => e.CreatedAt)
                     .HasDefaultValueSql("(getdate())")
                     .HasColumnType("datetime");
+
+                entity.Property(e=> e.UpdateAt).IsRequired(false).HasColumnType("datetime");
+                entity.Property(e => e.DeleteAt).IsRequired(false).HasColumnType("datetime");
+                entity.Property(e => e.IsBanned).IsRequired().HasDefaultValue(false);
+
                 entity.Property(e => e.Email)
                     .IsRequired()
                     .HasMaxLength(100);

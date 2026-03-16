@@ -60,6 +60,7 @@ namespace RecipeMgt.Application.Services.Dishes
                     images = await _imageService
                         .UploadEntityImagesAsync(request.Images, "Dish");
                 }
+                dish.CreatedDate = DateTime.UtcNow;
 
                 var result = await _repo.CreateDish(dish, images);
                 if (!result.Success || result.Data == null)

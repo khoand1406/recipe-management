@@ -32,12 +32,11 @@ namespace RecipentMgt.Infrastucture.Repository.Recipes
 
         Task AddRangeAsync(List<Step> steps);
 
-       
-
         void RemoveRange(List<Image> images);
 
         void Update(Recipe newRecipe);
         Task<bool> deleteRecipes(int id);
         Task<List<Image>> getRecipeImages(int recipeId);
+        Task <List<Recipe>>GetTopRecipeRating();
     }
 }

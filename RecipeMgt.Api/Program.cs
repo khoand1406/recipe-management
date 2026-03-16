@@ -103,7 +103,8 @@ internal class Program
             options.InstanceName = "RecipeMgt:";
         });
 
-        builder.Services.AddAuthorization();
+        builder.Services.AddAuthorizationBuilder()
+            .AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
         builder.Services.AddLogging();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();

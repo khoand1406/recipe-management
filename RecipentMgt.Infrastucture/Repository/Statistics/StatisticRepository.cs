@@ -234,5 +234,10 @@ WHEN NOT MATCHED THEN
             WHERE DishId = @dishId",
             new SqlParameter("@dishId", dishId));
         }
+
+        public async Task<int> GetRatingCount()
+        {
+            return await _context.Ratings.CountAsync();
+        }
     }
 }

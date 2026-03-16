@@ -27,5 +27,6 @@ namespace RecipentMgt.Infrastucture.Repository.Statistics
         Task IncreaseDishViewCount(int dishId);
 
         Task DecreaseDishBookmarkCount(int dishId);
+        Task<int> GetRatingCount();
     }
 }

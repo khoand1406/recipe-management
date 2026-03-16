@@ -24,6 +24,12 @@ public partial class User
 
     public bool IsActived { get; set; }
 
+    public bool IsBanned { get; set; }
+
+    public DateTime? UpdateAt { get; set; }
+
+    public DateTime? DeleteAt { get; set; }
+
 
     public virtual ICollection<Rating> Ratings { get; set; } = [];
 

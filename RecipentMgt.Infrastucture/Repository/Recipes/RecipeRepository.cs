@@ -142,6 +142,14 @@ namespace RecipentMgt.Infrastucture.Repository.Recipes
             };
         }
 
+        public async Task<List<Recipe>> GetTopRecipeRating()
+        {
+            return await _context.Recipes.Include(r => r.RecipeStatistic)
+                .OrderByDescending(x => x.RecipeStatistic.AvgRating)
+                .Take(5)
+                .ToListAsync();
+        }
+
         public void RemoveRange(List<Image> images)=> _context.RemoveRange(images);
         
 

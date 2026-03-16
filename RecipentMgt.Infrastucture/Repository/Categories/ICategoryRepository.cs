@@ -9,6 +9,7 @@ namespace RecipentMgt.Infrastucture.Repository.Categories
 {
     public interface ICategoryRepository
     {
+        Task<int> CountAsync();
         Task<ICollection<Category>> GetAll();
         Task<Dictionary<int, int>> GetAuthorCount();
         Task<Dictionary<int, int>> GetDishCount();

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using RecipentMgt.Infrastucture.Persistence;
 
@@ -11,9 +12,11 @@ using RecipentMgt.Infrastucture.Persistence;
 namespace RecipentMgt.Infrastucture.Migrations
 {
     [DbContext(typeof(RecipeManagementContext))]
-    partial class RecipeManagementContextModelSnapshot : ModelSnapshot
+    [Migration("20260316043445_AddCreateDates")]
+    partial class AddCreateDates
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -565,9 +568,6 @@ namespace RecipentMgt.Infrastucture.Migrations
                         .HasColumnType("datetime")
                         .HasDefaultValueSql("(getdate())");
 
-                    b.Property<DateTime?>("DeleteAt")
-                        .HasColumnType("datetime");
-
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -579,11 +579,6 @@ namespace RecipentMgt.Infrastucture.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<bool>("IsActived")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
-                    b.Property<bool>("IsBanned")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
                         .HasDefaultValue(false);
@@ -605,9 +600,6 @@ namespace RecipentMgt.Infrastucture.Migrations
 
                     b.Property<int>("RoleId")
                         .HasColumnType("int");
-
-                    b.Property<DateTime?>("UpdateAt")
-                        .HasColumnType("datetime");
 
                     b.HasKey("UserId")
                         .HasName("PK__Users__1788CC4C6B0995CF");

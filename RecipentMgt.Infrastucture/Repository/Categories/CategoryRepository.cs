@@ -18,6 +18,11 @@ namespace RecipentMgt.Infrastucture.Repository.Categories
             _context = context;
         }
 
+        public async Task<int> CountAsync()
+        {
+            return await _context.Categories.CountAsync();
+        }
+
         public async Task<ICollection<Category>> GetAll()
         {
             return await _context.Categories.ToListAsync();

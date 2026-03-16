@@ -17,6 +17,8 @@ public partial class Dish
 
     public int AuthorId { get; set; } = 0;
 
+    public DateTime CreatedDate { get; set; }
+
     public virtual Category Category { get; set; }
 
     [NotMapped]

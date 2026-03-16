@@ -120,12 +120,11 @@ namespace RecipeMgt.Application.Services.Auth
             var issuer = _configuration["Jwt:Issuer"];
             var audience = _configuration["Jwt:Audience"];
 
-
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim("role", "user")
+                new Claim(ClaimTypes.Role, user.Role?.RoleName ?? string.Empty)
             };
 
             var tokenDescriptor = new SecurityTokenDescriptor

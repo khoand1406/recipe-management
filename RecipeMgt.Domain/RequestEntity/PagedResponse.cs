@@ -18,4 +18,11 @@ namespace RecipeMgt.Domain.RequestEntity
 
         public int TotalPages { get; set; }
     }
+
+    public class DishChartResponse
+    {
+        public int Month { get; set; }
+
+        public int RecipeCount { get; set; }
+    }
 }
