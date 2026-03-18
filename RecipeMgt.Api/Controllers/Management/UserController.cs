@@ -50,8 +50,8 @@ namespace RecipeMgt.Api.Controllers.Management
         [HttpPost("upload-csv")]
         public async Task<IActionResult> CreateFromCsv(IFormFile file)
         {
-            var result= await _userManagementService.CreateUserFromCsv(file);
-            return Ok(ApiResponseFactory.Success(result.Value, HttpContext));
+            var result= await _userManagementService.CreateUsersFromCsv(file);
+            return Ok(ApiResponseFactory.Success(result, HttpContext));
         }
 
 

@@ -10,6 +10,7 @@ using RecipeMgt.Application;
 using RecipeMgt.Application.DTOs.Request.Dishes;
 using RecipeMgt.Application.DTOs.Request.Recipes;
 using RecipeMgt.Application.Validator.Auth;
+using RecipeMgt.Application.Validator.Csv;
 using RecipeMgt.Application.Validator.Rating;
 using RecipentMgt.Infrastucture;
 using System.Text;
@@ -72,7 +73,7 @@ internal class Program
         builder.Services.AddValidatorsFromAssemblyContaining<CreateRecipeRequest>();
         builder.Services.AddValidatorsFromAssemblyContaining<UpdateRecipeRequest>();
         builder.Services.AddValidatorsFromAssemblyContaining<AddRatingValidation>();
-
+        builder.Services.AddValidatorsFromAssemblyContaining<CreateUserCsvDtoValidator>();
 
 
         builder.Services.AddAuthentication(options =>

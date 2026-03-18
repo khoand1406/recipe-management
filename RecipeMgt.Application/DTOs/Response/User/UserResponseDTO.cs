@@ -70,8 +70,9 @@ namespace RecipeMgt.Application.DTOs.Response.User
         [MaxLength(100, ErrorMessage = "FULLNAME_TOO_LONG")]
         public string FullName { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "FULLNAME_REQUIRED")]
-        [MaxLength(100, ErrorMessage = "FULLNAME_TOO_LONG")]
+        [Required(ErrorMessage = "EMAIL_REQUIRED")]
+        [EmailAddress(ErrorMessage = "WRONG_EMAIL_FORMAT")]
+        [MaxLength(100, ErrorMessage = "EMAIL_TOO_LONG")]
         public string Email { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "PASSWORD_REQUIRED")]

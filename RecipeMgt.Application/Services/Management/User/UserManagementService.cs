@@ -108,8 +108,12 @@ namespace RecipeMgt.Application.Services.Management.User
 
         public async Task<Result<UserResponseDTO>> CreateUser(CreateUserRequest request)
         {
-            var payload = _mapper.Map<Domain.Entities.User>(request);
-            var result = await _userRepository.CreateAsync(payload);
+            var user = _mapper.Map<Domain.Entities.User>(request);
+            user.PasswordHash = UserUtils.HashPassword(request.Password);
+
+            user.CreatedAt = DateTime.UtcNow;
+            user.IsActived = true;
+            var result = await _userRepository.CreateAsync(user);
             var createdUser = await _userRepository.GetByIdAsync(result);
             if(createdUser == null)
             {

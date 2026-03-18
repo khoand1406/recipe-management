@@ -39,6 +39,6 @@ namespace RecipeMgt.Application.Services.Management.User
         Task<Result<bool>> BanBatchUser(BatchUserIdsRequest batchUserIds);
 
         Task<Result<bool>> RecoverUserAccount(int id);
-        Task <Result<BatchImportResult>>CreateUserFromCsv(IFormFile file);
+        Task<BatchImportResult> CreateUsersFromCsv(IFormFile file);
     }
 }
