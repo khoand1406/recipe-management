@@ -11,28 +11,51 @@ namespace RecipentMgt.Infrastucture.Repository.Users
 {
     public interface IUserRepository
     {
-        Task<User?> getUserByEmail(string email);
+        Task<User?> GetByIdAsync(int userId);
 
-        Task<User?> getUserByUsername(string username);
+        Task<User?> GetByEmailAsync(string email);
 
-        Task<PagedResponse<User>> GetUsersAsync(int page, int pageSize, string? searchQuery, int? userStatus);
+        Task<List<User>> GetUsersByIds(List<int> items);
+        Task<User?> GetByUserName(string username);
 
-        Task<User?> getUserAsync(int userId);
+        Task<bool> ExistsByEmailAsync(string email);
 
-        Task<(bool Success, string Message, int CarriageId)> createUser(User user);
-        Task<(bool Success, string Message, int UserId)> updateUser(User user, int id);
-
-        Task<bool> deleteUser(int userId);
-        Task<bool> checkDuplicateEmail(string email);
-
-        public Task<User> UpsertGoogleUserAsync(string providerId, string email, string username, string avatar);
-
-        public Task CreateUserActivityLog(int? userId,string? sessionId, UserActivityType action, string target, int targetId, string? description);
-        Task<List<User>> GetTopContributors();
-        Task<User> UpsertAzureUserAsync(string email, string? name);
         Task<int> CountAsync();
-        Task BanUser(User user);
 
-        Task UnbanUser(User user);
+        Task<PagedResponse<User>> GetUsersAsync(
+            int page,
+            int pageSize,
+            string? searchQuery,
+            int? userStatus);
+
+        Task<List<User>> GetTopContributorsAsync();
+
+        Task<int> CreateAsync(User user);
+
+        Task CreateBatchAsync(List<User> users);
+        Task UpdateAsync(User user);
+
+        Task UpdateRangeAsync(List<User> users);
+
+        Task DeleteAsync(User user);
+
+        Task CreateUserActivityLogAsync(
+            int? userId,
+            string? sessionId,
+            UserActivityType action,
+            string target,
+            int targetId,
+            string? description);
+        Task<User> UpsertGoogleUserAsync(
+            string providerId,
+            string email,
+            string username);
+
+        Task<User> UpsertAzureUserAsync(
+            string email,
+            string? name);
+        Task<Role?> GetRoleByName(string roleName);
+        Task<IEnumerable<string>> GetExistingEmails(List<string> emails);
+        Task <IEnumerable<string>>GetExistingName(List<string> names);
     }
 }

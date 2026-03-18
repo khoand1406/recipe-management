@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RecipeMgt.Api.Validator.Auth
+namespace RecipeMgt.Application.Validator.Auth
 {
     public class RegistetRequestValidator:AbstractValidator<RegisterRequest>
     {

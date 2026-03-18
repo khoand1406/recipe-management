@@ -37,7 +37,7 @@ namespace RecipeMgt.Api.Controllers
                 return Unauthorized(ApiResponseFactory.Fail(AuthenticationError.AuthenError, HttpContext));
             }
 
-            var user = await _userRepository.getUserByEmail(email);
+            var user = await _userRepository.GetByEmailAsync(email);
             if (user == null)
             {
                 return NotFound(ApiResponseFactory.Fail("", HttpContext));
@@ -57,7 +57,7 @@ namespace RecipeMgt.Api.Controllers
             {
                 return Unauthorized(ApiResponseFactory.Fail(AuthenticationError.AuthenError, HttpContext));
             }
-            var user = await _userRepository.getUserByEmail(email);
+            var user = await _userRepository.GetByEmailAsync(email);
             if (user == null)
             {
                 return NotFound(ApiResponseFactory.Fail("", HttpContext));

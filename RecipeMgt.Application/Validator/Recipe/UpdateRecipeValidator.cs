@@ -6,12 +6,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RecipeMgt.Api.Validator.Recipe
+namespace RecipeMgt.Application.Validator.Recipe
 {
-    public class CreateRecipeValidator : AbstractValidator<CreateRecipeRequest>
+    public class UpdateRecipeValidator:AbstractValidator<UpdateRecipeRequest>
     {
-        public CreateRecipeValidator()
-        {
+        public UpdateRecipeValidator() {
             RuleFor(x => x.Title).NotEmpty().WithMessage("Recipe Title is required");
 
             RuleFor(x => x.Description).NotEmpty().WithMessage("Description is required");
@@ -22,10 +21,21 @@ namespace RecipeMgt.Api.Validator.Recipe
             .NotNull().WithMessage("Ingredients list cannot be null.")
             .Must(x => x.Count > 0).WithMessage("At least one ingredient is required.");
 
+            RuleForEach(x => x.Ingredients).ChildRules(i =>
+            {
+                i.RuleFor(y => y.Name).NotEmpty().WithMessage("Ingredients can' be null");
+                i.RuleFor(y => y.Quantity).NotEmpty().WithMessage("Ingredient quantity must be not empty.");
+
+            });
+
             RuleFor(x => x.Steps)
                 .NotNull().WithMessage("Steps list cannot be null.")
                 .Must(x => x.Count > 0).WithMessage("At least one step is required.");
 
+            RuleForEach(x => x.Steps).ChildRules(s =>
+            {
+                s.RuleFor(y => y.Instruction).NotEmpty().WithMessage("Step instruction is required.");
+            });
         }
     }
 }

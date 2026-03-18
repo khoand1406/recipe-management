@@ -1,209 +1,223 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.Json;
 using Microsoft.Extensions.Logging;
 using RecipeMgt.Domain.Entities;
 using RecipeMgt.Domain.Enums;
 using RecipeMgt.Domain.RequestEntity;
 using RecipentMgt.Infrastucture.Persistence;
+using RecipentMgt.Infrastucture.Repository.Users;
 using RecipentMgt.Infrastucture.Utils;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace RecipentMgt.Infrastucture.Repository.Users
+public class UserRepository : IUserRepository
 {
-    public class UserRepository : IUserRepository
+    private readonly RecipeManagementContext _context;
+    private readonly ILogger<UserRepository> _logger;
+
+    public UserRepository(RecipeManagementContext context, ILogger<UserRepository> logger)
     {
-        private readonly RecipeManagementContext _context;
-        private readonly ILogger<UserRepository> _logger;
+        _context = context;
+        _logger = logger;
+    }
 
-        public UserRepository(RecipeManagementContext context, ILogger<UserRepository> logger)
+    public async Task<User?> GetByIdAsync(int userId)
+    {
+        return await _context.Users
+            .Include(u => u.Recipes)
+            .Include(u => u.Ratings)
+            .Include(u => u.UserStatistic)
+            .FirstOrDefaultAsync(x => x.UserId == userId);
+    }
+
+    public async Task<User?> GetByEmailAsync(string email)
+    {
+        return await _context.Users
+            .Include(u => u.Role)
+            .FirstOrDefaultAsync(x => x.Email == email);
+    }
+
+    public async Task<bool> ExistsByEmailAsync(string email)
+    {
+        return await _context.Users.AnyAsync(x => x.Email == email);
+    }
+
+    public async Task<int> CountAsync()
+    {
+        return await _context.Users.CountAsync();
+    }
+
+    public async Task<PagedResponse<User>> GetUsersAsync(int page, int pageSize, string? searchQuery, int? userStatus)
+    {
+        var query = _context.Users
+            .Include(u => u.Followers)
+            .Include(u => u.Recipes)
+            .AsNoTracking();
+
+        if (!string.IsNullOrEmpty(searchQuery))
         {
-            _context = context;
-            _logger = logger;
+            query = query.Where(x => x.FullName.Contains(searchQuery));
         }
 
-        public async Task BanUser(User user)
+        if (userStatus != null)
         {
-            user.IsBanned = true;
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task<bool> checkDuplicateEmail(string email)
-        {
-            var user = await getUserByEmail(email);
-            Console.WriteLine(user);
-            return user != null;
-        }
-
-        public async Task<int> CountAsync()
-        {
-            return await _context.Users.CountAsync();
-        }
-
-        public async Task<(bool Success, string Message, int CarriageId)> createUser(User user)
-        {
-            await _context.Users.AddAsync(user);
-            await _context.SaveChangesAsync();
-            return (true, "User created successfully", user.UserId);
-        }
-
-        public async Task CreateUserActivityLog(int ?userId, string? sessionId,  UserActivityType action, string target, int targetId, string? description)
-        {
-            await _context.UserActivityLogs.AddAsync(new UserActivityLog {
-                UserId= userId,
-                SessionId= sessionId,
-                ActivityType= action,
-                CreatedAt= DateTime.Now,
-                Description= description,
-                TargetId= targetId,
-                TargetType= target,
-            });
-            await _context.SaveChangesAsync();  
-        }
-
-        public async Task<bool> deleteUser(int userId)
-        {
-            var userFound = await _context.Users.FindAsync(userId);
-            if (userFound != null)
+            query = userStatus switch
             {
-                _context.Users.Remove(userFound);
-                await _context.SaveChangesAsync();
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+                0 => query.Where(x => x.IsActived),
+                1 => query.Where(x => !x.IsActived),
+                2 => query.Where(x => x.IsBanned),
+                3 => query.Where(x => x.DeleteAt != null),
+                _ => throw new ArgumentException("INVALID_USER_STATUS"),
+            };
         }
 
-        public async Task<List<User>> GetTopContributors()
+        return await PaginationHelper.ToPagedResponseAsync(query, page, pageSize);
+    }
+
+    public async Task<int> CreateAsync(User user)
+    {
+        await _context.Users.AddAsync(user);
+        return await _context.SaveChangesAsync();
+    }
+
+    public async Task CreateBatchAsync(List<User> users)
+    {
+        await _context.Users.AddRangeAsync(users);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task UpdateAsync(User user)
+    {
+        _context.Users.Update(user);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task UpdateRangeAsync(List<User> users)
+    {
+        _context.Users.UpdateRange(users);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task SoftDeleteAsync(User user)
+    {
+        user.DeleteAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+    }
+
+
+    public async Task CreateUserActivityLogAsync(
+        int? userId,
+        string? sessionId,
+        UserActivityType action,
+        string target,
+        int targetId,
+        string? description)
+    {
+        await _context.UserActivityLogs.AddAsync(new UserActivityLog
         {
-            var topContributor= await _context.Users
-                .Include(u=> u.UserStatistic)
-                .OrderBy(u=> u.UserStatistic.RecipeCount)
+            UserId = userId,
+            SessionId = sessionId,
+            ActivityType = action,
+            TargetType = target,
+            TargetId = targetId,
+            Description = description,
+            CreatedAt = DateTime.UtcNow
+        });
+
+        await _context.SaveChangesAsync();
+    }
+
+
+    public async Task<User> UpsertGoogleUserAsync(string providerId, string email, string username)
+    {
+        var user = await _context.Users
+            .FirstOrDefaultAsync(x => x.Provider == "Google" && x.ProviderId == providerId);
+
+        if (user != null) return user;
+
+        user = new User
+        {
+            Email = email,
+            FullName = username,
+            Provider = "Google",
+            ProviderId = providerId,
+            CreatedAt = DateTime.UtcNow,
+            IsActived = true
+        };
+
+        await _context.Users.AddAsync(user);
+        await _context.SaveChangesAsync();
+
+        return user;
+    }
+
+    public async Task<User> UpsertAzureUserAsync(string email, string? name)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(x => x.Email == email);
+
+        if (user != null) return user;
+
+        user = new User
+        {
+            Email = email,
+            FullName = name ?? "Default Name",
+            Provider = "Azure",
+            ProviderId = Guid.NewGuid().ToString(),
+            CreatedAt = DateTime.UtcNow,
+            IsActived = true
+        };
+
+        await _context.Users.AddAsync(user);
+        await _context.SaveChangesAsync();
+
+        return user;
+    }
+
+
+    public async Task<List<User>> GetTopContributorsAsync()
+    {
+        var topContributor = await _context.Users
+                .Include(u => u.UserStatistic)
+                .OrderBy(u => u.UserStatistic.RecipeCount)
                 .Take(5)
                 .ToListAsync();
-            return topContributor;
-        }
+        return topContributor;
+    }
 
+    
 
-        public async Task<User?> getUserAsync(int userId)
-        {
-            var userFound = await _context.Users.Include(u=> u.Recipes)
-                                    .Include(u=> u.UserStatistic)
-                                    .Include(u=> u.Ratings)
-                                    .FirstOrDefaultAsync(x=> x.UserId==userId);
-            return userFound;
-        }
+    public Task DeleteAsync(User user)
+    {
+        throw new NotImplementedException();
+    }
 
-        public async Task<User?> getUserByEmail(string email)
-        {
-            var user = await _context.Users.Include(u=> u.Role).FirstOrDefaultAsync(x => x.Email.Equals(email));
-            return user ?? null;
-        }
+    public async Task<List<User>> GetUsersByIds(List<int> items)
+    {
+        var result= await _context.Users.Where(x=> items.Contains(x.UserId)).ToListAsync();
+        return result;
+    }
 
-        public async Task<User?> getUserByUsername(string username)
-        {
-            return await _context.Users
-        .FirstOrDefaultAsync(x => x.FullName == username);
-        }
+    public async Task<User?> GetByUserName(string username)
+    {
+        var result= await _context.Users.Where(x=> x.FullName.Equals(username)).FirstOrDefaultAsync();
+        return result;
+    }
 
-        public async Task<PagedResponse<User>> GetUsersAsync(int page, int pageSize, string? searchQuery, int? userStatus)
-        {
-            var query = _context.Users
-                .Include(u=> u.Followers)
-                .Include(u=> u.Recipes)
-                .AsNoTracking();
+    public async Task<Role?> GetRoleByName(string roleName)
+    {
+        var role=  await _context.Roles.FirstOrDefaultAsync(x=> x.RoleName.Equals(roleName));
+        return role ?? null;
+    }
 
-            if (!string.IsNullOrEmpty(searchQuery))
-            {
-                query= query.Where(x=> x.FullName.Contains(searchQuery));
-            }
+    public async Task<IEnumerable<string>> GetExistingEmails(List<string> emails)
+    {
+        return await _context.Users
+        .Where(x => emails.Contains(x.Email))
+        .Select(x => x.Email)
+        .ToListAsync();
+    }
 
-            if (userStatus != null)
-            {
-                query = userStatus switch
-                {
-                    0 => query.Where(x => x.IsActived == true),
-                    1 => query.Where(x => x.IsActived == false),
-                    2 => query.Where(x => x.IsBanned == true),
-                    3 => query.Where(x => x.DeleteAt != null),
-                    _ => throw new ArgumentException("Invalid user status"),
-                };
-            }
-            var pagedResult = await PaginationHelper.ToPagedResponseAsync(query, page, pageSize);
-            return pagedResult;
-        }
-
-        public async Task UnbanUser(User user)
-        {
-            user.IsBanned = false;
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task<(bool Success, string Message, int UserId)> updateUser(User user, int id)
-        {
-            var userFound = await _context.Users.FindAsync(id);
-            if (userFound != null)
-            {
-                userFound.FullName = user.FullName;
-                userFound.Email = user.Email;
-                
-                await _context.SaveChangesAsync();
-                return (true, "Update userinfo successfully", userFound.UserId);
-
-            }
-            else
-            {
-                return (false, "User not found", 0);
-            }
-        }
-
-        public async Task<User> UpsertAzureUserAsync(string email, string? name)
-        {
-            var user = await _context.Users.FirstOrDefaultAsync(x => x.Email.Equals((email)));
-            if (user == null)
-            {
-                user = new User
-                {
-                    Email = email,
-                    FullName = name ?? "Default Name",
-                    Provider= "Azure",
-                    ProviderId= Guid.NewGuid().ToString(),
-                    CreatedAt = DateTime.Now,
-                };
-                _context.Users.Add(user);
-                await _context.SaveChangesAsync();
-                return user;
-            }
-            else return user;
-            
-        }
-
-        public async Task<User> UpsertGoogleUserAsync(string providerId, string email, string username, string avatar)
-        {
-            var user = await _context.Users
-                .FirstOrDefaultAsync(x =>
-            x.Provider == "Google" &&
-            x.ProviderId == providerId);
-            if(user != null)
-            {
-                return user;
-            }
-            user = new User
-            {
-                Email= email,
-                FullName = username,
-                Provider= "Google",
-                ProviderId= providerId,
-                CreatedAt= DateTime.Now,
-            };
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-            return user;
-        }
+    public async Task<IEnumerable<string>> GetExistingName(List<string> names)
+    {
+        return await _context.Users.Where(x=> names.Contains(x.FullName))
+                     .Select(x=> x.FullName)
+                     .ToListAsync();
     }
 }

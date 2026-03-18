@@ -1,5 +1,7 @@
-﻿using RecipeMgt.Application.Constant;
+﻿using Microsoft.AspNetCore.Http;
+using RecipeMgt.Application.Constant;
 using RecipeMgt.Application.DTOs;
+using RecipeMgt.Application.DTOs.Response;
 using RecipeMgt.Application.DTOs.Response.Recipe;
 using RecipeMgt.Application.DTOs.Response.User;
 using System;
@@ -22,7 +24,7 @@ namespace RecipeMgt.Application.Services.Management.User
 
         Task<Result<UserResponseDTO>> DeleteUser(int id);
 
-        Task<Result<bool>> CreateBatchUsers(BatchUserRequest<CreateUserRequest> userRequest);
+        Task<Result<BatchImportResult>> CreateBatchUsers(BatchUserRequest<CreateUserRequest> userRequest);
 
         Task<Result<bool>> UpdateBatchUsers(BatchUserRequest<UpdateUserRequest> userRequests);
 
@@ -37,5 +39,6 @@ namespace RecipeMgt.Application.Services.Management.User
         Task<Result<bool>> BanBatchUser(BatchUserIdsRequest batchUserIds);
 
         Task<Result<bool>> RecoverUserAccount(int id);
+        Task <Result<BatchImportResult>>CreateUserFromCsv(IFormFile file);
     }
 }

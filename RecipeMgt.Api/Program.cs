@@ -1,17 +1,18 @@
-using RecipentMgt.Infrastucture;
-using RecipeMgt.Application;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Microsoft.AspNetCore.Mvc;
-using RecipeMgt.Api.Validator.Auth;
-using FluentValidation;
-using RecipeMgt.Application.DTOs.Request.Dishes;
-using RecipeMgt.Application.DTOs.Request.Recipes;
 using CloudinaryDotNet;
 using dotenv.net;
-using RecipeMgt.Api.Validator.Rating;
+using FluentValidation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using RecipeMgt.Api.Common;
 using RecipeMgt.Api.Common.Middleware;
+using RecipeMgt.Application;
+using RecipeMgt.Application.DTOs.Request.Dishes;
+using RecipeMgt.Application.DTOs.Request.Recipes;
+using RecipeMgt.Application.Validator.Auth;
+using RecipeMgt.Application.Validator.Rating;
+using RecipentMgt.Infrastucture;
+using System.Text;
 
 internal class Program
 {
@@ -105,6 +106,28 @@ internal class Program
 
         builder.Services.AddAuthorizationBuilder()
             .AddPolicy("AdminOnly", policy => policy.RequireRole("Admin"));
+
+        builder.Services.Configure<ApiBehaviorOptions>(options =>
+        {
+            options.InvalidModelStateResponseFactory = context =>
+            {
+                var errors = context.ModelState
+                    .Where(x => x.Value != null && x.Value.Errors.Count > 0)
+                    .SelectMany(x => x.Value!.Errors)
+                    .Select(e => string.IsNullOrWhiteSpace(e.ErrorMessage)
+                        ? "INVALID_FIELD"
+                        : e.ErrorMessage)
+                    .ToList();
+
+                var response = ApiResponseFactory.Fail(
+                    "VALIDATION_ERROR",
+                    context.HttpContext,
+                    errors
+                );
+
+                return new BadRequestObjectResult(response);
+            };
+        });
         builder.Services.AddLogging();
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();

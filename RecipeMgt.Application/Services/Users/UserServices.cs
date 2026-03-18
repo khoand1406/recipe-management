@@ -69,7 +69,7 @@ namespace RecipeMgt.Application.Services.Users
 
         public async Task<List<UserResponseDTO>> GetTopContributors()
         {
-            var topContributors = await _userRepo.GetTopContributors();
+            var topContributors = await _userRepo.GetTopContributorsAsync();
             return _mapper.Map<List<UserResponseDTO>>(topContributors);
         }
     }

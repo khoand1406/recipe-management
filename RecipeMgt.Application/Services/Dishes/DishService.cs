@@ -83,7 +83,7 @@ namespace RecipeMgt.Application.Services.Dishes
 
                         await dishService.CalculateStructuralDish(result.Data.DishId, CancellationToken.None);
 
-                        await userRepo.CreateUserActivityLog(
+                        await userRepo.CreateUserActivityLogAsync(
                             request.AuthorId.Value,
                             sessionId: null,
                             UserActivityType.CreateDish,
@@ -163,7 +163,7 @@ namespace RecipeMgt.Application.Services.Dishes
                     var staticRepo = sp.GetRequiredService<IStatisticRepository>();
                     var userRepo = sp.GetRequiredService<IUserRepository>();
                     await staticRepo.IncreaseDishViewCount(id);
-                    await userRepo.CreateUserActivityLog(userId: valueId, sessionId, Domain.Enums.UserActivityType.View, ENTITY_TYPE, id, "");
+                    await userRepo.CreateUserActivityLogAsync(userId: valueId, sessionId, Domain.Enums.UserActivityType.View, ENTITY_TYPE, id, "");
                 });
 
                 var response = new DishDetailResponse
@@ -202,7 +202,7 @@ namespace RecipeMgt.Application.Services.Dishes
                     var staticRepo = sp.GetRequiredService<IStatisticRepository>();
                     var userRepo = sp.GetRequiredService<IUserRepository>();
                     await staticRepo.IncreaseDishViewCount(id);
-                    await userRepo.CreateUserActivityLog(userId, sessionId, UserActivityType.View, ENTITY_TYPE, id, "");
+                    await userRepo.CreateUserActivityLogAsync(userId, sessionId, UserActivityType.View, ENTITY_TYPE, id, "");
                 });
                 var dishDetailResponse = new DishDetailResponse
                 {

@@ -1,6 +1,7 @@
 ﻿using RecipeMgt.Application.Constant;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -65,19 +66,26 @@ namespace RecipeMgt.Application.DTOs.Response.User
 
     public class CreateUserRequest
     {
+        [Required(ErrorMessage = "FULLNAME_REQUIRED")]
+        [MaxLength(100, ErrorMessage = "FULLNAME_TOO_LONG")]
         public string FullName { get; set; } = string.Empty;
 
+        [Required(ErrorMessage = "FULLNAME_REQUIRED")]
+        [MaxLength(100, ErrorMessage = "FULLNAME_TOO_LONG")]
         public string Email { get; set; } = string.Empty;
 
+        [Required(ErrorMessage = "PASSWORD_REQUIRED")]
+        [MinLength(6, ErrorMessage = "PASSWORD_TOO_SHORT")]
         public string Password { get; set; } = string.Empty;
 
-        public int RoleId { get; set; }
+        public int RoleId { get; set; } = RoleConstants.USER_ROLE_ID;
 
         public bool IsActived { get; set; } = true;
     }
 
     public class UpdateUserRequest
     {
+        public int UserId { get; set; }
         public string? FullName { get; set; }
 
         public string? Email { get; set; }

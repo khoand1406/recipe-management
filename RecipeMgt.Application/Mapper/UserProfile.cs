@@ -24,8 +24,8 @@ namespace RecipeMgt.Application.Mapper
                                                 .ForMember(dest => dest.TotalFollowers, opt => opt.MapFrom(src => src.Followers.Count))
                                                 .ForMember(dest => dest.TotalFollowing, opt => opt.MapFrom(src => src.FollowingUsers.Count))
                                                 .ForMember(dest => dest.TotalRecipes, opt => opt.MapFrom(src => src.Recipes.Count));
-                                                
 
+            CreateMap<CreateUserRequest, User>();
         }
     }
 }

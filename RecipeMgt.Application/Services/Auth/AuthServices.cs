@@ -47,7 +47,7 @@ namespace RecipeMgt.Application.Services.Auth
             var email = request.email.Trim();
             var password = request.password.Trim();
 
-            var user = await _userRepository.getUserByEmail(email)
+            var user = await _userRepository.GetByEmailAsync(email)
                 ?? throw new AuthenticationException(AuthenticationError.AuthenError);
 
             if (!UserUtils.VerifyPassword(password, user.PasswordHash))
@@ -89,10 +89,10 @@ namespace RecipeMgt.Application.Services.Auth
             var username = request.UserName.Trim();
             var password = request.Password.Trim();
 
-            if (await _userRepository.checkDuplicateEmail(email))
+            if (await _userRepository.ExistsByEmailAsync(email))
                 throw new AuthenticationException(AuthenticationError.DuplicateEmail);
 
-            if (await _userRepository.getUserByUsername(username) != null)
+            if (await _userRepository.GetByUserName(username) != null)
                 throw new AuthenticationException(AuthenticationError.DuplicateUsername);
 
             var user = new User
@@ -104,7 +104,7 @@ namespace RecipeMgt.Application.Services.Auth
                 CreatedAt = DateTime.UtcNow
             };
 
-            await _userRepository.createUser(user);
+            await _userRepository.CreateAsync(user);
 
             return new RegisterResponse
             {
@@ -174,8 +174,8 @@ namespace RecipeMgt.Application.Services.Auth
             var user = await _userRepository.UpsertGoogleUserAsync(
                 payload.Subject,
                 payload.Email,
-                payload.Name,
-                payload.Picture
+                payload.Name
+                
             );
 
             return new AuthResponse

@@ -4,19 +4,20 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Client;
 using RecipeMgt.Api.Common;
 using RecipeMgt.Application.Constant;
+using RecipeMgt.Application.DTOs.Response.User;
 using RecipeMgt.Application.Services.Management.Dashboard;
 using RecipeMgt.Application.Services.Management.User;
 
-namespace RecipeMgt.Api.Controllers
+namespace RecipeMgt.Api.Controllers.Management
 {
     [Authorize(Policy = "AdminOnly")]
-    [Route("api/[controller]")]
+    [Route("api/admin/[controller]")]
     [ApiController]
-    public class AdminController : ControllerBase
+    public class DashboardController : ControllerBase
     {
         private readonly IDashboardService _dashboardService;
         private readonly IUserManagementService _userManagementService;
-        public AdminController(IDashboardService dashboardService, IUserManagementService userManagement)
+        public DashboardController(IDashboardService dashboardService, IUserManagementService userManagement)
         {
             _dashboardService = dashboardService;
             _userManagementService = userManagement;
@@ -50,12 +51,7 @@ namespace RecipeMgt.Api.Controllers
             return Ok(ApiResponseFactory.Success(topRatingData.Value, HttpContext));    
         }
 
-        [HttpGet("user-management")]
-        public async Task<IActionResult> GetListUsers(string? searchQuery, UserStatus? userStatus, int page = 1, int pageSize = 10)
-        {
-            var usersData = await _userManagementService.GetUsers(page, pageSize, searchQuery, userStatus);
-            return Ok(ApiResponseFactory.Success(usersData.Value, HttpContext));
-        }
+        
 
     }
 }

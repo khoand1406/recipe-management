@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RecipeMgt.Api.Validator.Dish
+namespace RecipeMgt.Application.Validator.Dish
 {
     public class CreateDishRequestValidator: AbstractValidator<CreateDishRequest>
     {

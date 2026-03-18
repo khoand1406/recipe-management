@@ -1,7 +1,7 @@
 ﻿using FluentValidation;
 using RecipeMgt.Application.DTOs.Request.Rating;
 
-namespace RecipeMgt.Api.Validator.Rating
+namespace RecipeMgt.Application.Validator.Rating
 {
     public class AddRatingValidation : AbstractValidator<AddRatingRequest>
     {
