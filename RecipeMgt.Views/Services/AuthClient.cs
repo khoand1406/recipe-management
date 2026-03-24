@@ -32,6 +32,15 @@ namespace RecipeMgt.Views.Services
                    ?? ApiResponse<LoginResponse>.Fail("Invalid server response", null, "SERVER_ERROR", (int?)StatusCode.INTERNAL_SERVER_ERROR);
         }
 
+        public async Task<ApiResponse<LoginResponse>> LoginWithGoogleAsync(string email, string name)
+        {
+            var payload= new { email, name };
+            var content= new StringContent(JsonSerializer.Serialize(payload),Encoding.UTF8, "application/json");
+            var response = await _httpClient.PostAsync(Endpoints.AuthGoogleLogin, content);
+            var json= await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<ApiResponse<LoginResponse>>(json, _options) ?? ApiResponse<LoginResponse>.Fail("Invalid server response", null, "SERVER_ERROR", (int?)StatusCode.INTERNAL_SERVER_ERROR); ;
+        }
+
         public async Task<ApiResponse<RegisterResponse>> RegisterAsync(string email, string password, string username)
         {
             var payload = new { email, password, username };

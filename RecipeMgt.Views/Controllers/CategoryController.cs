@@ -16,7 +16,9 @@ namespace RecipeMgt.Views.Controllers
         public async Task<IActionResult> Index()
         {
             var result= await _client.GetCategoriesAsync();
-            return View(result);
+            return View(result.Data);
         }
+
+        
     }
 }

@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using RecipeMgt.Views.Interface;
@@ -10,10 +12,12 @@ namespace RecipeMgt.Views.Controllers
     {
 
         private readonly IAuthClient _authClient;
+        private readonly ILogger<AuthController> _logger;
         
-        public AuthController(IAuthClient authClient)
+        public AuthController(IAuthClient authClient, ILogger<AuthController> logger)
         {
             _authClient = authClient;
+            _logger = logger;
         }
 
         [HttpGet("Login")]
@@ -28,11 +32,71 @@ namespace RecipeMgt.Views.Controllers
             return View();
         }
 
-        [HttpGet]
+        [HttpGet("ChangePassword")]
         public IActionResult ChangePassword()
         {
             return View();
         }
+
+        [HttpGet("LoginGoogle")]
+        public IActionResult LoginGoogle()
+        {
+            var redirectUrl = Url.Action("GoogleResponse", "Auth", null, Request.Scheme);
+            var properties = new AuthenticationProperties
+            {
+                RedirectUri = redirectUrl,
+            };
+            _logger.LogInformation("Runnnnnn into hererrrrrrrrrr");
+            return Challenge(properties, GoogleDefaults.AuthenticationScheme);
+
+        }
+
+        [HttpGet("GoogleResponse")]
+        public async Task<IActionResult> GoogleResponse()
+        {
+            _logger.LogInformation($"{nameof(GoogleResponse)}");
+            var result = await HttpContext.AuthenticateAsync("Cookies");
+            _logger.LogInformation($"{result}");
+            if (result == null || !result.Succeeded)
+            {
+                _logger.LogError(result?.Failure?.InnerException?.Message ?? "ERROR WHEN AUTHENTICATED");
+                return RedirectToAction("Login");
+            }
+
+            foreach (var token in result.Properties.GetTokens())
+            {
+                _logger.LogInformation($"{token.Name}: {token.Value}");
+            }
+
+            var email = result.Principal?.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+            var name = result.Principal?.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
+
+            _logger.LogInformation($"Email: {email}");
+            _logger.LogInformation($"Name: {name}");
+            
+
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(name))
+            {
+                _logger.LogError("Unable to get email");
+                return RedirectToAction("Login");
+            }
+
+            var apiResponse = await _authClient.LoginWithGoogleAsync(email, name);
+
+            if (apiResponse == null || !apiResponse.Success || apiResponse.Data?.Token == null)
+            {
+                return RedirectToAction("Login");
+            }
+
+            var jwt = apiResponse.Data.Token;
+
+            await HttpContext.SignOutAsync("Cookies");
+
+            HttpContext.Session.SetString("JwtToken", jwt);
+
+            return RedirectToAction("Index", "Home");
+        }
+
 
         [HttpPost("Login", Name = "AuthLogin")]
         public async Task<IActionResult> Login(string email, string password)
@@ -109,7 +173,7 @@ namespace RecipeMgt.Views.Controllers
             }
         }
 
-        [HttpGet]
+        [HttpGet("Logout")]
         public IActionResult Logout()
         {
             HttpContext.Session.Remove("JwtToken");

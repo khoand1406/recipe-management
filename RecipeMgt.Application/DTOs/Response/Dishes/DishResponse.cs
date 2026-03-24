@@ -87,6 +87,8 @@ namespace RecipeMgt.Application.DTOs.Response.Dishes
         public string CreatorAvatar { get; set; } = string.Empty;
 
         public string CategoryImage {  get; set; } = string.Empty;
+
+        public bool IsConfirmed { get; set; }= false;
     }
 
     

@@ -18,7 +18,6 @@ namespace RecipeMgt.Api.Controllers
             _dishService = dishService;
         }
 
-        // GET: api/dish?page=1&pageSize=10&searchQuery=&categoryId=
         [HttpGet]
         public async Task<IActionResult> GetAll(
             [FromQuery] int page = 1,

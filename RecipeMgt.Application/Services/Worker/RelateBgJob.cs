@@ -36,64 +36,103 @@ namespace RecipeMgt.Application.Services.Worker
             {
                 var fromTime = DateTime.UtcNow.AddMinutes(-30);
 
-                var baseQuery = db.UserActivityLogs
-    .Where(x => x.CreatedAt >= fromTime)
-    .Where(x =>
-        (x.ActivityType == UserActivityType.View ||
-         x.ActivityType == UserActivityType.Bookmark)
-        && x.TargetType == Entity_Type
-    )
-    .Select(x => new
-    {
-        x.UserId,
-        x.SessionId,
-        DishId = x.TargetId!.Value
-    });
+                
+                var confirmedDishIds = db.Dishes
+                    .Where(d => d.IsConfirm)
+                    .Select(d => d.DishId);
 
-                var relations = await (
-    from a in baseQuery
-    from b in baseQuery
-    where
-        (
-            (a.UserId != null && a.UserId == b.UserId) ||
-            (a.UserId == null && b.UserId == null && a.SessionId == b.SessionId)
-        )
-        && a.DishId < b.DishId
-    group 1 by new
-    {
-        DishId = a.DishId,
-        RelatedDishId = b.DishId
-    } into g
-    select new
-    {
-        DishId = g.Key.DishId,
-        RelatedDishId = g.Key.RelatedDishId,
-        Weight = g.Count()
-    }
-).ToListAsync(cancellationToken);
+                var activities = await db.UserActivityLogs
+                    .Where(log =>
+                        log.CreatedAt >= fromTime &&
+                        (log.ActivityType == UserActivityType.View ||
+                         log.ActivityType == UserActivityType.Bookmark) &&
+                        log.TargetType == Entity_Type &&
+                        log.TargetId != null &&
+                        confirmedDishIds.Contains(log.TargetId.Value))
+                    .Select(log => new
+                    {
+                        log.UserId,
+                        log.SessionId,
+                        DishId = log.TargetId!.Value
+                    })
+                    .ToListAsync(cancellationToken);
 
-                if (relations.Count == 0)
+
+                var grouped = activities
+    .GroupBy(x => x.UserId.HasValue
+        ? $"u_{x.UserId.Value}"
+        : $"s_{x.SessionId!}");
+
+                var relationDict = new Dictionary<(int, int), int>();
+
+                foreach (var group in grouped)
+                {
+                    var dishes = group
+                        .Select(x => x.DishId)
+                        .Distinct()
+                        .ToList();
+
+                    int n = dishes.Count;
+
+                    for (int i = 0; i < n; i++)
+                    {
+                        for (int j = i + 1; j < n; j++)
+                        {
+                            var d1 = dishes[i];
+                            var d2 = dishes[j];
+
+                            
+                            var key = d1 < d2 ? (d1, d2) : (d2, d1);
+
+                            if (!relationDict.TryAdd(key, 1))
+                                relationDict[key]++;
+                        }
+                    }
+                }
+
+                if (relationDict.Count == 0)
                     return;
 
-               
-                var dishIds = relations
-                    .SelectMany(x => new[] { x.DishId, x.RelatedDishId })
+                var dishIds = relationDict.Keys
+                    .SelectMany(k => new[] { k.Item1, k.Item2 })
                     .Distinct()
                     .ToList();
 
+                
                 var existingRelations = await db.RelatedDishes
                     .Where(x =>
+                        x.RelationType == DishRelationType.Behavior &&
                         dishIds.Contains(x.DishId) &&
-                        dishIds.Contains(x.RelatedDishId) &&
-                        x.RelationType == DishRelationType.Behavior
-                    )
+                        dishIds.Contains(x.RelatedDishId))
                     .ToListAsync(cancellationToken);
 
+                var existingDict = existingRelations.ToDictionary(
+                    x => (Math.Min(x.DishId, x.RelatedDishId),
+                          Math.Max(x.DishId, x.RelatedDishId))
+                );
+
                 
-                foreach (var r in relations)
+                foreach (var kv in relationDict)
                 {
-                    Upsert(existingRelations, db, r.DishId, r.RelatedDishId, r.Weight);
-                    Upsert(existingRelations, db, r.RelatedDishId, r.DishId, r.Weight);
+                    var (dishId, relatedDishId) = kv.Key;
+                    var weight = kv.Value;
+
+                    if (existingDict.TryGetValue((dishId, relatedDishId), out var entity))
+                    {
+                        entity.Priority += weight;
+                        entity.LastUpdatedAt = DateTime.UtcNow;
+                    }
+                    else
+                    {
+                        db.RelatedDishes.Add(new RelatedDish
+                        {
+                            DishId = dishId,
+                            RelatedDishId = relatedDishId,
+                            RelationType = DishRelationType.Behavior,
+                            Priority = weight,
+                            LastUpdatedAt = DateTime.UtcNow
+                        });
+                    }
                 }
 
                 await db.SaveChangesAsync(cancellationToken);

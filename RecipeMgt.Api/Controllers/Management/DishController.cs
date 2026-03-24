@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using RecipeMgt.Api.Common;
+using RecipeMgt.Api.Common.Extension;
 using RecipeMgt.Application.DTOs.Request.Dishes;
 using RecipeMgt.Application.Services.Dishes;
 
@@ -29,7 +30,7 @@ namespace RecipeMgt.Api.Controllers.Management
         int page = 1,
         int pageSize = 10)
         {
-            var result = await _dishService.getDishes(page, pageSize, searchQuery, categoryId);
+            var result = await _dishService.GetDishesWithStat(page, pageSize, searchQuery, categoryId);
 
             return Ok(ApiResponseFactory.Success(result.Value, HttpContext));
         }
@@ -38,9 +39,15 @@ namespace RecipeMgt.Api.Controllers.Management
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetDetail(int id)
         {
-            var result = await _dishService.GetDishDetail(id);
+            var userId = HttpContext.GetOptionalUserId();
+            string? sessionId = null;
+            if (userId == null)
+            {
+                sessionId = GetOrCreateSessionId();
+            }
+            var result = await _dishService.GetDishDetail(id, userId, sessionId);
 
-            if (!result.Success)
+            if (!result.IsSuccess)
                 return NotFound(ApiResponseFactory.Fail(result.Error, HttpContext));
 
             return Ok(ApiResponseFactory.Success(result.Value, HttpContext));
@@ -52,9 +59,6 @@ namespace RecipeMgt.Api.Controllers.Management
         {
             var result = await _dishService.CreateDish(request);
 
-            if (!result.Success)
-                return BadRequest(ApiResponseFactory.Fail(result.Error, HttpContext));
-
             return Ok(ApiResponseFactory.Success(result.Value, HttpContext));
         }
 
@@ -62,12 +66,12 @@ namespace RecipeMgt.Api.Controllers.Management
         [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateDishRequest request)
         {
-            var result = await _dishService.UpdateDish(id, request);
+            var result = await _dishService.UpdateDish(request);
 
-            if (!result.Success)
+            if (!result.IsSuccess)
                 return BadRequest(ApiResponseFactory.Fail(result.Error, HttpContext));
 
-            return Ok(ApiResponseFactory.Success(result.Value, HttpContext));
+            return Ok(ApiResponseFactory.Success(result.IsSuccess, HttpContext));
         }
 
         // DELETE: api/admin/dishes/{id}
@@ -76,10 +80,43 @@ namespace RecipeMgt.Api.Controllers.Management
         {
             var result = await _dishService.DeleteDish(id);
 
-            if (!result.Success)
+            if (!result.IsSuccess)
                 return BadRequest(ApiResponseFactory.Fail(result.Error, HttpContext));
 
             return Ok(ApiResponseFactory.Success("DELETE_SUCCESS", HttpContext));
+        }
+
+        [HttpPost("{id:int}/approved")]
+        public async Task<IActionResult> ApproveDish(int id)
+        {
+            var result = await _dishService.ApproveDish(id);
+            return Ok(ApiResponseFactory.Success("APPROVE_SUCCESS", HttpContext));
+        }
+
+        [HttpPost("{id:int}/declined")]
+        public async Task<IActionResult> Declined(int id)
+        {
+            var result= await _dishService.RejectDish(id);
+            return Ok(ApiResponseFactory.Success("DECLINED_SUCCESS", HttpContext));
+        }
+
+        private string GetOrCreateSessionId()
+        {
+            const string cookieKey = "guest_session_id";
+            if (Request.Cookies.TryGetValue(cookieKey, out var sessionId))
+            {
+                return sessionId!;
+            }
+            else
+            {
+                var newSessionId = Guid.NewGuid().ToString();
+                Response.Cookies.Append(cookieKey, newSessionId, new CookieOptions
+                {
+                    HttpOnly = true,
+                    Expires = DateTimeOffset.UtcNow.AddDays(30)
+                });
+                return newSessionId;
+            }
         }
     }
 }

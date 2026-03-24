@@ -66,6 +66,8 @@ namespace RecipentMgt.Infrastucture.Persistence
 
                 entity.HasIndex(e => e.CategoryName, "UQ__Categori__8517B2E055772FB0").IsUnique();
 
+                
+
                 entity.Property(e => e.CategoryName)
                     .IsRequired()
                     .HasMaxLength(100);
@@ -83,6 +85,8 @@ namespace RecipentMgt.Infrastucture.Persistence
                 entity.Property(e => e.CreatedDate)
                 .IsRequired()
                 .HasDefaultValueSql("GETDATE()");
+
+                entity.Property(e => e.IsConfirm).IsRequired().HasDefaultValue(false);
 
                 entity.HasOne(d => d.Category).WithMany(p => p.Dishes)
                     .HasForeignKey(d => d.CategoryId)

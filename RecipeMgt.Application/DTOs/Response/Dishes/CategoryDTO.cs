@@ -20,6 +20,8 @@ namespace RecipeMgt.Application.DTOs.Response.Dishes
 
         public int AuthorCount { get; set; }
 
+        
+
 
     }
 

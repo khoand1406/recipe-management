@@ -96,6 +96,7 @@ namespace RecipentMgt.Infrastucture.Repository.Dishes
 
                 existingDish.DishName = dish.DishName;
                 existingDish.Description = dish.Description;
+                existingDish.IsConfirm = false;
 
                 await RemoveDishImages(dish.DishId);
                 await SaveDishImages(dish.DishId, images);
@@ -125,6 +126,32 @@ namespace RecipentMgt.Infrastucture.Repository.Dishes
             int? categoryId = null
             )
         {
+            var query = BaseDishQuery().Where(x=> x.IsConfirm)
+                .AsNoTracking();
+
+            if (!string.IsNullOrWhiteSpace(searchQuery))
+            {
+                query = query.Where(d =>
+                    d.DishName.Contains(searchQuery));
+            }
+
+            if (categoryId.HasValue)
+            {
+                query = query.Where(d =>
+                    d.CategoryId == categoryId.Value);
+            }
+
+            query = query.OrderByDescending(d => d.DishId);
+
+            var pagedResult = await PaginationHelper
+                .ToPagedResponseAsync(query, page, pageSize);
+
+            await LoadImagesForDishes(pagedResult.Items);
+
+            return pagedResult;
+        }
+        public async Task<PagedResponse<Dish>> SearchAdmin(int page, int pageSize, string? searchQuery, int? categoryId)
+        {
             var query = BaseDishQuery()
                 .AsNoTracking();
 
@@ -150,7 +177,6 @@ namespace RecipentMgt.Infrastucture.Repository.Dishes
             return pagedResult;
         }
 
-        
 
         public async Task<Dish?> GetById(int id)
         {
@@ -182,13 +208,14 @@ namespace RecipentMgt.Infrastucture.Repository.Dishes
         .Include(rd => rd.RelateDish)
             .ThenInclude(d => d.Statistic)
         .Select(rd => rd.RelateDish)
+        .Where(d=> d.IsConfirm)
         .Take(10)
         .ToListAsync();
         }
 
         public async Task<List<Dish>> GetTopViewDishesAsync()
         {
-            return await _context.Dishes
+            return await _context.Dishes.Where(d=> d.IsConfirm)
          .Include(d => d.Statistic)
          .Where(d => d.Statistic != null)
          .OrderByDescending(d => d.Statistic.ViewCount)
@@ -207,13 +234,14 @@ namespace RecipentMgt.Infrastucture.Repository.Dishes
                 .OrderByDescending(rd => rd.Priority)
                 .ThenByDescending(rd => rd.LastUpdatedAt)
                 .Select(rd => rd.RelateDish)
+                .Where(d=> d.IsConfirm)
                 .Take(5)
                 .AsNoTracking()
                 .ToListAsync();
         }
         public async Task<List<DishChartResponse>> GetChartCreateMonthly()
         {
-            return await _context.Dishes.GroupBy(d => new { d.CreatedDate.Year, d.CreatedDate.Month })
+            return await _context.Dishes.Where(x=> x.IsConfirm).GroupBy(d => new { d.CreatedDate.Year, d.CreatedDate.Month })
                 .Select(g => new DishChartResponse
                 {
                     Month= g.Key.Month,
@@ -351,9 +379,11 @@ namespace RecipentMgt.Infrastucture.Repository.Dishes
 
         
 
+
+
         #endregion
 
-        
+
     }
     
 }

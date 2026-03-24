@@ -21,7 +21,7 @@ namespace RecipeMgt.Application.Services.Auth
 
         Task<TokenResponse> Refreshtoken(string refreshToken);
 
-        Task<AuthResponse> LoginWithGoogleAsync(string idToken);
+        Task<AuthResponse> LoginWithGoogleAsync(string email, string name);
 
         Task<AuthResponse> LoginWithAzureAsync(string idToken);
     }

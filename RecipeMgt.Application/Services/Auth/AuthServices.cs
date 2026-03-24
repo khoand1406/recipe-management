@@ -167,14 +167,17 @@ namespace RecipeMgt.Application.Services.Auth
             return Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
         }
 
-        public async Task<AuthResponse> LoginWithGoogleAsync(string idToken)
+        public async Task<AuthResponse> LoginWithGoogleAsync(string email, string name)
         {
-            var payload = await _ioAuthService.VerifyAsync(idToken);
+            if (!VerifyEmail(email))
+            {
+                throw new BadRequestException("Invalid email format");
+            }
 
             var user = await _userRepository.UpsertGoogleUserAsync(
-                payload.Subject,
-                payload.Email,
-                payload.Name
+                "",
+                email,
+                name
                 
             );
 
@@ -183,6 +186,11 @@ namespace RecipeMgt.Application.Services.Auth
                 AccessToken = _jwtService.GenerateJWTToken(user),
                 ExpiredAt = DateTime.UtcNow.AddMinutes(30)
             };
+        }
+
+        private bool VerifyEmail(string email)
+        {
+            throw new NotImplementedException();
         }
 
         public async Task<AuthResponse> LoginWithAzureAsync(string idToken)

@@ -127,10 +127,26 @@ public class UserRepository : IUserRepository
 
     public async Task<User> UpsertGoogleUserAsync(string providerId, string email, string username)
     {
-        var user = await _context.Users
-            .FirstOrDefaultAsync(x => x.Provider == "Google" && x.ProviderId == providerId);
+        User? user = null;
 
-        if (user != null) return user;
+        if (!string.IsNullOrEmpty(providerId))
+        {
+            user = await _context.Users
+                .FirstOrDefaultAsync(x => x.Provider == "Google" && x.ProviderId == providerId);
+        }
+
+      
+        user ??= await _context.Users
+                .FirstOrDefaultAsync(x => x.Email == email);
+
+        if (user != null)
+        {
+            user.FullName = username ?? user.FullName;
+            user.IsActived = true;
+
+            await _context.SaveChangesAsync();
+            return user;
+        }
 
         user = new User
         {
@@ -147,6 +163,7 @@ public class UserRepository : IUserRepository
 
         return user;
     }
+
 
     public async Task<User> UpsertAzureUserAsync(string email, string? name)
     {

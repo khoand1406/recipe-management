@@ -6,6 +6,7 @@ using RecipeMgt.Application.DTOs;
 using RecipeMgt.Application.DTOs.Request.Dishes;
 using RecipeMgt.Application.DTOs.Response.Dishes;
 using RecipeMgt.Application.DTOs.Response.Recipe;
+using RecipeMgt.Application.Exceptions;
 using RecipeMgt.Application.Services.Images;
 using RecipeMgt.Application.Services.Worker;
 using RecipeMgt.Application.Utils.Tasks;
@@ -16,6 +17,7 @@ using RecipentMgt.Infrastucture.Repository.Dishes;
 using RecipentMgt.Infrastucture.Repository.Recipes;
 using RecipentMgt.Infrastucture.Repository.Statistics;
 using RecipentMgt.Infrastucture.Repository.Users;
+using System.CodeDom;
 using System.Text.Json;
 
 namespace RecipeMgt.Application.Services.Dishes
@@ -61,6 +63,7 @@ namespace RecipeMgt.Application.Services.Dishes
                         .UploadEntityImagesAsync(request.Images, "Dish");
                 }
                 dish.CreatedDate = DateTime.UtcNow;
+                dish.IsConfirm = false;
 
                 var result = await _repo.CreateDish(dish, images);
                 if (!result.Success || result.Data == null)
@@ -276,7 +279,6 @@ namespace RecipeMgt.Application.Services.Dishes
             return Result<DTOs.Response.Recipe.PagedResponse<CategoryDishResponse>>.Success(mappedResult);
         }
 
-
         public async Task<Result<IEnumerable<DishResponse>>> GetRelatedDish(int id)
         {
             var cacheKey = $"related:dish:{id}";
@@ -344,6 +346,66 @@ namespace RecipeMgt.Application.Services.Dishes
                 AuthorCount= authorDict.GetValueOrDefault(item.CategoryId)
             });
             return Result<IEnumerable<CategoryDTO>>.Success(mappedResult);
+        }
+
+        public async Task<Result<PagedResponse<CategoryDishResponse>>> GetDishesWithStat(int page, int pageSize, string? searchQuery, int? categoryId)
+        {
+            var result = await _repo.SearchAdmin(page, pageSize, searchQuery, categoryId);
+
+            var images = await _repo.LoadImageForAuthor(result.Items);
+            var categoryImage = "";
+
+            if (categoryId != null)
+            {
+                categoryImage = await _repo.LoadImageForCategory((int)categoryId);
+            }
+
+            var avatarDict = images?.ToDictionary(i => i.EntityId, i => i.ImageUrl) ?? [];
+
+
+            var mapped = result.Items.Select(x => new CategoryDishResponse
+            {
+                DishId = x.DishId,
+                CategoryId = x.CategoryId,
+                Description = x.Description,
+                BookmarkCount = x.Statistic?.BookmarkCount ?? 0,
+                ViewCount = x.Statistic?.ViewCount ?? 0,
+                CreatorName = x.Author?.FullName ?? "",
+                Category = x.Category,
+                DishName = x.DishName,
+                ImageUrls = x.Images?.Select(image => image.ImageUrl).ToList() ?? [],
+                CategoryImage = categoryImage,
+                CreatorAvatar = avatarDict.GetValueOrDefault(x.AuthorId, ""),
+                IsConfirmed= x.IsConfirm
+            });
+
+            var mappedResult = new PagedResponse<CategoryDishResponse>
+            {
+                Items = mapped,
+                Page = result.Page,
+                PageSize = result.PageSize,
+                TotalItems = result.TotalItems,
+                TotalPages = result.TotalPages,
+            };
+            return Result<DTOs.Response.Recipe.PagedResponse<CategoryDishResponse>>.Success(mappedResult);
+        }
+
+        public async Task<Result> ApproveDish(int id)
+        {
+            var result = await _repo.GetById(id) ?? throw new NotFoundException("DISH_NOT_FOUND");
+            result.IsConfirm = true;
+            var (Success, Message, _) = await _repo.UpdateDish(result, null);
+            if(!Success) throw new BadRequestException(Message);
+            return Result.Success();
+        }
+
+        public async Task<Result> RejectDish(int id)
+        {
+            var result = await _repo.GetById(id) ?? throw new NotFoundException("DISH_NOT_FOUND");
+            result.IsConfirm = false;
+            var (Success, Message, _) = await _repo.UpdateDish(result, null);
+            if (!Success) throw new BadRequestException(Message);
+            return Result.Success();
         }
     }
 

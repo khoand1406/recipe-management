@@ -1,14 +1,37 @@
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Extensions.Options;
 using RecipeMgt.Views.Common.Config;
 using RecipeMgt.Views.Interface;
 using RecipeMgt.Views.Services;
 using System.Runtime.Intrinsics.Arm;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddSession();
 builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme= CookieAuthenticationDefaults.AuthenticationScheme;
+}).AddCookie(options=>
+{
+    options.LoginPath = "/Auth/Login";
+    options.AccessDeniedPath = "/Auth/Login";
+}).AddGoogle(options=>
+{
+    options.ClientId = builder.Configuration["Google:ClientID"] ?? throw new InvalidOperationException("Unable to load config");
+    options.ClientSecret = builder.Configuration["Google:SecretKey"] ?? throw new InvalidOperationException("Unable to load config");
+    options.CallbackPath = "/signin-google";
+
+    options.SaveTokens = true;
+    options.Scope.Add("openid");
+    options.Scope.Add("profile");
+    options.Scope.Add("email");
+    
+});
 
 builder.Services.Configure<ApiSettings>(builder.Configuration.GetSection("ApiSettings"));
 builder.Services.AddHttpClient<IAuthClient, AuthClient>((serviceProvider, client) =>
@@ -61,7 +84,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
-
+app.UseAuthentication();
 app.UseAuthorization();
 app.UseSession();
 

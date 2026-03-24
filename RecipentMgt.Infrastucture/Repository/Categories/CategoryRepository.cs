@@ -44,13 +44,15 @@ namespace RecipentMgt.Infrastucture.Repository.Categories
 
         public async Task<Dictionary<int, int>> GetDishCount()
         {
-            var categoryDict= new Dictionary<int, int>();
-            var queryResult= await _context.Categories.Include(x=> x.Dishes).ToListAsync();
-            foreach (var category in queryResult)
-            {
-                categoryDict.Add(category.CategoryId, category.Dishes.Count);
-            }
-            return categoryDict;
+            var result = await _context.Categories
+                .Select(c => new
+                {
+                    c.CategoryId,
+                    Count = c.Dishes.Count(d => d.IsConfirm)
+                })
+                .ToDictionaryAsync(x => x.CategoryId, x => x.Count);
+
+            return result;
         }
     }
 }

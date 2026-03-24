@@ -70,7 +70,7 @@ namespace RecipeMgt.Views.Controllers
             return View(response);
         }
 
-        [HttpGet()]
+        [HttpGet("{id:int}")]
         public async Task<IActionResult> Detail(int id)
         {
             var dish = await _dishClient.GetDetailAsync(id);

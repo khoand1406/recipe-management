@@ -4,6 +4,7 @@
     {
         public const string AuthLoginEndpoint = "/api/auth/login";
         public const string AuthRegisterEndpoint = "/api/auth/register";
+        public const string AuthGoogleLogin = "/api/auth/login-google";
         public const string AuthLogoutEndpoint = "/api/auth/logout";
         public const string AuthRefreshTokenEndpoint = "/api/auth/refresh-token";
         public const string AuthUserChangePasswordEndpoint = "/api/auth/change-password";

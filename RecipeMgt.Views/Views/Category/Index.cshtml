@@ -88,40 +88,29 @@
 
                 @foreach (var cat in Model)
                 {
-                    <a href="/Category/@cat.CategoryId"
+                    <a href="/Dish/ByCategory/@cat.CategoryId"
                        class="cat-item"
                        data-img="@cat.ImageUrl"
                        data-title="@cat.CategoryName"
                        data-desc="@cat.Description"
-                       data-count="@cat.RecipeCount"
-                       data-authors="@cat.AuthorCount"
-                       data-avgtime="@cat.AvgCookTime"
-                       data-badge="@cat.Tag"
-                       data-href="/Category/@cat.Slug">
+                       data-count="@cat.DishesCount"
+                       data-authors="@cat.AuthorCount">
 
                         <div class="cat-item-thumb">
                             <img src="@cat.ImageUrl"
-                                 alt="@cat.Name"
+                                 alt="@cat.CategoryName"
                                  loading="lazy" />
                         </div>
 
                         <div class="cat-item-body">
                             <div class="cat-item-top">
-                                <span class="cat-item-name">@cat.Name</span>
-                                @if (!string.IsNullOrEmpty(cat.Tag))
-                                {
-                                    <span class="cat-tag">@cat.Tag</span>
-                                }
+                                <span class="cat-item-name">@cat.CategoryName</span>
                             </div>
                             <p class="cat-item-desc">@cat.Description</p>
                             <div class="cat-item-meta">
                                 <span>
                                     <i class="bi bi-journal-text"></i>
-                                    @cat.RecipeCount công thức
-                                </span>
-                                <span>
-                                    <i class="bi bi-clock"></i>
-                                    TB @cat.AvgCookTime phút
+                                    @cat.DishesCount công thức
                                 </span>
                             </div>
                         </div>
@@ -157,9 +146,9 @@
         const fDesc       = document.getElementById('featureDesc');
         const fCount      = document.getElementById('featureCount');
         const fAuthors    = document.getElementById('featureAuthors');
-        const fAvgTime    = document.getElementById('featureAvgTime');
-        const fBadge      = document.getElementById('featureBadge');
-        const fCta        = document.getElementById('featureCta');
+        // const fAvgTime    = document.getElementById('featureAvgTime');
+        // const fBadge      = document.getElementById('featureBadge');
+        // const fCta        = document.getElementById('featureCta');
         const searchInput = document.getElementById('catSearchInput');
         const catEmpty    = document.getElementById('catEmpty');
 

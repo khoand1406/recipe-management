@@ -16,8 +16,10 @@ public partial class Dish
     public int CategoryId { get; set; }
 
     public int AuthorId { get; set; } = 0;
-
+    
     public DateTime CreatedDate { get; set; }
+
+    public bool IsConfirm { get; set; }
 
     public virtual Category Category { get; set; }
 

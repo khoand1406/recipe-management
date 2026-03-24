@@ -7,6 +7,8 @@ namespace RecipeMgt.Views.Interface
     {
         public Task<ApiResponse<LoginResponse>> LoginAsync(string email, string password);
 
+        public Task<ApiResponse<LoginResponse>> LoginWithGoogleAsync(string email, string name);
+
         public Task<ApiResponse<RegisterResponse>> RegisterAsync(string email, string password, string username);
 
         public Task<ApiResponse<ChangePasswordResponse>> ChangePasswordAsync(string email, string oldPassword, string newPassword, string jwtToken);     
