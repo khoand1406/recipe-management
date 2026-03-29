@@ -48,6 +48,7 @@ namespace RecipeMgt.Application.Services.Management.User
             foreach (var user in users)
             {
                 user.IsBanned = true;
+                user.IsActived = false;
             }
 
             await _userRepository.UpdateRangeAsync(users);
@@ -63,6 +64,7 @@ namespace RecipeMgt.Application.Services.Management.User
                 throw new NotFoundException("USER_NOT_FOUND");
             }
             user.IsBanned = true;
+            user.IsActived = false;
             await _userRepository.UpdateAsync(user);
             var mappedUser= _mapper.Map<UserBasicResponse>(user);
             return Result<UserBasicResponse>.Success(mappedUser);
@@ -235,6 +237,7 @@ namespace RecipeMgt.Application.Services.Management.User
             foreach (var user in users)
             {
                 user.DeleteAt = DateTime.UtcNow;
+                user.IsActived = false;
             }
 
             await _userRepository.UpdateRangeAsync(users);
@@ -246,6 +249,7 @@ namespace RecipeMgt.Application.Services.Management.User
         {
             var user = await _userRepository.GetByIdAsync(id) ?? throw new NotFoundException("USER_NOT_FOUND");
             user.DeleteAt = DateTime.UtcNow;
+            user.IsActived= false;
             await _userRepository.UpdateAsync(user);
             
             _logger.LogInformation($"Successfully Delete User with id: {id}");

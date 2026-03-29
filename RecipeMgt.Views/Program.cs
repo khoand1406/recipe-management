@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Extensions.Options;
 using RecipeMgt.Views.Common.Config;
+using RecipeMgt.Views.Common.Middleware;
 using RecipeMgt.Views.Interface;
 using RecipeMgt.Views.Services;
 using System.Runtime.Intrinsics.Arm;
@@ -34,41 +35,48 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.Configure<ApiSettings>(builder.Configuration.GetSection("ApiSettings"));
+builder.Services.AddTransient<AuthHandler>();
 builder.Services.AddHttpClient<IAuthClient, AuthClient>((serviceProvider, client) =>
 {
     var settings = serviceProvider.GetRequiredService<IOptions<ApiSettings>>().Value;
     client.BaseAddress = new Uri(settings.BaseUrl);
-});
+}).AddHttpMessageHandler<AuthHandler>(); ;
+
+builder.Services.AddHttpClient<IAdminClient, AdminClient>((serviceProvider, client) =>
+{
+    var settings = serviceProvider.GetRequiredService<IOptions<ApiSettings>>().Value;
+    client.BaseAddress = new Uri(settings.BaseUrl);
+}).AddHttpMessageHandler<AuthHandler>(); ;
 builder.Services.AddHttpClient<IDashboardClient, DashboardClient>((serviceProvider, client)=>
 {
     var settings = serviceProvider.GetRequiredService<IOptions<ApiSettings>>().Value;
     client.BaseAddress = new Uri(settings.BaseUrl);
-});
+}).AddHttpMessageHandler<AuthHandler>(); ;
 builder.Services.AddHttpClient<IDishClient, DishClient>((serviceProvider, client) =>
 {
     var settings = serviceProvider.GetRequiredService<IOptions<ApiSettings>>().Value;
     client.BaseAddress = new Uri(settings.BaseUrl);
-});
+}).AddHttpMessageHandler<AuthHandler>(); ;
 builder.Services.AddHttpClient<IRecipeClient, RecipeClient>((serviceProvider, client) =>
 {
     var settings = serviceProvider.GetRequiredService<IOptions<ApiSettings>>().Value;
     client.BaseAddress = new Uri(settings.BaseUrl);
-});
+}).AddHttpMessageHandler<AuthHandler>(); ;
 builder.Services.AddHttpClient<IIngredientClient, IngredientClient>((serviceProvider, client) =>
 {
     var settings = serviceProvider.GetRequiredService<IOptions<ApiSettings>>().Value;
     client.BaseAddress = new Uri(settings.BaseUrl);
-});
+}).AddHttpMessageHandler<AuthHandler>(); ;
 builder.Services.AddHttpClient<IStepClient, StepClient>((serviceProvider, client) =>
 {
     var settings = serviceProvider.GetRequiredService<IOptions<ApiSettings>>().Value;
     client.BaseAddress = new Uri(settings.BaseUrl);
-});
+}).AddHttpMessageHandler<AuthHandler>(); ;
 builder.Services.AddHttpClient<ICommentClient, CommentClient>((serviceProvider, client) =>
 {
     var settings = serviceProvider.GetRequiredService<IOptions<ApiSettings>>().Value;
     client.BaseAddress = new Uri(settings.BaseUrl);
-});
+}).AddHttpMessageHandler<AuthHandler>(); ;
 
 var app = builder.Build();
 

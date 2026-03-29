@@ -106,8 +106,6 @@ namespace RecipeMgt.Views.Controllers
             if (result?.Success == true && result.Data?.Token != null)
             {
                
-                Console.WriteLine(result.Data.Token);
-                Console.WriteLine(result.Data?.User?.FullName);
                 HttpContext.Session.SetString("JwtToken", result.Data?.Token?? "");
                 HttpContext.Session.SetString("UserName", result.Data?.User?.FullName?? "");
                 HttpContext.Session.SetString("UserEmail", result.Data?.User?.Email?? "");

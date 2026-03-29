@@ -24,7 +24,7 @@ namespace RecipeMgt.Api.Controllers.Management
         }
 
         [HttpGet("dashboard")]
-        public async Task<IActionResult> GetDashBoardStatistic()
+        public async Task<IActionResult> GetDashBoardStatisatic()
         {
             var dashboardMetrics = await _dashboardService.GetDashboardMetric();
             return Ok(ApiResponseFactory.Success(dashboardMetrics.Value, HttpContext));
@@ -36,6 +36,7 @@ namespace RecipeMgt.Api.Controllers.Management
             var chartData = await _dashboardService.GetChartCategory();
             return Ok(ApiResponseFactory.Success(chartData.Value, HttpContext));
         }
+
 
         [HttpGet("monthly-chart")]
         public async Task<IActionResult> GetMonthlyChart()

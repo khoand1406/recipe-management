@@ -1,0 +1,626 @@
+﻿@using RecipeMgt.Application.DTOs.Response.Management.Dashboard
+@using RecipeMgt.Views.Models.ViewModels
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+@* ─── CSS ─── *@
+<style>
+    :root {
+        --primary:   #4f46e5;
+        --success:   #10b981;
+        --warning:   #f59e0b;
+        --danger:    #ef4444;
+        --card-bg:   #ffffff;
+        --page-bg:   #f1f5f9;
+        --text-muted:#6b7280;
+    }
+
+    body { background: var(--page-bg); }
+
+    /* ── Metric Cards ── */
+    .metric-card {
+        background: var(--card-bg);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.04);
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        transition: transform .2s, box-shadow .2s;
+    }
+    .metric-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 24px rgba(0,0,0,.10);
+    }
+    .metric-icon {
+        width: 56px; height: 56px;
+        border-radius: 14px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+    .metric-label {
+        font-size: .78rem;
+        font-weight: 600;
+        letter-spacing: .05em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+    }
+    .metric-value {
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1;
+        color: #1e293b;
+    }
+
+    /* ── Chart Card ── */
+    .chart-card {
+        background: var(--card-bg);
+        border-radius: 16px;
+        padding: 28px;
+        box-shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.04);
+    }
+    .chart-card .card-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 6px;
+    }
+    .chart-card .card-subtitle {
+        font-size: .82rem;
+        color: var(--text-muted);
+        margin-bottom: 20px;
+    }
+
+    /* ── Page header ── */
+    .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 28px;
+    }
+    .page-header h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0;
+    }
+    .badge-live {
+        display: inline-flex; align-items: center; gap: 6px;
+        background: #dcfce7; color: #16a34a;
+        font-size: .75rem; font-weight: 600;
+        padding: 4px 12px; border-radius: 999px;
+    }
+    .badge-live::before {
+        content: '';
+        width: 7px; height: 7px;
+        background: #16a34a; border-radius: 50%;
+        animation: pulse 1.5s infinite;
+    }
+    @@keyframes pulse {
+        0%,100% { opacity: 1; }
+        50%      { opacity: .3; }
+    }
+
+    /* ── Empty state ── */
+    .empty-state {
+        text-align: center; padding: 60px 20px;
+        color: var(--text-muted);
+    }
+    .empty-state i { font-size: 2.5rem; margin-bottom: 12px; }
+    /* ── Export toast ── */
+    .export-toast {
+        position: fixed;
+        bottom: 80px; right: 28px;
+        background: #1e293b;
+        color: #fff;
+        padding: 12px 18px;
+        border-radius: 12px;
+        font-size: .82rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 8px 24px rgba(0,0,0,.2);
+        z-index: 9999;
+        transform: translateY(20px);
+        opacity: 0;
+        transition: transform .3s, opacity .3s;
+        pointer-events: none;
+    }
+    .export-toast.show {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    .export-toast .toast-icon {
+        width: 28px; height: 28px;
+        border-radius: 8px;
+        background: rgba(255,255,255,.12);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1rem;
+    }
+    .export-toast.success .toast-icon { color: #10b981; }
+    .export-toast.error   .toast-icon { color: #ef4444; }
+</style>
+
+@* ─── PAGE HEADER ─── *@
+<div class="page-header">
+    <div>
+        <h1><i class="bi bi-speedometer2 me-2 text-primary"></i>Dashboard</h1>
+        <small class="text-muted">Tổng quan hệ thống</small>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge-live">Live</span>
+        @* ── Export dropdown ── *@
+        <div class="dropdown">
+            <button class="btn btn-outline-primary btn-sm d-flex align-items-center gap-2"
+                    data-bs-toggle="dropdown" aria-expanded="false"
+                    style="border-radius:10px; padding:6px 14px; font-weight:600;">
+                <i class="bi bi-download"></i>
+                Xuất dữ liệu
+                <i class="bi bi-chevron-down" style="font-size:.7rem;"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-1"
+                style="border-radius:12px; min-width:200px;">
+                <li>
+                    <h6 class="dropdown-header text-muted" style="font-size:.7rem; letter-spacing:.05em;">
+                        CHỌN DỮ LIỆU
+                    </h6>
+                </li>
+                <li>
+                    <a class="dropdown-item py-2" href="#" id="exportMetrics">
+                        <i class="bi bi-card-list me-2 text-primary"></i>Thông số tổng quan
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item py-2" href="#" id="exportChart">
+                        <i class="bi bi-bar-chart me-2 text-success"></i>Biểu đồ danh mục
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider my-1"></li>
+                <li>
+                    <a class="dropdown-item py-2" href="#" id="exportAll">
+                        <i class="bi bi-file-earmark-spreadsheet me-2 text-warning"></i>
+                        Tất cả dữ liệu
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item py-2" href="/admin/dashboard/export-csv"
+                       id="exportServer">
+                        <i class="bi bi-cloud-download me-2 text-danger"></i>
+                        Export từ server
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+
+@* ─── METRIC CARDS ─── *@
+@if (Model.Metrics != null)
+{
+    <div class="row g-3 mb-4">
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="metric-card">
+                <div class="metric-icon" style="background:#ede9fe;">
+                    <i class="bi bi-cup-hot" style="color:#4f46e5;"></i>
+                </div>
+                <div>
+                    <div class="metric-label">Món ăn</div>
+                    <div class="metric-value">@Model.Metrics.TotalDish.ToString("N0")</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="metric-card">
+                <div class="metric-icon" style="background:#d1fae5;">
+                    <i class="bi bi-people" style="color:#10b981;"></i>
+                </div>
+                <div>
+                    <div class="metric-label">Người dùng</div>
+                    <div class="metric-value">@Model.Metrics.TotalUser.ToString("N0")</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="metric-card">
+                <div class="metric-icon" style="background:#fef3c7;">
+                    <i class="bi bi-journal-richtext" style="color:#f59e0b;"></i>
+                </div>
+                <div>
+                    <div class="metric-label">Công thức</div>
+                    <div class="metric-value">@Model.Metrics.TotalRecipes.ToString("N0")</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-sm-6 col-xl-3">
+            <div class="metric-card">
+                <div class="metric-icon" style="background:#fee2e2;">
+                    <i class="bi bi-star" style="color:#ef4444;"></i>
+                </div>
+                <div>
+                    <div class="metric-label">Đánh giá</div>
+                    <div class="metric-value">@Model.Metrics.TotalReviews.ToString("N0")</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+}
+else
+{
+    <div class="alert alert-warning d-flex align-items-center gap-2 mb-4" role="alert">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        Không thể tải thông số tổng quan. Vui lòng thử lại.
+    </div>
+}
+
+@* ─── CHARTS ROW ─── *@
+<div class="row g-3">
+
+    @* Bar chart – món ăn theo tháng *@
+    <div class="col-12 col-lg-8">
+        <div class="chart-card h-100">
+            <div class="card-title">
+                <i class="bi bi-bar-chart-line me-2 text-primary"></i>Món ăn theo danh mục
+            </div>
+            <div class="card-subtitle">Phân bố số lượng món ăn trong từng danh mục</div>
+
+            @if (Model.DishChart != null && Model.DishChart.Any())
+            {
+                <canvas id="barChart" height="110"></canvas>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="bi bi-bar-chart d-block"></i>
+                    Chưa có dữ liệu biểu đồ
+                </div>
+            }
+        </div>
+    </div>
+
+    @* Doughnut chart – tỷ lệ *@
+    <div class="col-12 col-lg-4">
+        <div class="chart-card h-100">
+            <div class="card-title">
+                <i class="bi bi-pie-chart me-2 text-warning"></i>Tỷ lệ danh mục
+            </div>
+            <div class="card-subtitle">Phần trăm mỗi danh mục</div>
+
+            @if (Model.DishChart != null && Model.DishChart.Any())
+            {
+                <canvas id="doughnutChart" height="220"></canvas>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="bi bi-pie-chart d-block"></i>
+                    Chưa có dữ liệu
+                </div>
+            }
+        </div>
+    </div>
+
+</div>
+
+@* ─── SUMMARY TABLE ─── *@
+@if (Model.DishChart != null && Model.DishChart.Any())
+{
+    <div class="chart-card mt-3">
+        <div class="card-title">
+            <i class="bi bi-table me-2 text-success"></i>Chi tiết danh mục
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Danh mục</th>
+                        <th class="text-end">Số món</th>
+                        <th>Tỷ lệ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        int totalDishes = Model.DishChart.Sum(x => x.DishCount);
+                        int rank = 1;
+                    }
+                    @foreach (var item in Model.DishChart.OrderByDescending(x => x.DishCount))
+                    {
+                        double pct = totalDishes > 0 ? (double)item.DishCount / totalDishes * 100 : 0;
+                        <tr>
+                            <td class="text-muted">@rank</td>
+                            <td><strong>@item.CategoryName</strong></td>
+                            <td class="text-end">@item.DishCount.ToString("N0")</td>
+                            <td style="min-width:160px;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress flex-grow-1" style="height:6px;">
+                                        <div class="progress-bar bg-primary"
+                                             style="width:@pct.ToString("F1")%;"
+                                             role="progressbar"></div>
+                                    </div>
+                                    <small class="text-muted" style="white-space:nowrap;">
+                                        @pct.ToString("F1")%
+                                    </small>
+                                </div>
+                            </td>
+                        </tr>
+                        rank++;
+                    }
+                </tbody>
+                <tfoot class="table-light fw-bold">
+                    <tr>
+                        <td colspan="2">Tổng cộng</td>
+                        <td class="text-end">@totalDishes.ToString("N0")</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+    <div class="export-toast" id="exportToast">
+    <div class="toast-icon"><i class="bi bi-check-circle-fill" id="toastIcon"></i></div>
+    <span id="toastMsg">Đang xuất...</span>
+</div>
+}
+
+@* ─── SCRIPTS ─── *@
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    
+    const dishChart = @Html.Raw(
+        System.Text.Json.JsonSerializer.Serialize(
+            Model.DishChart ?? new List<ChartCategoryDishResponse>(),
+            new System.Text.Json.JsonSerializerOptions {
+                PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+            }
+        )
+    );
+    const metrics = @Html.Raw(
+    System.Text.Json.JsonSerializer.Serialize(
+        Model.Metrics,
+        new System.Text.Json.JsonSerializerOptions {
+            PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase
+        }
+    )
+);
+    
+    function escapeCell(val) {
+        if (val === null || val === undefined) return '';
+        const str = String(val);
+        return /[",\n\r]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+    }
+    
+    function toCSV(rows) {
+        return rows.map(row => row.map(escapeCell).join(',')).join('\r\n');
+    }
+    
+    function downloadCSV(filename, csvString) {
+        
+        const BOM  = '\uFEFF';
+        const blob = new Blob([BOM + csvString], { type: 'text/csv;charset=utf-8;' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
+        a.download = `${filename}_${formatDateForFile(new Date())}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+    function formatDateForFile(date) {
+        return date.toISOString().slice(0, 10).replace(/-/g, '');  // 20250115
+    }
+    
+    let toastTimer = null;
+    function showToast(msg, type = 'success') {
+        const toast   = document.getElementById('exportToast');
+        const msgEl   = document.getElementById('toastMsg');
+        const iconEl  = document.getElementById('toastIcon');
+        msgEl.textContent = msg;
+        toast.className   = `export-toast ${type}`;
+        iconEl.className  = type === 'success'
+            ? 'bi bi-check-circle-fill'
+            : 'bi bi-x-circle-fill';
+        
+        toast.offsetHeight;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+    
+    function exportMetrics() {
+        if (!metrics) {
+            showToast('Không có dữ liệu thông số!', 'error');
+            return;
+        }
+        const rows = [
+            ['Thông số', 'Giá trị', 'Thời gian xuất'],
+            ['Tổng món ăn',   metrics.totalDish,    new Date().toLocaleString('vi-VN')],
+            ['Tổng người dùng', metrics.totalUser,  ''],
+            ['Tổng công thức',  metrics.totalRecipes, ''],
+            ['Tổng đánh giá',   metrics.totalReviews, ''],
+        ];
+        downloadCSV('dashboard_metrics', toCSV(rows));
+        showToast('Đã xuất thông số tổng quan ✓');
+    }
+    function exportChart() {
+        if (!dishChart || !dishChart.length) {
+            showToast('Không có dữ liệu biểu đồ!', 'error');
+            return;
+        }
+        const total = dishChart.reduce((s, d) => s + d.dishCount, 0);
+        const rows  = [
+            ['STT', 'Danh mục', 'Số món ăn', 'Tỷ lệ (%)', 'Thời gian xuất'],
+            ...dishChart
+                .slice()
+                .sort((a, b) => b.dishCount - a.dishCount)
+                .map((d, i) => [
+                    i + 1,
+                    d.categoryName,
+                    d.dishCount,
+                    total > 0 ? (d.dishCount / total * 100).toFixed(2) : '0.00',
+                    i === 0 ? new Date().toLocaleString('vi-VN') : '',
+                ]),
+            
+            ['', 'TỔNG CỘNG', total, '100.00', ''],
+        ];
+        downloadCSV('dashboard_category_chart', toCSV(rows));
+        showToast('Đã xuất biểu đồ danh mục ✓');
+    }
+    function exportAll() {
+        if (!metrics && (!dishChart || !dishChart.length)) {
+            showToast('Không có dữ liệu để xuất!', 'error');
+            return;
+        }
+        const now   = new Date().toLocaleString('vi-VN');
+        const total = dishChart ? dishChart.reduce((s, d) => s + d.dishCount, 0) : 0;
+        const rows = [
+            // ── Section 1: Metrics ──
+            ['=== THÔNG SỐ TỔNG QUAN ===', '', '', ''],
+            ['Thông số', 'Giá trị', '', ''],
+        ];
+        if (metrics) {
+            rows.push(
+                ['Tổng món ăn',    metrics.totalDish,    '', ''],
+                ['Tổng người dùng', metrics.totalUser,   '', ''],
+                ['Tổng công thức',  metrics.totalRecipes,'', ''],
+                ['Tổng đánh giá',   metrics.totalReviews,'', ''],
+            );
+        }
+        // ── Section 2: Chart ──
+        rows.push(
+            ['', '', '', ''],
+            ['=== BIỂU ĐỒ DANH MỤC ===', '', '', ''],
+            ['STT', 'Danh mục', 'Số món ăn', 'Tỷ lệ (%)'],
+        );
+        if (dishChart && dishChart.length) {
+            dishChart
+                .slice()
+                .sort((a, b) => b.dishCount - a.dishCount)
+                .forEach((d, i) => {
+                    rows.push([
+                        i + 1,
+                        d.categoryName,
+                        d.dishCount,
+                        total > 0 ? (d.dishCount / total * 100).toFixed(2) : '0.00',
+                    ]);
+                });
+            rows.push(['', 'TỔNG CỘNG', total, '100.00']);
+        }
+        // ── Footer ──
+        rows.push(
+            ['', '', '', ''],
+            [`Xuất lúc: ${now}`, '', '', ''],
+            ['Xuất bởi: FoodAdmin System', '', '', ''],
+        );
+        downloadCSV('dashboard_full_report', toCSV(rows));
+        showToast('Đã xuất toàn bộ báo cáo ✓');
+    }
+    
+    document.getElementById('exportMetrics')
+        ?.addEventListener('click', e => { e.preventDefault(); exportMetrics(); });
+    document.getElementById('exportChart')
+        ?.addEventListener('click', e => { e.preventDefault(); exportChart(); });
+    document.getElementById('exportAll')
+        ?.addEventListener('click', e => { e.preventDefault(); exportAll(); });
+    if (!dishChart.length) return;
+
+    const labels = dishChart.map(d => d.categoryName);
+    const counts  = dishChart.map(d => d.dishCount);
+
+    
+    const COLORS = [
+        '#4f46e5','#10b981','#f59e0b','#ef4444',
+        '#06b6d4','#8b5cf6','#ec4899','#14b8a6',
+        '#f97316','#84cc16'
+    ];
+    const palette = labels.map((_, i) => COLORS[i % COLORS.length]);
+
+    Chart.defaults.font.family = "'Inter','Segoe UI',sans-serif";
+    Chart.defaults.plugins.legend.labels.boxWidth = 12;
+    Chart.defaults.plugins.legend.labels.padding  = 16;
+
+    // ── Bar Chart ──────────────────────────────────────────
+    new Chart(document.getElementById('barChart'), {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Số món ăn',
+                data: counts,
+                backgroundColor: palette,
+                borderRadius: 8,
+                borderSkipped: false,
+                maxBarThickness: 52
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => ` ${ctx.parsed.y.toLocaleString()} món`
+                    }
+                }
+            },
+            scales: {
+                x: { grid: { display: false } },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: '#f1f5f9' },
+                    ticks: {
+                        precision: 0,
+                        callback: v => v.toLocaleString()
+                    }
+                }
+            }
+        }
+    });
+
+    // ── Doughnut Chart ─────────────────────────────────────
+    new Chart(document.getElementById('doughnutChart'), {
+        type: 'doughnut',
+        data: {
+            labels,
+            datasets: [{
+                data: counts,
+                backgroundColor: palette,
+                borderWidth: 2,
+                borderColor: '#ffffff',
+                hoverOffset: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            cutout: '65%',
+            plugins: {
+                legend: { position: 'bottom' },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => {
+                            const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
+                            const pct   = (ctx.parsed / total * 100).toFixed(1);
+                            return ` ${ctx.label}: ${ctx.parsed.toLocaleString()} (${pct}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+})();
+</script>
+}

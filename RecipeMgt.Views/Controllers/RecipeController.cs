@@ -109,7 +109,7 @@ namespace RecipeMgt.Views.Controllers
             if (cookingTime.HasValue) form.Add(new StringContent(cookingTime.Value.ToString()), "CookingTime");
             if (servings.HasValue) form.Add(new StringContent(servings.Value.ToString()), "Servings");
             form.Add(new StringContent(difficultyLevel ?? "Medium", Encoding.UTF8), "DifficultyLevel");
-            form.Add(new StringContent(ingredientsJson ?? "[]", Encoding.UTF8), "IngredientsJson");
+            form.Add(new StringContent(ingredientsJson ?? "[]", Encoding.UTF8), "IngredientsJson"); 
             form.Add(new StringContent(stepsJson ?? "[]", Encoding.UTF8), "StepsJson");
             if (images != null)
             {
