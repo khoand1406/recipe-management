@@ -64,6 +64,7 @@ namespace RecipentMgt.Infrastucture.Repository.Dishes
                     return (false, $"Dish with id {id} not found");
 
                 await RemoveDishImages(id);
+                await RemoveRelatedDishes(id);
 
                 _context.Dishes.Remove(dish);
                 await _context.SaveChangesAsync();
@@ -79,6 +80,15 @@ namespace RecipentMgt.Infrastucture.Repository.Dishes
                 _logger.LogError(ex, "DeleteDish failed for id {DishId}", id);
                 return (false, "Error deleting dish");
             }
+        }
+
+        private async Task RemoveRelatedDishes(int id)
+        {
+            var related = await _context.RelatedDishes
+        .Where(x => x.DishId == id || x.RelatedDishId == id)
+        .ToListAsync();
+
+            _context.RelatedDishes.RemoveRange(related);
         }
 
         public async Task<(bool Success, string Message, int DishId)> UpdateDish(
@@ -112,6 +122,25 @@ namespace RecipentMgt.Infrastucture.Repository.Dishes
                 await transaction.RollbackAsync();
                 _logger.LogError(ex, "UpdateDish failed");
                 return (false, "Error updating dish", 0);
+            }
+        }
+
+        public async Task<(bool Success, string Message)> ApproveDish(int id)
+        {
+            try
+            {
+                var dish = await _context.Dishes.FindAsync(id);
+                if (dish == null)
+                    return (false, $"Dish with id {id} not found");
+                dish.IsConfirm = true;
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("Approved dish {DishId}", id);
+                return (true, "Dish approved successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "ApproveDish failed for id {DishId}", id);
+                return (false, "Error approving dish");
             }
         }
 

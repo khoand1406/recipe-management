@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using RecipeMgt.Application.DTOs.Request.Dishes;
 using RecipeMgt.Application.DTOs.Response.User;
 using RecipeMgt.Domain.Enums;
 using RecipeMgt.Views.Interface;
@@ -78,6 +79,94 @@ namespace RecipeMgt.Views.Controllers
 
             return View(vm);
         }
+        public async Task<IActionResult> DishManagement(string? searchQuery,
+            int? categoryId,
+            int page = 1,
+            int pageSize = 10)
+        {
+            var result= await _adminClient.GetDishes(
+                searchQuery,
+                categoryId,
+                page,
+                pageSize
+            );
+            var categoriesResult = await _adminClient.GetAllCategories();
+            if (result.Success && result.Data != null)
+            {
+                var vm = new DishesViewModel
+                {
+                    Dishes = result.Data.Items,
+                    Page = result.Data.Page,
+                    PageSize = result.Data.PageSize,
+                    TotalCount = result.Data.TotalItems,
+                    PageCount = result.Data.TotalPages,
+                    SearchQuery = searchQuery,
+                    Categories = categoriesResult.Data?? [],
+                    CategoryFilter= categoryId,
+                };
+                return View(vm);
+            }
+            return View("Error", result.Errors);
+        }
+
+        [HttpPatch("/admin/dishes/{id}/confirm")]
+        public async Task<IActionResult> ConfirmDish(int id)
+        {
+            var result = await _adminClient.ApproveDish(id);
+            if(result.Success)
+                return Ok(new { message = "Dish confirmed successfully" });
+            return BadRequest(new { message = result.Message, errors = result.Errors });
+        }
+        
+        [HttpPost("/admin/dishes/create")]
+        public async Task<IActionResult> CreateDish([FromForm] CreateDishRequest model)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState
+                    .Where(x => x.Value?.Errors.Count > 0)
+                    .Select(x => new {
+                        Field = x.Key,
+                        Errors = x.Value?.Errors.Select(e => e.ErrorMessage)
+                    });
+
+                return BadRequest(new { message = "Invalid input", errors });
+            }
+            var result = await _adminClient.CreateDish(model);
+            if (result.Success)
+                return Ok(new { message = "Dish created successfully" });
+            return BadRequest(new { message = result.Message, errors = result.Errors });
+        }
+
+        [HttpPost("/admin/dishes/{id}/update")]
+        public async Task<IActionResult> UpdateDish(int id, [FromForm] UpdateDishRequest model)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState
+                    .Where(x => x.Value?.Errors.Count > 0)
+                    .Select(x => new {
+                        Field = x.Key,
+                        Errors = x.Value?.Errors.Select(e => e.ErrorMessage)
+                    });
+                return BadRequest(new { message = "Invalid input", errors });
+            }
+            var result = await _adminClient.UpdateDish(id, model);
+            if (result.Success)
+                return Ok(new { message = "Dish updated successfully" });
+            return BadRequest(new { message = result.Message, errors = result.Errors });
+        }
+
+        [HttpDelete("/admin/dishes/{id}/delete")]
+        public async Task<IActionResult> DeleteDish(int id)
+        {
+            var result = await _adminClient.DeleteDish(id);
+            if (result.Success)
+                return Ok(new { message = "Dish deleted successfully" });
+            return BadRequest(new { message = result.Message, errors = result.Errors });
+        }
+
+
         [HttpPatch("/admin/users/{id}/ban")]
         public async Task<IActionResult> BanUser(int id)
         {
@@ -150,7 +239,6 @@ namespace RecipeMgt.Views.Controllers
         [HttpGet("/admin/users/export")]
     public async Task<IActionResult> ExportUsers([FromQuery] UserQueryRequest query)
     {
-        // ❗ Bỏ pagination để export full
         query.Page = 1;
         query.PageSize = int.MaxValue;
 
@@ -162,8 +250,6 @@ namespace RecipeMgt.Views.Controllers
         var users = result.Data.Items;
 
         var csv = new StringBuilder();
-
-        // Header
         csv.AppendLine("Id,FullName,Email,Role,Status,Recipes,Followers,CreatedAt");
 
         foreach (var u in users)
@@ -179,8 +265,6 @@ namespace RecipeMgt.Views.Controllers
                 $"{(u.CreatedAt.HasValue ? u.CreatedAt.Value.ToString("dd/MM/yyyy") : "")}"
             );
         }
-
-        // ✅ Fix lỗi tiếng Việt Excel
         var bytes = Encoding.UTF8.GetPreamble()
             .Concat(Encoding.UTF8.GetBytes(csv.ToString()))
             .ToArray();

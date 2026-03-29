@@ -394,8 +394,8 @@ namespace RecipeMgt.Application.Services.Dishes
         {
             var result = await _repo.GetById(id) ?? throw new NotFoundException("DISH_NOT_FOUND");
             result.IsConfirm = true;
-            var (Success, Message, _) = await _repo.UpdateDish(result, null);
-            if(!Success) throw new BadRequestException(Message);
+            var res = await _repo.ApproveDish(id);
+            if(!res.Success) throw new BadRequestException(res.Message);
             return Result.Success();
         }
 

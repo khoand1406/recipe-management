@@ -1,0 +1,711 @@
+﻿@using RecipeMgt.Views.Models.ViewModels
+@model DishesViewModel
+@{
+    ViewData["Title"] = "Món ăn";
+    ViewData["ActiveNav"] = "dishes";
+    ViewData["BreadcrumbParent"] = "Quản lý";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var categoryFilter = Model.CategoryFilter?.ToString();
+    var pageSize = Model.PageSize.ToString();
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Quản lý Món ăn</h1>
+        <p class="page-subtitle">Duyệt, chỉnh sửa và quản lý toàn bộ món ăn trong hệ thống</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-primary-sm" onclick="openCreateModal()">
+            <i class="bi bi-plus-lg"></i> Thêm món ăn
+        </button>
+    </div>
+</div>
+
+@* ── Stat cards ── *@
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="stat-icon orange"><i class="bi bi-cup-hot-fill"></i></div>
+        <div>
+            <div class="stat-value">@Model.TotalCount</div>
+            <div class="stat-label">Tổng món ăn</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green"><i class="bi bi-patch-check-fill"></i></div>
+        <div>
+            <div class="stat-value" id="confirmedCount">—</div>
+            <div class="stat-label">Đã duyệt</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon violet"><i class="bi bi-hourglass-split"></i></div>
+        <div>
+            <div class="stat-value" id="pendingCount">—</div>
+            <div class="stat-label">Chờ duyệt</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon blue"><i class="bi bi-eye-fill"></i></div>
+        <div>
+            <div class="stat-value" id="totalViews">—</div>
+            <div class="stat-label">Tổng lượt xem</div>
+        </div>
+    </div>
+</div>
+
+@* ── Toolbar ── *@
+<form asp-controller="Management" asp-action="DishManagement" method="get" id="filterForm">
+    <div class="table-toolbar">
+        <div class="search-box">
+            <i class="bi bi-search"></i>
+            <input type="text" name="searchQuery" id="searchQuery"
+                   value="@Model.SearchQuery"
+                   placeholder="Tìm tên món ăn…" autocomplete="off" />
+        </div>
+        <input type="hidden" name="page" value="1" />
+
+        <select class="filter-select" name="categoryId" id="categoryFilter">
+            <option value="" selected="@(categoryFilter == null ? "selected" : null)">Tất cả danh mục</option>
+            @foreach (var cat in Model.Categories)
+            {
+                <option value="@cat.CategoryId"
+                        selected="@(categoryFilter == cat.CategoryId.ToString() ? "selected" : null)">
+                    @cat.CategoryName
+                </option>
+            }
+        </select>
+
+        <select class="filter-select" name="pageSize" id="pageSizeFilter">
+            <option value="10" selected="@(pageSize == "10" ? "selected" : null)">10 / trang</option>
+            <option value="25" selected="@(pageSize == "25" ? "selected" : null)">25 / trang</option>
+            <option value="50" selected="@(pageSize == "50" ? "selected" : null)">50 / trang</option>
+        </select>
+
+        <div class="ms-auto" style="display:flex;gap:8px;">
+            <button type="submit" class="btn-primary-sm">
+                <i class="bi bi-funnel"></i> Lọc
+            </button>
+            <a asp-controller="Management" asp-action="DishManagement" class="btn-outline-sm">
+                <i class="bi bi-arrow-counterclockwise"></i> Đặt lại
+            </a>
+        </div>
+    </div>
+</form>
+
+@* ── Table ── *@
+<div class="table-wrapper">
+    <div class="table-responsive">
+        @if (Model.Dishes != null && Model.Dishes.Any())
+        {
+            <table class="dish-table" id="dishTable">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" class="form-check-input" id="checkAll" /></th>
+                        <th>Món ăn</th>
+                        <th class="hide-mobile">Danh mục</th>
+                        <th class="hide-mobile">Người tạo</th>
+                        <th class="hide-mobile">Lượt xem</th>
+                        <th class="hide-mobile">Bookmark</th>
+                        <th class="hide-mobile">Trạng thái</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var d in Model.Dishes)
+                    {
+                        var firstImg = d.ImageUrls.FirstOrDefault();
+                        var creatorInit = string.IsNullOrWhiteSpace(d.CreatorName) ? "?" :
+                        string.Concat(d.CreatorName.Split(' ',
+                        StringSplitOptions.RemoveEmptyEntries).Select(w => w[0])).ToUpper();
+                        creatorInit = creatorInit.Length > 2 ? creatorInit[..2] : creatorInit;
+
+                        <tr>
+                            <td>
+                                <input type="checkbox" class="form-check-input row-check" value="@d.DishId" />
+                            </td>
+                            <td>
+                                <div class="dish-cell">
+                                    @if (!string.IsNullOrEmpty(firstImg))
+                                    {
+                                        <img src="@firstImg" alt="@d.DishName" class="dish-thumb" loading="lazy" />
+                                    }
+                                    else
+                                    {
+                                        <div class="dish-thumb-placeholder"><i class="bi bi-cup-hot"></i></div>
+                                    }
+                                    <div>
+                                        <div class="dish-name" title="@d.DishName">@d.DishName</div>
+                                        <div class="dish-desc" title="@d.Description">@d.Description</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="hide-mobile">
+                                <span class="cat-badge">
+                                    <i class="bi bi-grid-3x3-gap"></i>
+                                    @(d.CategoryName ?? "—")
+                                </span>
+                            </td>
+                            <td class="hide-mobile">
+                                <div class="creator-cell">
+                                    @if (!string.IsNullOrEmpty(d.CreatorAvatar))
+                                    {
+                                        <img src="@d.CreatorAvatar" class="creator-ava" alt="@d.CreatorName" />
+                                    }
+                                    else
+                                    {
+                                        <div class="creator-ava-placeholder">@creatorInit</div>
+                                    }
+                                    <span class="creator-name">@(d.CreatorName ?? "—")</span>
+                                </div>
+                            </td>
+                            <td class="hide-mobile">
+                                <span class="mini-stat">
+                                    <i class="bi bi-eye"></i> @d.ViewCount.ToString("N0")
+                                </span>
+                            </td>
+                            <td class="hide-mobile">
+                                <span class="mini-stat">
+                                    <i class="bi bi-bookmark"></i> @d.BookmarkCount.ToString("N0")
+                                </span>
+                            </td>
+                            <td class="hide-mobile">
+                                @if (d.IsConfirmed)
+                                {
+                                    <span class="badge badge-confirmed">
+                                        <span class="badge-dot"></span>Đã duyệt
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-pending">
+                                        <span class="badge-dot"></span>Chờ duyệt
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                <div class="action-group">
+                                    @* Confirm / Unconfirm *@
+                                    @if (!d.IsConfirmed)
+                                    
+                                    {
+                                        <button class="act-btn success" title="Duyệt món"
+                                                data-id="@d.DishId" data-name="@d.DishName"
+                                                onclick="confirmToggle(this, true)">
+                                            <i class="bi bi-patch-check"></i>
+                                        </button>
+                                    }
+                                    @* Edit *@
+                                    <button class="act-btn" title="Chỉnh sửa"
+                                            data-id="@d.DishId"
+                                            data-name="@d.DishName"
+                                            data-desc="@d.Description"
+                                            data-category="@d.CategoryId"
+                                            data-confirmed="@d.IsConfirmed.ToString().ToLower()"
+                                            data-images="@string.Join(",", d.ImageUrls)"
+                                            onclick="openEditModal(this)">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    @* Delete *@
+                                    <button class="act-btn danger" title="Xoá"
+                                            data-id="@d.DishId" data-name="@d.DishName"
+                                            onclick="openDeleteModal(this)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            @* ── Pagination ── *@
+            <div class="table-footer">
+                <div class="page-info">
+                    Hiển thị <strong>@((Model.Page - 1) * Model.PageSize + 1)</strong>
+                    – <strong>@Math.Min(Model.Page * Model.PageSize, Model.TotalCount)</strong>
+                    trong <strong>@Model.TotalCount</strong> món ăn
+                </div>
+
+                @{
+                    int totalPages = Model.PageCount;
+                    string PageUrl(int p) => Url.Action("DishManagement", "Management", new
+                    {
+                        page = p,
+                        pageSize = Model.PageSize,
+                        searchQuery = Model.SearchQuery,
+                        categoryId = Model.CategoryFilter
+                    })!;
+                }
+                <div class="pagination-group">
+                    <a class="page-btn @(Model.Page <= 1 ? "disabled" : "")" href="@PageUrl(Model.Page - 1)">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                    @{
+                        int startP = Math.Max(1, Model.Page - 2);
+                        int endP = Math.Min(totalPages, Model.Page + 2);
+                    }
+                    @if (startP > 1)
+                    {
+                        <a class="page-btn" href="@PageUrl(1)">1</a>
+                        @if (startP > 2)
+                        {
+                            <span class="page-btn disabled">…</span>
+                        }
+                    }
+                    @for (int p = startP; p <= endP; p++)
+                    {
+                        <a class="page-btn @(p == Model.Page ? "active" : "")" href="@PageUrl(p)">@p</a>
+                    }
+                    @if (endP < totalPages)
+                    {
+                        @if (endP < totalPages - 1)
+                        {
+                            <span class="page-btn disabled">…</span>
+                        }
+                        <a class="page-btn" href="@PageUrl(totalPages)">@totalPages</a>
+                    }
+                    <a class="page-btn @(Model.Page >= totalPages ? "disabled" : "")" href="@PageUrl(Model.Page + 1)">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="bi bi-cup-hot"></i>
+                <strong style="color:#64748b;">Không có món ăn nào</strong>
+                <p>Thử thay đổi bộ lọc hoặc thêm món ăn mới.</p>
+            </div>
+        }
+    </div>
+</div>
+
+@* ══════════ CREATE MODAL ══════════ *@
+<div class="modal fade" id="createModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-plus-circle me-2" style="color:#f97316"></i>Thêm món ăn</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-alert error" id="createAlert"></div>
+                <div class="form-row">
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label class="form-label">Tên món ăn <span class="req">*</span></label>
+                        <input type="text" class="form-control" id="c_name" placeholder="VD: Phở bò Hà Nội" maxlength="200" />
+                        <div class="invalid-feedback">Tên món ăn không được để trống</div>
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label class="form-label">Mô tả</label>
+                        <textarea class="form-control" id="c_desc" rows="3" placeholder="Mô tả ngắn về món ăn…" style="resize:vertical"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Danh mục <span class="req">*</span></label>
+                        <select class="form-control" id="c_category">
+                            <option value="">-- Chọn danh mục --</option>
+                            @foreach (var cat in Model.Categories)
+                            {
+                                <option value="@cat.CategoryId">@cat.CategoryName</option>
+                            }
+                        </select>
+                        <div class="invalid-feedback">Vui lòng chọn danh mục</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Trạng thái duyệt</label>
+                        <select class="form-control" id="c_confirmed">
+                            <option value="false">Chờ duyệt</option>
+                            <option value="true">Duyệt ngay</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label class="form-label">Hình ảnh (URL, mỗi dòng một URL)</label>
+                        <input type="file" id="c_images" multiple accept="image/*" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-outline-sm" data-bs-dismiss="modal">Huỷ</button>
+                <button type="button" class="btn-primary-sm" id="createSubmit" onclick="submitCreate()">
+                    <span class="spinner-sm"></span>
+                    <span class="btn-text"><i class="bi bi-plus-lg me-1"></i>Tạo món ăn</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ══════════ EDIT MODAL ══════════ *@
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Chỉnh sửa món ăn</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-alert error" id="editAlert"></div>
+                <input type="hidden" id="e_dishId" />
+                <div class="form-row">
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label class="form-label">Tên món ăn <span class="req">*</span></label>
+                        <input type="text" class="form-control" id="e_name" maxlength="200" />
+                        <div class="invalid-feedback">Tên không được để trống</div>
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label class="form-label">Mô tả</label>
+                        <textarea class="form-control" id="e_desc" rows="3" style="resize:vertical"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Danh mục</label>
+                        <select class="form-control" id="e_category">
+                            @foreach (var cat in Model.Categories)
+                            {
+                                <option value="@cat.CategoryId">@cat.CategoryName</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Trạng thái duyệt</label>
+                        <select class="form-control" id="e_confirmed">
+                            <option value="false">Chờ duyệt</option>
+                            <option value="true">Đã duyệt</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label class="form-label">Hình ảnh hiện tại</label>
+                        <div class="img-preview-strip" id="e_imgPreview"></div>
+                        <input type="file" id="e_images" multiple accept="image/*" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-outline-sm" data-bs-dismiss="modal">Huỷ</button>
+                <button type="button" class="btn-primary-sm" id="editSubmit" onclick="submitEdit()">
+                    <span class="spinner-sm"></span>
+                    <span class="btn-text"><i class="bi bi-check-lg me-1"></i>Lưu thay đổi</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ══════════ CONFIRM TOGGLE MODAL ══════════ *@
+<div class="modal fade" id="toggleModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:400px;">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title" id="toggleModalTitle">Xác nhận duyệt</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pt-0">
+                <p id="toggleModalBody" style="color:#64748b;font-size:.85rem;margin:0;"></p>
+                <input type="hidden" id="toggleDishId" />
+                <input type="hidden" id="toggleAction" />
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn-outline-sm" data-bs-dismiss="modal">Huỷ</button>
+                <button type="button" class="btn-primary-sm" id="toggleSubmit" onclick="submitToggle()">
+                    <span class="spinner-sm"></span>
+                    <span class="btn-text">Xác nhận</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* ══════════ DELETE MODAL ══════════ *@
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:400px;">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center pt-0">
+                <div class="delete-icon-wrap"><i class="bi bi-trash3"></i></div>
+                <h5 style="font-weight:700;color:#0f172a;margin-bottom:8px;">Xoá món ăn?</h5>
+                <p style="color:#64748b;font-size:.85rem;margin:0;">
+                    Bạn sắp xoá <strong id="deleteDishName"></strong>.<br>
+                    Hành động này <strong>không thể hoàn tác</strong>.
+                </p>
+                <input type="hidden" id="deleteDishId" />
+            </div>
+            <div class="modal-footer justify-content-center border-0 pt-0">
+                <button type="button" class="btn-outline-sm" data-bs-dismiss="modal">Huỷ bỏ</button>
+                <button type="button" id="deleteSubmit" onclick="submitDelete()"
+                        style="display:inline-flex;align-items:center;gap:6px;padding:8px 20px;border-radius:9px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;font-size:.82rem;font-weight:600;border:none;cursor:pointer;">
+                    <span class="spinner-sm"></span>
+                    <span class="btn-text"><i class="bi bi-trash me-1"></i>Xoá ngay</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            /* ── instances ── */
+            const createModal = new bootstrap.Modal(document.getElementById('createModal'));
+            const editModal   = new bootstrap.Modal(document.getElementById('editModal'));
+            const toggleModal = new bootstrap.Modal(document.getElementById('toggleModal'));
+            const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+
+            /* ── helpers ── */
+            function setLoading(btnId, on) {
+                const btn = document.getElementById(btnId);
+                if (!btn) return;
+                btn.classList.toggle('btn-loading', on);
+                btn.disabled = on;
+            }
+            function showAlert(id, msg) {
+                const el = document.getElementById(id);
+                el.textContent = msg;
+                el.className = 'modal-alert error show';
+            }
+            function hideAlert(id) {
+                document.getElementById(id).className = 'modal-alert error';
+            }
+            function resetInvalid(...ids) {
+                ids.forEach(id => document.getElementById(id)?.classList.remove('is-invalid'));
+            }
+
+            /* ── check-all ── */
+            const checkAll = document.getElementById('checkAll');
+            if (checkAll) {
+                checkAll.addEventListener('change', () =>
+                    document.querySelectorAll('.row-check').forEach(cb => cb.checked = checkAll.checked));
+            }
+
+            /* ── quick stats ── */
+            let confirmed = 0, pending = 0, views = 0;
+            document.querySelectorAll('#dishTable tbody tr').forEach(row => {
+                const badge = row.querySelector('.badge');
+                if (badge?.classList.contains('badge-confirmed')) confirmed++;
+                else pending++;
+                const mini = row.querySelectorAll('.mini-stat');
+                if (mini.length > 0) views += parseInt(mini[0].textContent.replace(/\D/g,'')) || 0;
+            });
+            const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v.toLocaleString('vi-VN'); };
+            set('confirmedCount', confirmed);
+            set('pendingCount',   pending);
+            set('totalViews',     views);
+
+            /* ── search debounce ── */
+            let timer;
+            const sq = document.getElementById('searchQuery');
+            if (sq) sq.addEventListener('input', () => {
+                clearTimeout(timer);
+                timer = setTimeout(() => document.getElementById('filterForm').submit(), 500);
+            });
+
+            /* ── filter auto-submit ── */
+            ['categoryFilter','pageSizeFilter'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('change', () => {
+                    document.querySelector('#filterForm input[name="page"]').value = 1;
+                    document.getElementById('filterForm').submit();
+                });
+            });
+
+            /* ══════════ CREATE ══════════ */
+            window.openCreateModal = () => {
+                hideAlert('createAlert');
+                resetInvalid('c_name','c_category');
+                ['c_name','c_desc','c_images'].forEach(id => document.getElementById(id).value = '');
+                document.getElementById('c_category').value  = '';
+                document.getElementById('c_confirmed').value = 'false';
+                createModal.show();
+            };
+
+            window.submitCreate = async () => {
+            hideAlert('createAlert');
+
+            const name  = document.getElementById('c_name').value.trim();
+            const desc  = document.getElementById('c_desc').value.trim();
+            const catId = document.getElementById('c_category').value;
+
+            const files = document.getElementById('c_images').files;
+
+            let valid = true;
+            resetInvalid('c_name','c_category');
+
+            if (!name) {
+                document.getElementById('c_name').classList.add('is-invalid');
+                valid = false;
+            }
+
+            if (!catId) {
+                document.getElementById('c_category').classList.add('is-invalid');
+                valid = false;
+            }
+
+            if (!valid) return;
+
+            
+            const formData = new FormData();
+            formData.append("DishName", name);
+            formData.append("Description", desc);
+            formData.append("CategoryId", catId);
+
+            
+            for (let i = 0; i < files.length; i++) {
+                formData.append("Images", files[i]);
+            }
+
+            setLoading('createSubmit', true);
+
+            try {
+                const res = await fetch('/admin/dishes/create', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    createModal.hide();
+                    location.reload();
+                } else {
+                    showAlert('createAlert', data.message || 'Có lỗi xảy ra');
+                }
+
+            } catch {
+                showAlert('createAlert', 'Không thể kết nối đến server');
+            } finally {
+                setLoading('createSubmit', false);
+            }
+        };
+
+            /* ══════════ EDIT ══════════ */
+            window.openEditModal = (btn) => {
+                hideAlert('editAlert');
+                const images = (btn.dataset.images || '').split(',').filter(Boolean);
+
+                document.getElementById('e_dishId').value    = btn.dataset.id;
+                document.getElementById('e_name').value      = btn.dataset.name;
+                document.getElementById('e_desc').value      = btn.dataset.desc;
+                document.getElementById('e_category').value  = btn.dataset.category;
+                document.getElementById('e_confirmed').value = btn.dataset.confirmed;
+
+                // render image preview
+                const strip = document.getElementById('e_imgPreview');
+                strip.innerHTML = images.length
+                    ? images.map(url => `
+                        <div class="img-preview-item">
+                            <img src="${url}" alt="" onerror="this.parentElement.style.display='none'"/>
+                        </div>`).join('')
+                    : '<span style="font-size:.78rem;color:#94a3b8;">Chưa có hình ảnh</span>';
+
+                editModal.show();
+            };
+
+                    window.submitEdit = async () => {
+            hideAlert('editAlert');
+
+            const id    = document.getElementById('e_dishId').value;
+            const name  = document.getElementById('e_name').value.trim();
+            const desc  = document.getElementById('e_desc').value.trim();
+            const catId = document.getElementById('e_category').value;
+
+            const files = document.getElementById('e_images').files;
+
+            resetInvalid('e_name');
+
+            if (!name) {
+                document.getElementById('e_name').classList.add('is-invalid');
+                return;
+            }
+
+            // ✅ dùng FormData
+            const formData = new FormData();
+            formData.append("DishId", id);
+            formData.append("DishName", name);
+            formData.append("Description", desc);
+            formData.append("CategoryId", catId);
+
+            // ✅ append file mới nếu có
+            if (files && files.length > 0) {
+                for (let i = 0; i < files.length; i++) {
+                    formData.append("Images", files[i]);
+                }
+            }
+
+            setLoading('editSubmit', true);
+
+            try {
+                const res = await fetch(`/admin/dishes/${id}/update`, {
+                    method: 'POST', // gọi MVC
+                    body: formData
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data) {
+                    editModal.hide();
+                    location.reload();
+                } else {
+                    showAlert('editAlert', data.message || 'Có lỗi xảy ra');
+                }
+
+            } catch {
+                showAlert('editAlert', 'Không thể kết nối đến server');
+            } finally {
+                setLoading('editSubmit', false);
+            }
+        };
+
+            /* ══════════ CONFIRM TOGGLE ══════════ */
+            window.confirmToggle = (btn, approve) => {
+                document.getElementById('toggleDishId').value = btn.dataset.id;
+                document.getElementById('toggleAction').value = approve ? 'confirm' : 'unconfirm';
+                document.getElementById('toggleModalTitle').textContent = approve ? 'Duyệt món ăn' : 'Huỷ duyệt món ăn';
+                document.getElementById('toggleModalBody').innerHTML    = approve
+                    ? `Xác nhận duyệt món <strong>${btn.dataset.name}</strong>? Món sẽ hiển thị công khai.`
+                    : `Huỷ duyệt món <strong>${btn.dataset.name}</strong>? Món sẽ bị ẩn khỏi danh sách.`;
+
+                const submitBtn = document.getElementById('toggleSubmit');
+                submitBtn.style.background = approve
+                    ? 'linear-gradient(135deg,#22c55e,#16a34a)'
+                    : 'linear-gradient(135deg,#f59e0b,#d97706)';
+                submitBtn.querySelector('.btn-text').textContent = approve ? '✓ Duyệt ngay' : 'Huỷ duyệt';
+                toggleModal.show();
+            };
+
+            window.submitToggle = async () => {
+                const id     = document.getElementById('toggleDishId').value;
+                const action = document.getElementById('toggleAction').value;
+                setLoading('toggleSubmit', true);
+                try {
+                    const res  = await fetch(`/admin/dishes/${id}/confirm`, { method: 'PATCH' });
+                    const data = await res.json();
+                    if (res.ok && data) { toggleModal.hide(); location.reload(); }
+                    else alert(data.message || 'Có lỗi xảy ra');
+                } catch { alert('Không thể kết nối đến server'); }
+                finally  { setLoading('toggleSubmit', false); }
+            };
+
+            /* ══════════ DELETE ══════════ */
+            window.openDeleteModal = (btn) => {
+                document.getElementById('deleteDishId').value        = btn.dataset.id;
+                document.getElementById('deleteDishName').textContent = btn.dataset.name || '(không tên)';
+                deleteModal.show();
+            };
+
+            window.submitDelete = async () => {
+                const id = document.getElementById('deleteDishId').value;
+                setLoading('deleteSubmit', true);
+                try {
+                    const res  = await fetch(`/admin/dishes/${id}/delete`, { method: 'DELETE' });
+                    const data = await res.json();
+                    if (res.ok && data) { deleteModal.hide(); location.reload(); }
+                    else alert(data.message || 'Có lỗi xảy ra khi xoá');
+                } catch { alert('Không thể kết nối đến server'); }
+                finally  { setLoading('deleteSubmit', false); }
+            };
+        })();
+    </script>
+}
+

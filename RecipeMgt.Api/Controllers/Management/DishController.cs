@@ -55,7 +55,7 @@ namespace RecipeMgt.Api.Controllers.Management
 
         // POST: api/admin/dishes
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateDishRequest request)
+        public async Task<IActionResult> Create([FromForm] CreateDishRequest request)
         {
             var result = await _dishService.CreateDish(request);
 
@@ -64,7 +64,7 @@ namespace RecipeMgt.Api.Controllers.Management
 
         // PUT: api/admin/dishes/{id}
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> Update(int id, [FromBody] UpdateDishRequest request)
+        public async Task<IActionResult> Update(int id, [FromForm] UpdateDishRequest request)
         {
             var result = await _dishService.UpdateDish(request);
 
@@ -89,7 +89,7 @@ namespace RecipeMgt.Api.Controllers.Management
         [HttpPost("{id:int}/approved")]
         public async Task<IActionResult> ApproveDish(int id)
         {
-            var result = await _dishService.ApproveDish(id);
+            await _dishService.ApproveDish(id);
             return Ok(ApiResponseFactory.Success("APPROVE_SUCCESS", HttpContext));
         }
 

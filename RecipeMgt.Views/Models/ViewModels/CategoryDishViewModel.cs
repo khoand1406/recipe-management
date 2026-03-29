@@ -1,4 +1,5 @@
-﻿using RecipeMgt.Views.Models.Response;
+﻿using RecipeMgt.Application.DTOs.Response.Dishes;
+using RecipeMgt.Views.Models.Response;
 
 namespace RecipeMgt.Views.Models.ViewModels
 {

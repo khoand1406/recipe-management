@@ -7,9 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Views\Management\Dashboard\" />
-    <Folder Include="Views\Management\Dish\" />
-    <Folder Include="Views\Management\User\" />
     <Folder Include="Views\User\" />
   </ItemGroup>
 

@@ -1,4 +1,5 @@
 using Azure;
+using RecipeMgt.Application.DTOs.Response.Dishes;
 using RecipeMgt.Views.Common.Constant;
 using RecipeMgt.Views.Interface;
 using RecipeMgt.Views.Models;
@@ -19,12 +20,12 @@ namespace RecipeMgt.Views.Services
             _jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         }
 
-        public async Task<List<DishResponse>> GetAllAsync()
+        public async Task<List<Models.Response.DishResponse>> GetAllAsync()
         {
             var resp = await _httpClient.GetAsync(Endpoints.ApiDishEndpoint);
             resp.EnsureSuccessStatusCode();
             var json = await resp.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<List<DishResponse>>(json, _jsonOptions)
+            return JsonSerializer.Deserialize<List<Models.Response.DishResponse>>(json, _jsonOptions)
                    ?? [];
         }
 
@@ -55,15 +56,15 @@ namespace RecipeMgt.Views.Services
             return result.Data!;
         }
 
-        public async Task<ApiResponse<DishDetailResponse?>> GetDetailAsync(int dishId)
+        public async Task<ApiResponse<Models.Response.DishDetailResponse?>> GetDetailAsync(int dishId)
         {
             var resp = await _httpClient.GetAsync(Endpoints.ApiDishDetailEndpoint);
-            if (!resp.IsSuccessStatusCode) return ApiResponse<DishDetailResponse?>.Fail("Error fetch detail data", null, "INTERNAL_SERVER_ERROR", 500);
+            if (!resp.IsSuccessStatusCode) return ApiResponse<Models.Response.DishDetailResponse?>.Fail("Error fetch detail data", null, "INTERNAL_SERVER_ERROR", 500);
             var json = await resp.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<ApiResponse<DishDetailResponse?>>(json, _jsonOptions)!;
+            return JsonSerializer.Deserialize<ApiResponse<Models.Response.DishDetailResponse?>>(json, _jsonOptions)!;
         }
 
-        public async Task<CreateDishResponse> CreateAsync(MultipartFormDataContent form)
+        public async Task<Models.Response.CreateDishResponse> CreateAsync(MultipartFormDataContent form)
         {
             var resp = await _httpClient.PostAsync(Endpoints.ApiDishCreateEndpoint, form);
             
@@ -73,7 +74,7 @@ namespace RecipeMgt.Views.Services
                 throw new ApplicationException($"API Error: {error}");
             }
             var json = await resp.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<CreateDishResponse>(json, _jsonOptions);
+            var result = JsonSerializer.Deserialize<Models.Response.CreateDishResponse>(json, _jsonOptions);
             if (result == null)
             {
                 throw new ApplicationException($"API Error: {result?.Message ?? "Unknown error"}");

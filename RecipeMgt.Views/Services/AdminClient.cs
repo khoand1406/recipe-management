@@ -2,6 +2,7 @@
 using RecipeMgt.Application.DTOs.Request.Dishes;
 using RecipeMgt.Application.DTOs.Request.Recipes;
 using RecipeMgt.Application.DTOs.Response;
+using RecipeMgt.Application.DTOs.Response.Dishes;
 using RecipeMgt.Application.DTOs.Response.Management.Dashboard;
 using RecipeMgt.Application.DTOs.Response.User;
 using RecipeMgt.Domain.Enums;
@@ -41,9 +42,11 @@ namespace RecipeMgt.Views.Services
             _httpClient.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", token);
         }
-        public Task<Models.ApiResponse<bool>> ApproveDish(int dishId)
+        public async Task<Models.ApiResponse<bool>> ApproveDish(int dishId)
         {
-            throw new NotImplementedException();
+            var response= await _httpClient.PostAsync($"/api/admin/Dish/{dishId}/approved", null);
+            return await Deserialize<Models.ApiResponse<bool>>(response)
+                   ?? Models.ApiResponse<bool>.Fail("ERROR", null, "SERVER_ERROR", 500);
         }
 
         public Task<Models.ApiResponse<bool>> BanBatchUsers(BatchUserIdsRequest request)
@@ -59,10 +62,55 @@ namespace RecipeMgt.Views.Services
                    ?? Models.ApiResponse<UserBasicResponse>.Fail("ERROR", null, "SERVER_ERROR", 500);
         }
 
-        public Task<Models.ApiResponse<DishResponse>> CreateDish(CreateDishRequest request)
+        public async Task<Models.ApiResponse<Application.DTOs.Response.Dishes.DishResponse>> CreateDish(CreateDishRequest request)
         {
-            throw new NotImplementedException();
+            using var content = new MultipartFormDataContent();
+
+            // text fields
+            content.Add(new StringContent(request.DishName), "DishName");
+            content.Add(new StringContent(request.Description ?? ""), "Description");
+            content.Add(new StringContent(request.CategoryId.ToString()), "CategoryId");
+
+            if (request.AuthorId.HasValue)
+                content.Add(new StringContent(request.AuthorId.Value.ToString()), "AuthorId");
+
+            // file upload
+            if (request.Images != null)
+            {
+                foreach (var file in request.Images)
+                {
+                    var stream = new MemoryStream();
+                    await file.CopyToAsync(stream);
+                    stream.Position = 0;
+
+                    var streamContent = new StreamContent(stream);
+
+                    streamContent.Headers.ContentType =
+                        new System.Net.Http.Headers.MediaTypeHeaderValue(
+                            file.ContentType ?? "application/octet-stream"
+                        );
+
+                    content.Add(streamContent, "Images", file.FileName);
+                }
+            }
+
+            var response = await _httpClient.PostAsync("/api/admin/Dish", content);
+
+            var json = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return new Models.ApiResponse<Application.DTOs.Response.Dishes.DishResponse>
+                {
+                    Success = false,
+                    Message = json
+                };
+            }
+
+            return Newtonsoft.Json.JsonConvert.DeserializeObject<
+                Models.ApiResponse<Application.DTOs.Response.Dishes.DishResponse>>(json)!;
         }
+
 
         public Task<Models.ApiResponse<RecipeResponse>> CreateRecipe(CreateRecipeRequest request)
         {
@@ -106,9 +154,11 @@ namespace RecipeMgt.Views.Services
             throw new NotImplementedException();
         }
 
-        public Task<Models.ApiResponse<bool>> DeleteDish(int dishId)
+        public async Task<Models.ApiResponse<bool>> DeleteDish(int dishId)
         {
-            throw new NotImplementedException();
+            var response =await  _httpClient.DeleteAsync($"/api/admin/Dish/{dishId}");
+            return await Deserialize<Models.ApiResponse<bool>>(response)
+                   ?? Models.ApiResponse<bool>.Fail("ERROR", null, "SERVER_ERROR", 500);
         }
 
         public Task<Models.ApiResponse<bool>> DeleteRecipe(int recipeId)
@@ -140,14 +190,16 @@ namespace RecipeMgt.Views.Services
                    ?? Models.ApiResponse<List<DishChartResponse>>.Fail("ERROR", null, "SERVER_ERROR", 500);
         }
 
-        public Task<Models.ApiResponse<DishDetailResponse>> GetDishDetail(int dishId)
+        public Task<Models.ApiResponse<Models.Response.DishDetailResponse>> GetDishDetail(int dishId)
         {
             throw new NotImplementedException();
         }
 
-        public Task<Models.ApiResponse<Models.Response.PagedResponse<DishResponse>>> GetDishes(string? searchQuery, int? categoryId, int page, int pageSize)
+        public async Task<Models.ApiResponse<Models.Response.PagedResponse<CategoryDishResponse>>> GetDishes(string? searchQuery, int? categoryId, int page, int pageSize)
         {
-            throw new NotImplementedException();
+            var response = await _httpClient.GetAsync($"/api/admin/Dish?page={page}&pageSize={pageSize}&searchQuery={searchQuery}&categoryId={categoryId}");
+            return await Deserialize<Models.ApiResponse<Models.Response.PagedResponse<CategoryDishResponse>>>(response)
+                   ?? Models.ApiResponse<Models.Response.PagedResponse<CategoryDishResponse>>.Fail("ERROR", null, "SERVER_ERROR", 500);
         }
 
         public async Task<Models.ApiResponse<List<DishChartResponse>>> GetRecipeChartMonthly()
@@ -213,10 +265,53 @@ namespace RecipeMgt.Views.Services
             throw new NotImplementedException();
         }
 
-        public Task<Models.ApiResponse<DishResponse>> UpdateDish(int dishId, UpdateDishRequest request)
+        public async Task<Models.ApiResponse<bool>> UpdateDish(int dishId, UpdateDishRequest request)
         {
-            throw new NotImplementedException();
+            using var content = new MultipartFormDataContent();
+
+            content.Add(new StringContent(dishId.ToString()), "DishId");
+
+            content.Add(new StringContent(request.DishName ?? ""), "DishName");
+            content.Add(new StringContent(request.Description ?? ""), "Description");
+            content.Add(new StringContent(request.CategoryId.ToString()), "CategoryId");
+
+            
+            if (request.Images != null && request.Images.Any())
+            {
+                foreach (var file in request.Images)
+                {
+                    var stream = new MemoryStream();
+                    await file.CopyToAsync(stream);
+                    stream.Position = 0;
+
+                    var streamContent = new StreamContent(stream);
+
+                    streamContent.Headers.ContentType =
+                        new System.Net.Http.Headers.MediaTypeHeaderValue(
+                            file.ContentType ?? "application/octet-stream"
+                        );
+
+                    content.Add(streamContent, "Images", file.FileName);
+                }
+            }
+
+            var response = await _httpClient.PutAsync($"/api/admin/Dish/{dishId}", content);
+
+            var json = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return new Models.ApiResponse<bool>
+                {
+                    Success = false,
+                    Message = json
+                };
+            }
+
+            return Newtonsoft.Json.JsonConvert.DeserializeObject<
+                Models.ApiResponse<bool>>(json)!;
         }
+        
 
         public Task<Models.ApiResponse<RecipeResponse>> UpdateRecipe(int recipeId, UpdateRecipeRequest request)
         {
@@ -261,6 +356,14 @@ namespace RecipeMgt.Views.Services
             var response = await _httpClient.GetAsync("/api/admin/User/statistics");
             return await Deserialize<Models.ApiResponse<UsersStatistic>>(response)
                    ?? Models.ApiResponse<UsersStatistic>.Fail("ERROR", null, "SERVER_ERROR", 500);
+        }
+
+        public async Task<Models.ApiResponse<IEnumerable<CategoryDTO>>> GetAllCategories()
+        {
+            var response = await _httpClient.GetAsync("/api/Category");
+            return await Deserialize<Models.ApiResponse<IEnumerable<CategoryDTO>>>(response)
+                ?? Models.ApiResponse<IEnumerable<CategoryDTO>>.Fail("ERROR", null, "SERVER_ERROR", 500);
+
         }
     }
 }

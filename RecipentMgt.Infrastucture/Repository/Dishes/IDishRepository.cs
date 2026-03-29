@@ -21,6 +21,8 @@ namespace RecipentMgt.Infrastucture.Repository.Dishes
 
         public Task<(bool Success, string Message)> DeleteDish(int id);
 
+        public Task<(bool Success, string Message)> ApproveDish(int id);
+
         Task<List<string>> GetDishImages(int dishId);
 
         Task<List<Image>> LoadImageForAuthor(IEnumerable<Dish> dishes);

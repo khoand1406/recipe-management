@@ -1,8 +1,10 @@
 ﻿using RecipeMgt.Application.DTOs.Request.Dishes;
 using RecipeMgt.Application.DTOs.Request.Recipes;
 using RecipeMgt.Application.DTOs.Response;
+using RecipeMgt.Application.DTOs.Response.Dishes;
 using RecipeMgt.Application.DTOs.Response.Management.Dashboard;
 using RecipeMgt.Application.DTOs.Response.User;
+using RecipeMgt.Domain.Entities;
 using RecipeMgt.Domain.Enums;
 using RecipeMgt.Domain.RequestEntity;
 using RecipeMgt.Views.Common;
@@ -46,17 +48,17 @@ namespace RecipeMgt.Views.Interface
 
         // ========================= DISH =========================
 
-        Task<Models.ApiResponse<Models.Response.PagedResponse<DishResponse>>> GetDishes(
+        Task<Models.ApiResponse<Models.Response.PagedResponse<Application.DTOs.Response.Dishes.CategoryDishResponse>>> GetDishes(
             string? searchQuery,
             int? categoryId,
             int page,
             int pageSize);
 
-        Task<Models.ApiResponse<DishDetailResponse>> GetDishDetail(int dishId);
+        Task<Models.ApiResponse<Models.Response.DishDetailResponse>> GetDishDetail(int dishId);
 
-        Task<Models.ApiResponse<DishResponse>> CreateDish(CreateDishRequest request);
+        Task<Models.ApiResponse<Application.DTOs.Response.Dishes.DishResponse>> CreateDish(CreateDishRequest request);
 
-        Task<Models.ApiResponse<DishResponse>> UpdateDish(int dishId, UpdateDishRequest request);
+        Task<Models.ApiResponse<bool>> UpdateDish(int dishId, UpdateDishRequest request);
 
         Task<Models.ApiResponse<bool>> DeleteDish(int dishId);
 
@@ -96,5 +98,6 @@ namespace RecipeMgt.Views.Interface
 
         Task<Models.ApiResponse<string>> UploadImage(IFormFile file);
         Task<Models.ApiResponse<UsersStatistic>> GetUserStatistics();
+        Task<Models.ApiResponse<IEnumerable<CategoryDTO>>> GetAllCategories();
     }
 }
