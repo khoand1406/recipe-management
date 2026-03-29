@@ -57,5 +57,7 @@ namespace RecipentMgt.Infrastucture.Repository.Users
         Task<Role?> GetRoleByName(string roleName);
         Task<IEnumerable<string>> GetExistingEmails(List<string> emails);
         Task <IEnumerable<string>>GetExistingName(List<string> names);
+        Task<int> GetUserCountByStatus(int active);
+        Task<int> GetTotalRecipeCount();
     }
 }

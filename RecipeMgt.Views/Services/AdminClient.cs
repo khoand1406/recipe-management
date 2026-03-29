@@ -1,10 +1,10 @@
 ﻿using Azure.Core;
-using RecipeMgt.Application.Constant;
 using RecipeMgt.Application.DTOs.Request.Dishes;
 using RecipeMgt.Application.DTOs.Request.Recipes;
 using RecipeMgt.Application.DTOs.Response;
 using RecipeMgt.Application.DTOs.Response.Management.Dashboard;
 using RecipeMgt.Application.DTOs.Response.User;
+using RecipeMgt.Domain.Enums;
 using RecipeMgt.Domain.RequestEntity;
 using RecipeMgt.Views.Common;
 using RecipeMgt.Views.Interface;
@@ -88,7 +88,7 @@ namespace RecipeMgt.Views.Services
 
             content.Add(fileContent, "file", file.FileName);
 
-            var response = await _httpClient.PostAsync("/api/admin/User/import-csv", content);
+            var response = await _httpClient.PostAsync("/api/admin/User/upload-csv", content);
 
             return await Deserialize<Models.ApiResponse<BatchImportResult>>(response)
                    ?? Models.ApiResponse<BatchImportResult>.Fail("ERROR", null, "SERVER_ERROR", 500);
@@ -116,12 +116,12 @@ namespace RecipeMgt.Views.Services
             throw new NotImplementedException();
         }
 
-        public async Task<Models.ApiResponse<bool>> DeleteUser(int userId)
+        public async Task<Models.ApiResponse<UserResponseDTO>> DeleteUser(int userId)
         {
-            var response = await _httpClient.DeleteAsync($"/api/admin/User/{userId}");
+            var response = await _httpClient.DeleteAsync($"/api/admin/User/users/{userId}");
 
-            return await Deserialize<Models.ApiResponse<bool>>(response)
-                   ?? Models.ApiResponse<bool>.Fail("ERROR", null, "SERVER_ERROR", 500);
+            return await Deserialize<Models.ApiResponse<UserResponseDTO>>(response)
+                   ?? Models.ApiResponse<UserResponseDTO>.Fail("ERROR", null, "SERVER_ERROR", 500);
         }
 
         public async Task<Models.ApiResponse<DashboardMetricResponse>> GetDashboardMetrics()
@@ -190,7 +190,7 @@ namespace RecipeMgt.Views.Services
             if (status.HasValue)
                 
                 Console.WriteLine($"Status value: {status.Value}"); // Debug log to check the value
-            Console.WriteLine($"Fuccccccccccccc: {status}");
+            
             query.Add($"userStatus={status}");
 
             var url = "/api/admin/User?" + string.Join("&", query);
@@ -227,7 +227,7 @@ namespace RecipeMgt.Views.Services
         {
             var content = new StringContent(JsonSerializer.Serialize(request), Encoding.UTF8, "application/json");
 
-            var response = await _httpClient.PutAsync($"/api/admin/User/{userId}", content);
+            var response = await _httpClient.PostAsync($"/api/admin/User/update/{userId}", content);
 
             return await Deserialize<Models.ApiResponse<UserResponseDTO>>(response)
                    ?? Models.ApiResponse<UserResponseDTO>.Fail("ERROR", null, "SERVER_ERROR", 500);
@@ -254,6 +254,13 @@ namespace RecipeMgt.Views.Services
 
             return await Deserialize<Models.ApiResponse<List<ChartCategoryDishResponse>>>(response)
                    ?? Models.ApiResponse<List<ChartCategoryDishResponse>>.Fail("ERROR", null, "SERVER_ERROR", 500);
+        }
+
+        public async Task<Models.ApiResponse<UsersStatistic>> GetUserStatistics()
+        {
+            var response = await _httpClient.GetAsync("/api/admin/User/statistics");
+            return await Deserialize<Models.ApiResponse<UsersStatistic>>(response)
+                   ?? Models.ApiResponse<UsersStatistic>.Fail("ERROR", null, "SERVER_ERROR", 500);
         }
     }
 }

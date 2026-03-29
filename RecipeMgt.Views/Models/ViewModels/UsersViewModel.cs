@@ -6,6 +6,14 @@ namespace RecipeMgt.Views.Models.ViewModels
     {
         public IEnumerable<UserResponseMgtDTO> Users { get; set; } = [];
 
+        public int ActiveCount { get; set; }
+        public int PendingCount { get; set; }
+        public int BannedCount { get; set; }
+
+        public int RecipeCount { get; set; }    
+
+        public int TotalRecipes { get; set; }
+
         public string? SearchQuery { get; set; }
 
         public int? StatusFilter { get; set; }

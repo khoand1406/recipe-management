@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
-using RecipeMgt.Application.Constant;
 using RecipeMgt.Application.DTOs.Response.Recipe;
 using RecipeMgt.Application.DTOs.Response.User;
 using RecipeMgt.Domain.Entities;
+using RecipeMgt.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,6 +39,7 @@ namespace RecipeMgt.Application.Mapper
                                                 .ForMember(dest => dest.TotalRecipes, opt => opt.MapFrom(src => src.Recipes.Count));
 
             CreateMap<CreateUserRequest, User>();
+            CreateMap<UpdateUserRequest, User>().ForMember(dest=>dest.PasswordHash, opt=> opt.Ignore());
         }
     }
 }

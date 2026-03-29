@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Azure.Core;
 using CsvHelper;
+using CsvHelper.Configuration;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -13,6 +14,7 @@ using RecipeMgt.Application.DTOs.Response.User;
 using RecipeMgt.Application.Exceptions;
 using RecipeMgt.Application.Utils;
 using RecipeMgt.Domain.Entities;
+using RecipeMgt.Domain.Enums;
 using RecipentMgt.Infrastucture.Repository.Following;
 using RecipentMgt.Infrastucture.Repository.Users;
 using System;
@@ -137,42 +139,83 @@ namespace RecipeMgt.Application.Services.Management.User
             var result = new BatchImportResult();
             var users = new List<Domain.Entities.User>();
 
-            using var stream = new StreamReader(file.OpenReadStream());
-            using var csv = new CsvReader(stream, CultureInfo.InvariantCulture);
+            
+            var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                BadDataFound = null,
+                MissingFieldFound = null,
+                HeaderValidated = null
+            };
 
-            var records = csv.GetRecords<CreateUserCsvDto>().ToList();
+            using var stream = new StreamReader(file.OpenReadStream());
+            using var csv = new CsvReader(stream, config);
+
+            List<CreateUserCsvDto> records;
+
+            try
+            {
+                records = csv.GetRecords<CreateUserCsvDto>().ToList();
+            }
+            catch
+            {
+                throw new BadRequestException("INVALID_CSV_FORMAT");
+            }
+
+           
+            records.ForEach(x =>
+            {
+                x.Email = x.Email?.Trim()?? "";
+                x.FullName = x.FullName?.Trim()??"";
+            });
+
+            
+            var seenEmails = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var seenNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
             var emails = records
                 .Where(x => !string.IsNullOrEmpty(x.Email))
                 .Select(x => x.Email)
                 .ToList();
 
-            var names = records.Where(x => !string.IsNullOrEmpty(x.FullName)).Select(x=> x.FullName).ToList();
+            var names = records
+                .Where(x => !string.IsNullOrEmpty(x.FullName))
+                .Select(x => x.FullName)
+                .ToList();
 
-
+            
             var existingEmails = await _userRepository.GetExistingEmails(emails);
-            var existingUserName = await _userRepository.GetExistingName(names);
-            var existingEmailSet = new HashSet<string>(existingEmails);
-            var existingUsernameSet = new HashSet<string>(existingUserName);
+            var existingNames = await _userRepository.GetExistingName(names);
 
-            int row = 1;
+            var existingEmailSet = new HashSet<string>(existingEmails, StringComparer.OrdinalIgnoreCase);
+            var existingNameSet = new HashSet<string>(existingNames, StringComparer.OrdinalIgnoreCase);
+
+            int row = 2;
 
             foreach (var record in records)
             {
                 try
                 {
-                    var validationResult= await _createUserCsvValidator.ValidateAsync(record);
+                    
+                    var validationResult = await _createUserCsvValidator.ValidateAsync(record);
 
                     if (!validationResult.IsValid)
                     {
-                        var errors= validationResult.Errors.Select(x => x.ErrorMessage);
+                        var errors = validationResult.Errors.Select(x => x.ErrorMessage);
                         throw new BadRequestException(string.Join(", ", errors));
                     }
 
+                    
+                    if (!seenEmails.Add(record.Email))
+                        throw new BadRequestException("DUPLICATE_EMAIL_IN_FILE");
+
+                    if (!seenNames.Add(record.FullName))
+                        throw new BadRequestException("DUPLICATE_USERNAME_IN_FILE");
+
+                    
                     if (existingEmailSet.Contains(record.Email))
                         throw new BadRequestException("EMAIL_ALREADY_EXISTS");
 
-                    if (existingUsernameSet.Contains(record.FullName)) 
+                    if (existingNameSet.Contains(record.FullName))
                         throw new BadRequestException("USERNAME_ALREADY_EXISTS");
 
                     var roleId = await MapRole(record.Role);
@@ -194,13 +237,16 @@ namespace RecipeMgt.Application.Services.Management.User
                 catch (Exception ex)
                 {
                     result.FailedCount++;
-                    result.Errors.Add($"Row {row} ({record.Email}): {ex.Message}");
+
+                    result.Errors.Add(
+                        $"Row {row} ({record.Email ?? "N/A"}): {ex.Message}"
+                    );
                 }
 
                 row++;
             }
 
-            if (users.Count != 0)
+            if (users.Any())
                 await _userRepository.CreateBatchAsync(users);
 
             return result;
@@ -299,6 +345,18 @@ namespace RecipeMgt.Application.Services.Management.User
             return Result<PagedResponse<UserResponseMgtDTO>>.Success(result);
         }
 
+        public async Task<Result<UsersStatistic>> GetUsersStatistic()
+        {
+            var statistic = new UsersStatistic
+            {
+                ActiveCount = await _userRepository.GetUserCountByStatus((int)UserStatus.Active),
+                PendingCount =await _userRepository.GetUserCountByStatus((int)UserStatus.Deactivated),
+                BannedCount = await _userRepository.GetUserCountByStatus((int)UserStatus.Banned),
+                RecipeCount= await _userRepository.GetTotalRecipeCount()
+            };
+            return Result<UsersStatistic>.Success(statistic);
+        }
+
         public async Task<Result<bool>> RecoverUserAccount(int id)
         {
             var user = await _userRepository.GetByIdAsync(id);
@@ -330,14 +388,28 @@ namespace RecipeMgt.Application.Services.Management.User
 
         public async Task<Result<UserResponseDTO>> UpdateUser(UpdateUserRequest request, int id)
         {
-            var payload = _mapper.Map<Domain.Entities.User>(request);
-            await _userRepository.UpdateAsync(payload);
+            var user = await _userRepository.GetByIdAsync(id);
+            if (user == null)
+                return Result<UserResponseDTO>.Failure("User not found");
 
-            var userUpdated = await _userRepository.GetByIdAsync(id);
-            var mappedResponse = _mapper.Map<UserResponseDTO>(userUpdated);
+            // Update basic info
+            if (!string.IsNullOrWhiteSpace(request.FullName))
+                user.FullName = request.FullName;
+
+            if (!string.IsNullOrWhiteSpace(request.Email))
+                user.Email = request.Email;
+
+            if (request.RoleId.HasValue)
+                user.RoleId = request.RoleId.Value;
+
+            
+
+            await _userRepository.UpdateAsync(user);
+
+            var mappedResponse = _mapper.Map<UserResponseDTO>(user);
             return Result<UserResponseDTO>.Success(mappedResponse);
         }
-            
+
         private UserStatus ConvertFromUserDetail(Domain.Entities.User user)
         {
             if (user.DeleteAt != null)

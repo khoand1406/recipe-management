@@ -1,4 +1,5 @@
 ﻿using RecipeMgt.Application.Constant;
+using RecipeMgt.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -62,6 +63,15 @@ namespace RecipeMgt.Application.DTOs.Response.User
         public int TotalFollowers { get; set; }
 
         public int TotalFollowing { get; set; }
+    }
+
+    public class UsersStatistic
+    {
+        public int ActiveCount { get; set; }
+        public int PendingCount { get; set; }
+        public int BannedCount { get; set; }
+
+        public int RecipeCount { get; set; }
     }
 
     public class CreateUserRequest

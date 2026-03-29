@@ -1,4 +1,5 @@
 ﻿@using RecipeMgt.Application.Constant
+@using RecipeMgt.Domain.Enums
 @model RecipeMgt.Views.Models.ViewModels.UsersViewModel
 @{
     ViewData["Title"] = "Người dùng";
@@ -10,263 +11,25 @@
 
 }
 
-@section Styles {
-<style>
-    /* ── Page header ── */
-    .page-header {
-        display: flex;
-        align-items: flex-start;
-        justify-content: space-between;
-        gap: 16px;
-        margin-bottom: 24px;
-        flex-wrap: wrap;
-    }
-    .page-title { font-size: 1.4rem; font-weight: 700; color: #0f172a; margin: 0; }
-    .page-subtitle { font-size: .82rem; color: #64748b; margin: 4px 0 0; }
-
-    /* ── Stat cards ── */
-    .stat-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 16px;
-        margin-bottom: 24px;
-    }
-    .stat-card {
-        background: #fff;
-        border: 1px solid #e2e8f0;
-        border-radius: 14px;
-        padding: 18px 20px;
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        transition: box-shadow .2s, transform .2s;
-    }
-    .stat-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,.07); transform: translateY(-1px); }
-    .stat-icon {
-        width: 44px; height: 44px; border-radius: 12px;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 1.2rem; flex-shrink: 0;
-    }
-    .stat-icon.blue   { background: #eff6ff; color: #3b82f6; }
-    .stat-icon.green  { background: #f0fdf4; color: #22c55e; }
-    .stat-icon.amber  { background: #fffbeb; color: #f59e0b; }
-    .stat-icon.red    { background: #fef2f2; color: #ef4444; }
-    .stat-icon.violet { background: #f5f3ff; color: #8b5cf6; }
-    .stat-value { font-size: 1.35rem; font-weight: 700; color: #0f172a; line-height: 1; }
-    .stat-label { font-size: .75rem; color: #64748b; margin-top: 3px; }
-
-    /* ── Toolbar ── */
-    .table-toolbar {
-        background: #fff;
-        border: 1px solid #e2e8f0;
-        border-radius: 14px 14px 0 0;
-        padding: 14px 20px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        flex-wrap: wrap;
-    }
-    .search-box {
-        position: relative; flex: 1; min-width: 200px; max-width: 320px;
-    }
-    .search-box .bi {
-        position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
-        color: #94a3b8; font-size: .9rem; pointer-events: none;
-    }
-    .search-box input {
-        width: 100%; padding: 8px 12px 8px 34px;
-        border: 1px solid #e2e8f0; border-radius: 9px;
-        font-size: .82rem; color: #1e293b;
-        background: #f8fafc;
-        transition: border .2s, box-shadow .2s;
-        outline: none;
-    }
-    .search-box input:focus {
-        border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,.12);
-        background: #fff;
-    }
-    .filter-select {
-        padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 9px;
-        font-size: .82rem; color: #1e293b; background: #f8fafc;
-        outline: none; cursor: pointer;
-        transition: border .2s;
-    }
-    .filter-select:focus { border-color: #6366f1; }
-
-    .btn-primary-sm {
-        display: inline-flex; align-items: center; gap: 6px;
-        padding: 8px 16px; border-radius: 9px;
-        background: linear-gradient(135deg, #4f46e5, #7c3aed);
-        color: #fff; font-size: .82rem; font-weight: 600;
-        border: none; cursor: pointer; text-decoration: none;
-        transition: opacity .2s, transform .15s;
-    }
-    .btn-primary-sm:hover { opacity: .88; color: #fff; transform: translateY(-1px); }
-
-    .btn-outline-sm {
-        display: inline-flex; align-items: center; gap: 6px;
-        padding: 8px 14px; border-radius: 9px;
-        border: 1px solid #e2e8f0; color: #475569;
-        background: #fff; font-size: .82rem; font-weight: 500;
-        cursor: pointer; text-decoration: none;
-        transition: background .2s, border-color .2s;
-    }
-    .btn-outline-sm:hover { background: #f1f5f9; border-color: #cbd5e1; color: #1e293b; }
-
-    .ms-auto { margin-left: auto; }
-
-    /* ── Table ── */
-    .table-wrapper {
-        background: #fff;
-        border: 1px solid #e2e8f0;
-        border-top: none;
-        border-radius: 0 0 14px 14px;
-        overflow: hidden;
-    }
-    .table-responsive { overflow-x: auto; }
-    .user-table {
-        width: 100%; border-collapse: collapse;
-        font-size: .82rem;
-    }
-    .user-table thead th {
-        background: #f8fafc;
-        padding: 11px 16px;
-        font-size: .72rem; font-weight: 700;
-        text-transform: uppercase; letter-spacing: .06em;
-        color: #64748b;
-        border-bottom: 1px solid #e2e8f0;
-        white-space: nowrap;
-    }
-    .user-table thead th:first-child { padding-left: 20px; }
-    .user-table thead th:last-child  { padding-right: 20px; text-align: right; }
-
-    .user-table tbody tr {
-        border-bottom: 1px solid #f1f5f9;
-        transition: background .15s;
-    }
-    .user-table tbody tr:last-child { border-bottom: none; }
-    .user-table tbody tr:hover { background: #fafbff; }
-    .user-table tbody td {
-        padding: 13px 16px;
-        vertical-align: middle;
-        color: #1e293b;
-    }
-    .user-table tbody td:first-child { padding-left: 20px; }
-    .user-table tbody td:last-child  { padding-right: 20px; }
-
-    /* User cell */
-    .user-cell { display: flex; align-items: center; gap: 10px; }
-    .user-ava {
-        width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
-        display: flex; align-items: center; justify-content: center;
-        font-weight: 700; font-size: .82rem; color: #fff;
-    }
-    .user-ava.c0 { background: linear-gradient(135deg,#6366f1,#8b5cf6); }
-    .user-ava.c1 { background: linear-gradient(135deg,#0ea5e9,#06b6d4); }
-    .user-ava.c2 { background: linear-gradient(135deg,#f59e0b,#f97316); }
-    .user-ava.c3 { background: linear-gradient(135deg,#22c55e,#10b981); }
-    .user-ava.c4 { background: linear-gradient(135deg,#ec4899,#f43f5e); }
-    .user-name  { font-weight: 600; color: #0f172a; }
-    .user-email { font-size: .75rem; color: #64748b; margin-top: 1px; }
-
-    /* Badges */
-    .badge {
-        display: inline-flex; align-items: center; gap: 4px;
-        padding: 3px 10px; border-radius: 999px;
-        font-size: .7rem; font-weight: 600;
-    }
-    .badge-dot { width: 6px; height: 6px; border-radius: 50%; }
-
-    .badge-active   { background: #f0fdf4; color: #16a34a; }
-    .badge-active .badge-dot { background: #22c55e; }
-
-    .badge-inactive { background: #f1f5f9; color: #64748b; }
-    .badge-inactive .badge-dot { background: #94a3b8; }
-
-    .badge-banned   { background: #fef2f2; color: #dc2626; }
-    .badge-banned .badge-dot { background: #ef4444; }
-
-    .badge-pending  { background: #fffbeb; color: #d97706; }
-    .badge-pending .badge-dot { background: #f59e0b; }
-
-    .badge-role-admin  { background: #f5f3ff; color: #7c3aed; padding: 3px 10px; border-radius: 999px; font-size: .7rem; font-weight: 600; }
-    .badge-role-user   { background: #eff6ff; color: #2563eb; padding: 3px 10px; border-radius: 999px; font-size: .7rem; font-weight: 600; }
-    .badge-role-other  { background: #f8fafc; color: #475569; padding: 3px 10px; border-radius: 999px; font-size: .7rem; font-weight: 600; }
-
-    .provider-badge {
-        display: inline-flex; align-items: center; gap: 5px;
-        padding: 3px 9px; border-radius: 7px;
-        font-size: .7rem; font-weight: 500;
-        background: #f8fafc; color: #475569; border: 1px solid #e2e8f0;
-    }
-
-    /* Mini stat in table */
-    .mini-stat { display: flex; align-items: center; gap: 4px; font-size: .78rem; color: #475569; }
-    .mini-stat .bi { font-size: .7rem; }
-
-    /* Action buttons */
-    .action-group { display: flex; align-items: center; gap: 4px; justify-content: flex-end; }
-    .act-btn {
-        width: 30px; height: 30px; border-radius: 7px;
-        border: 1px solid #e2e8f0; background: #fff;
-        display: flex; align-items: center; justify-content: center;
-        font-size: .8rem; cursor: pointer; color: #64748b;
-        transition: all .15s; text-decoration: none;
-    }
-    .act-btn:hover { background: #f1f5f9; color: #1e293b; border-color: #cbd5e1; }
-    .act-btn.danger:hover  { background: #fef2f2; color: #dc2626; border-color: #fecaca; }
-    .act-btn.success:hover { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
-
-    /* ── Pagination ── */
-    .table-footer {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: 14px 20px; border-top: 1px solid #f1f5f9;
-        flex-wrap: wrap; gap: 12px;
-    }
-    .page-info { font-size: .78rem; color: #64748b; }
-    .pagination-group { display: flex; gap: 4px; }
-    .page-btn {
-        min-width: 32px; height: 32px; padding: 0 8px;
-        border-radius: 8px; border: 1px solid #e2e8f0;
-        background: #fff; color: #475569;
-        font-size: .78rem; font-weight: 500;
-        display: flex; align-items: center; justify-content: center;
-        cursor: pointer; text-decoration: none;
-        transition: all .15s;
-    }
-    .page-btn:hover:not(.disabled):not(.active) { background: #f1f5f9; border-color: #cbd5e1; color: #1e293b; }
-    .page-btn.active {
-        background: linear-gradient(135deg,#4f46e5,#7c3aed);
-        border-color: transparent; color: #fff; font-weight: 700;
-    }
-    .page-btn.disabled { opacity: .4; cursor: not-allowed; pointer-events: none; }
-
-    /* Empty state */
-    .empty-state {
-        text-align: center; padding: 60px 20px;
-    }
-    .empty-state .bi { font-size: 2.5rem; color: #cbd5e1; display: block; margin-bottom: 12px; }
-    .empty-state p { color: #94a3b8; font-size: .85rem; }
-
-    @@media (max-width: 768px) {
-        .stat-grid { grid-template-columns: 1fr 1fr; }
-        .hide-mobile { display: none; }
-    }
-</style>
-}
-
 <div class="page-header">
     <div>
         <h1 class="page-title">Quản lý Người dùng</h1>
         <p class="page-subtitle">Xem và quản lý tất cả tài khoản trong hệ thống</p>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <input type="file" id="csvFile" accept=".csv" hidden />
+
+        <button class="btn-outline-sm" onclick="document.getElementById('csvFile').click()">
+            <i class="bi bi-upload"></i> Import CSV
+        </button>
         <a href="#" class="btn-outline-sm" onclick="exportUsers()">
             <i class="bi bi-download"></i> Xuất CSV
         </a>
-        <a href="/admin/users/create" class="btn-primary-sm">
+        
+        <button class="btn-primary-sm" onclick="openCreateModal()">
             <i class="bi bi-plus-lg"></i> Thêm người dùng
-        </a>
+        </button>
+
     </div>
 </div>
 
@@ -282,28 +45,28 @@
     <div class="stat-card">
         <div class="stat-icon green"><i class="bi bi-person-check-fill"></i></div>
         <div>
-            <div class="stat-value" id="activeCount">—</div>
+            <div class="stat-value" id="activeCount">@Model?.ActiveCount</div>
             <div class="stat-label">Đang hoạt động</div>
         </div>
     </div>
     <div class="stat-card">
         <div class="stat-icon amber"><i class="bi bi-person-exclamation"></i></div>
         <div>
-            <div class="stat-value" id="pendingCount">—</div>
+            <div class="stat-value" id="pendingCount">@Model?.PendingCount</div>
             <div class="stat-label">Chờ xác minh</div>
         </div>
     </div>
     <div class="stat-card">
         <div class="stat-icon red"><i class="bi bi-person-slash"></i></div>
         <div>
-            <div class="stat-value" id="bannedCount">—</div>
+            <div class="stat-value" id="bannedCount">@Model?.BannedCount</div>
             <div class="stat-label">Bị cấm</div>
         </div>
     </div>
     <div class="stat-card">
         <div class="stat-icon violet"><i class="bi bi-journal-richtext"></i></div>
         <div>
-            <div class="stat-value" id="recipeCount">—</div>
+            <div class="stat-value" id="recipeCount">@Model?.RecipeCount</div>
             <div class="stat-label">Tổng công thức</div>
         </div>
     </div>
@@ -328,9 +91,9 @@
         </select>
 
         <select class="filter-select" name="pageSize" id="pageSizeFilter">
-            <option value="10" selected="@(pageSize == " 10" ? "selected" : null)">10 / trang</option>
-            <option value="25" selected="@(pageSize == " 25" ? "selected" : null)">25 / trang</option>
-            <option value="50" selected="@(pageSize == " 50" ? "selected" : null)">50 / trang</option>
+            <option value="10" selected="@(pageSize == "10" ? "selected" : null)">10 / trang</option>
+            <option value="25" selected="@(pageSize == "25" ? "selected" : null)">25 / trang</option>
+            <option value="50" selected="@(pageSize == "50" ? "selected" : null)">50 / trang</option>
         </select>
 
         <div class="ms-auto" style="display:flex;gap:8px;">
@@ -343,6 +106,140 @@
         </div>
     </div>
 </form>
+
+<div class="modal fade" id="createModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:520px;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-person-plus me-2 text-indigo-500"></i>Thêm người dùng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-alert error" id="createAlert"></div>
+                <div class="form-row">
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label class="form-label">Họ tên <span class="req">*</span></label>
+                        <input type="text" class="form-control" id="c_fullname" placeholder="Nguyễn Văn A" maxlength="100" />
+                        <div class="invalid-feedback">Họ tên không được để trống</div>
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label class="form-label">Email <span class="req">*</span></label>
+                        <input type="email" class="form-control" id="c_email" placeholder="example@email.com" maxlength="100" />
+                        <div class="invalid-feedback">Email không hợp lệ</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Mật khẩu <span class="req">*</span></label>
+                        <div style="position:relative;">
+                            <input type="password" class="form-control" id="c_password" placeholder="Tối thiểu 6 ký tự" style="padding-right:38px;" />
+                            <button type="button" onclick="togglePwd('c_password',this)"
+                                    style="position:absolute;right:10px;top:50%;transform:translateY(-50%);border:none;background:none;color:#94a3b8;cursor:pointer;">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </div>
+                        <div class="invalid-feedback">Mật khẩu tối thiểu 6 ký tự</div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Vai trò</label>
+                        <select class="form-control" id="c_role">
+                            <option value="1">User</option>
+                            <option value="2">Admin</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label class="form-label">Trạng thái</label>
+                        <div class="toggle-group">
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" id="c_actived" checked />
+                            </div>
+                            <span class="toggle-label">Kích hoạt tài khoản ngay</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-outline-sm" data-bs-dismiss="modal">Huỷ</button>
+                <button type="button" class="btn-primary-sm" id="createSubmit" onclick="submitCreate()">
+                    <span class="spinner-sm"></span>
+                    <span class="btn-text"><i class="bi bi-plus-lg me-1"></i>Tạo tài khoản</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:520px;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i>Chỉnh sửa người dùng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-alert error" id="editAlert"></div>
+                <input type="hidden" id="e_userId" />
+                <div class="form-row">
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label class="form-label">Họ tên</label>
+                        <input type="text" class="form-control" id="e_fullname" maxlength="100" />
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="e_email" maxlength="100" />
+                    </div>
+                    @* <div class="form-group">
+                        <label class="form-label">Vai trò</label>
+                        <select class="form-control" id="e_role">
+                            <option value="1">User</option>
+                            <option value="2">Admin</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Trạng thái</label>
+                        <select class="form-control" id="e_status">
+                            <option value="active_true_false">Hoạt động</option>
+                            <option value="active_false_false">Không hoạt động</option>
+                            <option value="active_false_true">Bị cấm</option>
+                        </select>
+                    </div> *@
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-outline-sm" data-bs-dismiss="modal">Huỷ</button>
+                <button type="button" class="btn-primary-sm" id="editSubmit" onclick="submitEdit()">
+                    <span class="spinner-sm"></span>
+                    <span class="btn-text"><i class="bi bi-check-lg me-1"></i>Lưu thay đổi</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:400px;">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center pt-0">
+                <div class="delete-icon-wrap"><i class="bi bi-trash3"></i></div>
+                <h5 style="font-weight:700;color:#0f172a;margin-bottom:8px;">Xoá người dùng?</h5>
+                <p style="color:#64748b;font-size:.85rem;margin:0;">
+                    Bạn sắp xoá tài khoản <strong id="deleteUserName"></strong>.<br>
+                    Hành động này <strong>không thể hoàn tác</strong>.
+                </p>
+                <input type="hidden" id="deleteUserId" />
+            </div>
+            <div class="modal-footer justify-content-center border-0 pt-0">
+                <button type="button" class="btn-outline-sm" data-bs-dismiss="modal">Huỷ bỏ</button>
+                <button type="button" id="deleteSubmit" onclick="submitDelete()"
+                        style="display:inline-flex;align-items:center;gap:6px;padding:8px 20px;border-radius:9px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;font-size:.82rem;font-weight:600;border:none;cursor:pointer;">
+                    <span class="spinner-sm"></span>
+                    <span class="btn-text"><i class="bi bi-trash me-1"></i>Xoá ngay</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @* ── Table ── *@
 <div class="table-wrapper">
@@ -384,12 +281,14 @@
                             UserStatus.Active   => "badge-active",
                             UserStatus.Deactivated => "badge-inactive",
                             UserStatus.Banned   => "badge-banned",
+                            UserStatus.Deleted  => "badge-deleted",
                             _                   => "badge-pending"
                         };
                         var statusLabel = u.UserStatus switch {
                             UserStatus.Active   => "Hoạt động",
                             UserStatus.Deactivated => "Không HĐ",
                             UserStatus.Banned   => "Bị cấm",
+                            UserStatus.Deleted => "Da Xoa",
                             _                   => "Chờ xác minh"
                         };
                         var roleClass = u.RoleName?.ToLower() switch {
@@ -450,12 +349,19 @@
                             </td>
                             <td>
                                 <div class="action-group">
-                                    <a href="/admin/users/@u.UserId" class="act-btn" title="Xem chi tiết">
+                                    @* <a href="/admin/users/@u.UserId" class="act-btn" title="Xem chi tiết">
                                         <i class="bi bi-eye"></i>
-                                    </a>
-                                    <a href="/admin/users/@u.UserId/edit" class="act-btn" title="Chỉnh sửa">
+                                    </a> *@
+                                    <button class="act-btn" title="Chỉnh sửa"
+                                            data-id="@u.UserId"
+                                            data-name="@u.FullName"
+                                            data-email="@u.Email"
+                                            data-role="@(u.RoleName?.ToLower() == "admin" ? 2 : 1)"
+                                            data-actived="@(u.UserStatus == UserStatus.Active ? "true" : "false")"
+                                            data-banned="@(u.UserStatus == UserStatus.Banned ? "true" : "false")"
+                                            onclick="openEditModal(this)">
                                         <i class="bi bi-pencil"></i>
-                                    </a>
+                                    </button>
                                     @if (u.UserStatus == UserStatus.Banned)
                                     {
                                         <button class="act-btn success" title="Bỏ cấm"
@@ -470,6 +376,12 @@
                                             <i class="bi bi-person-slash"></i>
                                         </button>
                                     }
+                                    <button class="act-btn danger" title="Xoá"
+                                            data-id="@u.UserId"
+                                            data-name="@u.FullName"
+                                            onclick="confirmDelete(this)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -563,120 +475,6 @@
 </div>
 
 @section Scripts {
-<script>
-
-    /* ── Check all ── */
-    const checkAll = document.getElementById('checkAll');
-    if (checkAll) {
-        checkAll.addEventListener('change', () =>
-            document.querySelectorAll('.row-check').forEach(cb => cb.checked = checkAll.checked)
-        );
-    }
-
-    /* ── Compute quick stats from rendered rows ── */
-    let active = 0, pending = 0, banned = 0, recipes = 0;
-    document.querySelectorAll('#userTable tbody tr').forEach(row => {
-        const badge = row.querySelector('.badge');
-        if (badge) {
-            const txt = badge.textContent.trim();
-            if (txt.includes('Hoạt động')) active++;
-            else if (txt.includes('Bị cấm'))  banned++;
-            else if (txt.includes('Chờ'))     pending++;
-        }
-        const ms = row.querySelectorAll('.mini-stat');
-        if (ms.length > 0) recipes += parseInt(ms[0].textContent.trim()) || 0;
-    });
-    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-    set('activeCount',  active);
-    set('pendingCount', pending);
-    set('bannedCount',  banned);
-    set('recipeCount',  recipes);
-
-    /* ── Search debounce ── */
-    let searchTimer;
-    const searchInput = document.getElementById('searchQuery');
-    if (searchInput) {
-        searchInput.addEventListener('input', () => {
-            clearTimeout(searchTimer);
-            searchTimer = setTimeout(() => document.getElementById('filterForm').submit(), 500);
-        });
-    }
-
-    document.querySelector('select[name="status"]').addEventListener('change', function () {
-        const form = document.getElementById('filterForm');
-        form.querySelector('input[name="page"]').value = 1;
-        form.submit();
-    });
-
-    document.querySelector('select[name="pageSize"]').addEventListener('change', function () {
-        const form = document.getElementById('filterForm');
-        form.querySelector('input[name="page"]').value = 1;
-        form.submit();
-    });
-
-    /* ── Ban / Unban modal ── */
-    const banModal  = new bootstrap.Modal(document.getElementById('banModal'));
-    const banForm   = document.getElementById('banForm');
-    const banTitle  = document.getElementById('banModalTitle');
-    const banBody   = document.getElementById('banModalBody');
-    const banSubmit = document.getElementById('banSubmit');
-
-                 window.confirmBan = (userId, name) => {
-            banTitle.textContent = 'Cấm người dùng';
-            banBody.innerHTML = `Bạn có chắc muốn <strong>cấm</strong> người dùng <strong>${name}</strong>?`;
-
-            banSubmit.onclick = async () => {
-                try {
-                    const res = await fetch(`/admin/users/${userId}/ban`, {
-                        method: 'PATCH'
-                    });
-
-                    if (!res.ok) throw new Error('Ban failed');
-
-                    location.reload();
-
-                } catch (err) {
-                    alert('Có lỗi xảy ra khi cấm user');
-                }
-            };
-
-            banSubmit.style.background = 'linear-gradient(135deg,#ef4444,#dc2626)';
-            banSubmit.textContent = 'Cấm ngay';
-            banModal.show();
-        }
-
-            window.confirmUnban = (userId, name) => {
-            banTitle.textContent = 'Bỏ cấm người dùng';
-            banBody.innerHTML = `Bạn có chắc muốn <strong>bỏ cấm</strong> người dùng <strong>${name}</strong>?`;
-
-            banSubmit.onclick = async () => {
-                try {
-                    const res = await fetch(`/admin/users/${userId}/unban`, {
-                        method: 'PATCH',
-                    });
-
-                    if (!res.ok) throw new Error('Unban failed');
-
-                    location.reload();
-
-                } catch (err) {
-                    alert('Có lỗi xảy ra khi bỏ cấm user');
-                }
-            };
-
-            banSubmit.style.background = 'linear-gradient(135deg,#22c55e,#16a34a)';
-            banSubmit.textContent = 'Bỏ cấm';
-            banModal.show();
-        };
-    
-
-    /* ── Export stub ── */
-    window.exportUsers = () => {
-        const params = new URLSearchParams(window.location.search);
-        params.set('export', 'csv');
-        window.location.href = `/admin/users/export?${params.toString()}`;
-    };
-
-</script>
+<script src="~/js/usermgt.js"></script>
 }
 

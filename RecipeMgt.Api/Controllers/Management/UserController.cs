@@ -2,9 +2,9 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using RecipeMgt.Api.Common;
-using RecipeMgt.Application.Constant;
 using RecipeMgt.Application.DTOs.Response.User;
 using RecipeMgt.Application.Services.Management.User;
+using RecipeMgt.Domain.Enums;
 
 namespace RecipeMgt.Api.Controllers.Management
 {
@@ -40,6 +40,13 @@ namespace RecipeMgt.Api.Controllers.Management
 
         }
 
+        [HttpGet("statistics")]
+        public async Task<IActionResult> GetUserStatistics()
+        {
+            var statisticsData = await _userManagementService.GetUsersStatistic();
+            return Ok(ApiResponseFactory.Success(statisticsData.Value, HttpContext));
+        }
+
         [HttpPost("create-batch")]
         public async Task<IActionResult> CreateBatch([FromBody] BatchUserRequest<CreateUserRequest> request)
         {
@@ -50,8 +57,30 @@ namespace RecipeMgt.Api.Controllers.Management
         [HttpPost("upload-csv")]
         public async Task<IActionResult> CreateFromCsv(IFormFile file)
         {
-            var result= await _userManagementService.CreateUsersFromCsv(file);
-            return Ok(ApiResponseFactory.Success(result, HttpContext));
+            var result = await _userManagementService.CreateUsersFromCsv(file);
+
+            
+            if (result.SuccessCount == 0)
+            {
+                return BadRequest(ApiResponseFactory.Fail(
+                    "IMPORT_FAILED",
+                    
+                    HttpContext
+                ));
+            }
+            if (result.FailedCount > 0)
+            {
+                return Ok(ApiResponseFactory.Success(
+                    result,
+                    HttpContext
+                    
+                ));
+            }
+            return Ok(ApiResponseFactory.Success(
+                result,
+                HttpContext
+                
+            ));
         }
 
 

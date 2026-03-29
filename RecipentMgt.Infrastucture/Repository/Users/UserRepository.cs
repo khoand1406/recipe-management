@@ -237,4 +237,31 @@ public class UserRepository : IUserRepository
                      .Select(x=> x.FullName)
                      .ToListAsync();
     }
+
+    public Task<int> GetUserCountByStatus(int userStatus)
+    {
+        var query = _context.Users
+            .Include(u => u.Followers)
+            .Include(u => u.Recipes)
+            .AsNoTracking();
+
+        query = userStatus switch
+        {
+            0 => query.Where(x => x.IsActived),
+            1 => query.Where(x => !x.IsActived && x.DeleteAt==null),
+            2 => query.Where(x => x.IsBanned && x.DeleteAt==null),
+            3 => query.Where(x => x.DeleteAt != null),
+            _ => throw new ArgumentException("INVALID_USER_STATUS"),
+        };
+
+        return query.CountAsync();
+
+
+    }
+
+    public Task<int> GetTotalRecipeCount()
+    {
+        var totalRecipeCount = _context.Recipes.CountAsync();
+        return totalRecipeCount;
+    }
 }

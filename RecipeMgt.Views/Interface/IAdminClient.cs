@@ -1,9 +1,9 @@
-﻿using RecipeMgt.Application.Constant;
-using RecipeMgt.Application.DTOs.Request.Dishes;
+﻿using RecipeMgt.Application.DTOs.Request.Dishes;
 using RecipeMgt.Application.DTOs.Request.Recipes;
 using RecipeMgt.Application.DTOs.Response;
 using RecipeMgt.Application.DTOs.Response.Management.Dashboard;
 using RecipeMgt.Application.DTOs.Response.User;
+using RecipeMgt.Domain.Enums;
 using RecipeMgt.Domain.RequestEntity;
 using RecipeMgt.Views.Common;
 using RecipeMgt.Views.Models;
@@ -29,7 +29,7 @@ namespace RecipeMgt.Views.Interface
 
         Task<Models.ApiResponse<UserResponseDTO>> UpdateUser(int userId, UpdateUserRequest request);
 
-        Task<Models.ApiResponse<bool>> DeleteUser(int userId);
+        Task<Models.ApiResponse<UserResponseDTO>> DeleteUser(int userId);
 
         Task<Models.ApiResponse<bool>> DeleteBatchUsers(BatchUserIdsRequest request);
 
@@ -95,6 +95,6 @@ namespace RecipeMgt.Views.Interface
         // ========================= MEDIA =========================
 
         Task<Models.ApiResponse<string>> UploadImage(IFormFile file);
-
+        Task<Models.ApiResponse<UsersStatistic>> GetUserStatistics();
     }
 }

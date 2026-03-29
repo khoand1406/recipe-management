@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
-using RecipeMgt.Application.Constant;
 using RecipeMgt.Application.DTOs;
 using RecipeMgt.Application.DTOs.Response;
 using RecipeMgt.Application.DTOs.Response.Recipe;
 using RecipeMgt.Application.DTOs.Response.User;
+using RecipeMgt.Domain.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,6 +39,8 @@ namespace RecipeMgt.Application.Services.Management.User
         Task<Result<bool>> BanBatchUser(BatchUserIdsRequest batchUserIds);
 
         Task<Result<bool>> RecoverUserAccount(int id);
+
+        Task<Result<UsersStatistic>> GetUsersStatistic();
         Task<BatchImportResult> CreateUsersFromCsv(IFormFile file);
     }
 }
