@@ -26,13 +26,13 @@ namespace RecipeMgt.Views.Services
             return JsonSerializer.Deserialize<ApiResponse<IngredientResponse>>(json, options)?? ApiResponse<IngredientResponse>.Fail("INTERAL SERVER ERROR", null, "SERVER_ERROR", (int?)StatusCode.INTERNAL_SERVER_ERROR);
         }
 
-        public async Task<ApiResponse<List<IngredientResponse>>> GetByRecipeIdAsync(int recipeId)
+        public async Task<List<IngredientResponse>> GetByRecipeIdAsync(int recipeId)
         {
             var resp = await _httpClient.GetAsync($"/api/ingredient/recipe/{recipeId}");
             resp.EnsureSuccessStatusCode();
             var json = await resp.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<ApiResponse<List<IngredientResponse>>>(json, options)!;
-                  
+            return JsonSerializer.Deserialize<List<IngredientResponse>>(json, options)!;
+
         }
 
         public async Task<ApiResponse<CreateIngredientResponse>> CreateAsync(int recipeId, string name, string quantity)

@@ -1,8 +1,11 @@
-using RecipeMgt.Views.Models.Response;
-using System.Net.Http.Headers;
-using System.Text.Json;
-using System.Text;
+using RecipeMgt.Application.DTOs;
+using RecipeMgt.Application.DTOs.Response.Comments;
 using RecipeMgt.Views.Interface;
+using RecipeMgt.Views.Models.Response;
+using System.Collections.Generic;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
 
 namespace RecipeMgt.Views.Services
 {
@@ -29,14 +32,6 @@ namespace RecipeMgt.Views.Services
             }
         }
 
-        public async Task<List<CommentResponseDTO>> GetCommentsByRecipeIdAsync(int recipeId)
-        {
-            var resp = await _httpClient.GetAsync($"/api/recipe/{recipeId}/comments");
-            resp.EnsureSuccessStatusCode();
-            var json = await resp.Content.ReadAsStringAsync();
-            return JsonSerializer.Deserialize<List<CommentResponseDTO>>(json, _options)
-                   ?? new List<CommentResponseDTO>();
-        }
 
         public async Task<AddCommentResponse> AddCommentAsync(int recipeId, string content)
         {
@@ -57,6 +52,14 @@ namespace RecipeMgt.Views.Services
             {
                 return new AddCommentResponse { Success = false, Message = ex.Message };
             }
+        }
+
+        public async Task<ApiResponse<List<CommentResposneDTO>>> GetCommentsByRecipeIdAsync(int recipeId)
+        {
+            var resp = await _httpClient.GetAsync($"/api/recipe/{recipeId}/comments");
+            resp.EnsureSuccessStatusCode();
+            var json = await resp.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<ApiResponse<List<CommentResposneDTO>>>(json, _options)!;
         }
     }
 }

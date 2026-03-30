@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace RecipeMgt.Domain.Entities
@@ -17,6 +18,7 @@ namespace RecipeMgt.Domain.Entities
         public DateTime LastUpdatedAt { get; set; }
 
         // Navigation
+        [JsonIgnore]
         public Dish Dish { get; set; }
     }
 

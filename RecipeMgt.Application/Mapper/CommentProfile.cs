@@ -13,7 +13,9 @@ namespace RecipeMgt.Application.Mapper
     {
         public CommentProfile() {
             CreateMap<Comment, CreateCommentDTO>();
-            CreateMap<CreateCommentDTO, Comment>();
+            CreateMap<CreateCommentDTO, Comment>()
+    .ForMember(dest => dest.Recipe, opt => opt.Ignore())
+    .ForMember(dest => dest.User, opt => opt.Ignore());
         }
     }
 }

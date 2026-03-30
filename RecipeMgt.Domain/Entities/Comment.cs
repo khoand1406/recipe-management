@@ -19,7 +19,7 @@ namespace RecipeMgt.Domain.Entities
         public DateTime? UpdatedAt { get; set; }
 
         // Navigation
-        public User User { get; set; }= new User();
-        public Recipe Recipe { get; set; }= new Recipe();
+        public User? User { get; set; }
+        public Recipe? Recipe { get; set; }
     }
 }

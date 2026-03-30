@@ -68,6 +68,7 @@ namespace RecipentMgt.Infrastucture.Repository.Recipes
             return await _context.Recipes
         .Include(r => r.Ingredients)
         .Include(r => r.Steps)
+        .Include(r=> r.Author)
         .FirstOrDefaultAsync(r => r.RecipeId == id);
         }
     

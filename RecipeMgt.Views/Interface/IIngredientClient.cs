@@ -8,7 +8,7 @@ namespace RecipeMgt.Views.Interface
     {
         public Task<ApiResponse<IngredientResponse>> GetByIdAsync(int ingredientId);
 
-        public Task<ApiResponse<List<IngredientResponse>>> GetByRecipeIdAsync(int recipeId);
+        public Task<List<IngredientResponse>> GetByRecipeIdAsync(int recipeId);
 
         public Task<ApiResponse<CreateIngredientResponse>> CreateAsync(int recipeId, string name, string quantity);
 

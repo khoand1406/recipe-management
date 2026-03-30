@@ -1,358 +1,1147 @@
-@model RecipeMgt.Views.Models.Response.RecipeResponse
+﻿@using RecipeMgt.Views.Models.Response
+@model RecipeResponse
+@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
 
 @{
-    ViewData["Title"] = Model.Title;
-    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = Model?.Title ?? "Chi tiết công thức";
+    var steps = ViewBag.Steps as List<StepResponse> ?? new();
+    var ingredients = (ViewBag.Ingredients as ApiResponse<List<IngredientResponse>>)?.Data ?? new();
+    var comments = ViewBag.Comments as List<CommentResponseDTO> ?? new();
+    var images = Model?.Images ?? new();
+    var diff = Model?.DifficultyLevel?.ToLower() ?? "";
+    var diffLabel = diff switch { "easy" => "Dễ", "medium" => "Trung bình", "hard" => "Khó", _ => Model?.DifficultyLevel ?? "" };
+    var diffColor = diff switch { "easy" => "#22c55e", "medium" => "#f59e0b", "hard" => "#ef4444", _ => "#64748b" };
+    var diffBg = diff switch { "easy" => "#f0fdf4", "medium" => "#fffbeb", "hard" => "#fef2f2", _ => "#f8fafc" };
 }
 
-<div class="container py-5">
-    <div class="mb-4">
-        <a href="javascript:history.back()" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left"></i> Back
-        </a>
+@section Styles {
+    <style>
+        /* ── layout ── */
+        .detail-page {
+            padding: 40px 0 80px;
+        }
+
+        /* ── hero ── */
+        .recipe-hero {
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-bottom: 36px;
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            min-height: 320px;
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .hero-image-strip {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            gap: 2px;
+        }
+
+        .hero-img {
+            flex: 1;
+            object-fit: cover;
+            width: 100%;
+            height: 100%;
+            opacity: .92;
+        }
+
+        .hero-placeholder {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 5rem;
+            opacity: .25;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,.72) 0%, rgba(0,0,0,.18) 55%, transparent 100%);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            padding: 28px 32px;
+            width: 100%;
+        }
+
+        .hero-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+
+        .hero-badge {
+            padding: 4px 14px;
+            border-radius: 50px;
+            font-size: .72rem;
+            font-weight: 700;
+            backdrop-filter: blur(8px);
+            text-transform: uppercase;
+            letter-spacing: .05em;
+        }
+
+            .hero-badge.diff {
+                background: rgba(255,255,255,.18);
+                color: #fff;
+                border: 1px solid rgba(255,255,255,.3);
+            }
+
+        .hero-title {
+            font-size: clamp(1.5rem, 4vw, 2.2rem);
+            font-weight: 800;
+            color: #fff;
+            margin: 0 0 10px;
+            line-height: 1.2;
+            text-shadow: 0 2px 12px rgba(0,0,0,.3);
+        }
+
+        .hero-meta {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .hero-author {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .author-ava {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            font-size: .78rem;
+            border: 2px solid rgba(255,255,255,.5);
+            flex-shrink: 0;
+        }
+
+        .author-name {
+            font-size: .82rem;
+            color: rgba(255,255,255,.9);
+            font-weight: 500;
+        }
+
+        .hero-date {
+            font-size: .78rem;
+            color: rgba(255,255,255,.65);
+        }
+
+        /* ── info chips ── */
+        .info-chips {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 32px;
+        }
+
+        .info-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 18px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            flex: 1;
+            min-width: 120px;
+            transition: all var(--transition);
+        }
+
+            .info-chip:hover {
+                border-color: var(--brand);
+                box-shadow: 0 2px 12px rgba(245,158,11,.1);
+            }
+
+        .chip-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: var(--brand-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: var(--brand-dark);
+            flex-shrink: 0;
+        }
+
+        .chip-val {
+            font-size: .95rem;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1;
+        }
+
+        .chip-label {
+            font-size: .72rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* ── section titles ── */
+        .section-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 18px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--brand-light);
+        }
+
+            .section-title i {
+                color: var(--brand-dark);
+                font-size: 1.1rem;
+            }
+
+        .section-count {
+            margin-left: auto;
+            font-size: .72rem;
+            font-weight: 700;
+            padding: 2px 10px;
+            border-radius: 50px;
+            background: var(--brand-light);
+            color: var(--brand-dark);
+        }
+
+        /* ── description ── */
+        .recipe-desc {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px 24px;
+            font-size: .9rem;
+            color: var(--text-muted);
+            line-height: 1.75;
+            margin-bottom: 32px;
+        }
+
+        /* ── ingredients ── */
+        .ingredients-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 32px;
+        }
+
+        .ingredient-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            transition: all var(--transition);
+        }
+
+            .ingredient-item:hover {
+                border-color: var(--brand);
+                background: var(--brand-light);
+            }
+
+        .ingredient-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--brand);
+            flex-shrink: 0;
+        }
+
+        .ingredient-name {
+            font-size: .85rem;
+            font-weight: 500;
+            color: var(--text);
+            flex: 1;
+        }
+
+        .ingredient-qty {
+            font-size: .78rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        /* ── steps ── */
+        .steps-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-bottom: 32px;
+        }
+
+        .step-item {
+            display: flex;
+            gap: 18px;
+            padding: 20px 24px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            transition: all var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+            .step-item::before {
+                content: '';
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                width: 3px;
+                background: linear-gradient(to bottom, var(--brand), var(--brand-dark));
+                opacity: 0;
+                transition: opacity var(--transition);
+            }
+
+            .step-item:hover::before {
+                opacity: 1;
+            }
+
+            .step-item:hover {
+                border-color: var(--brand-light);
+                box-shadow: 0 2px 16px rgba(245,158,11,.1);
+            }
+
+        .step-num {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+            color: #fff;
+            font-weight: 800;
+            font-size: .9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 2px 8px rgba(245,158,11,.35);
+        }
+
+        .step-text {
+            font-size: .9rem;
+            color: var(--text);
+            line-height: 1.7;
+            padding-top: 6px;
+            flex: 1;
+        }
+
+        /* ── image gallery ── */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 10px;
+            margin-bottom: 32px;
+        }
+
+        .gallery-img {
+            aspect-ratio: 1;
+            object-fit: cover;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+            .gallery-img:hover {
+                transform: scale(1.03);
+                box-shadow: var(--shadow-md);
+            }
+
+        /* lightbox */
+        .lightbox-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.88);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+
+            .lightbox-overlay.active {
+                display: flex;
+            }
+
+        .lightbox-img {
+            max-width: 90vw;
+            max-height: 85vh;
+            border-radius: 12px;
+            object-fit: contain;
+            box-shadow: 0 20px 60px rgba(0,0,0,.5);
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 24px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,.15);
+            border: none;
+            color: #fff;
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background var(--transition);
+        }
+
+            .lightbox-close:hover {
+                background: rgba(255,255,255,.25);
+            }
+
+        /* ── comments ── */
+        .comment-form-wrap {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 18px 20px;
+            margin-bottom: 20px;
+        }
+
+        .comment-input-row {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .comment-ava {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: .78rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .comment-textarea {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font-size: .85rem;
+            color: var(--text);
+            resize: none;
+            outline: none;
+            font-family: inherit;
+            transition: all var(--transition);
+            min-height: 80px;
+        }
+
+            .comment-textarea:focus {
+                border-color: var(--brand);
+                box-shadow: 0 0 0 3px rgba(245,158,11,.12);
+            }
+
+        .comment-form-footer {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 10px;
+        }
+
+        .btn-comment {
+            padding: 8px 20px;
+            border-radius: 50px;
+            background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+            color: #fff;
+            font-size: .82rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(245,158,11,.3);
+            transition: all var(--transition);
+        }
+
+            .btn-comment:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 14px rgba(245,158,11,.4);
+            }
+
+            .btn-comment:disabled {
+                opacity: .6;
+                cursor: not-allowed;
+                transform: none;
+            }
+
+        .comment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .comment-item {
+            display: flex;
+            gap: 12px;
+            padding: 16px 20px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            transition: border-color var(--transition);
+        }
+
+            .comment-item:hover {
+                border-color: var(--brand-light);
+            }
+
+        .comment-user-ava {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+            background: #e0e7ff;
+        }
+
+        .comment-user-ava-placeholder {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: .72rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .comment-body {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .comment-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 6px;
+        }
+
+        .comment-username {
+            font-size: .85rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .comment-date {
+            font-size: .72rem;
+            color: var(--text-muted);
+        }
+
+        .comment-content {
+            font-size: .85rem;
+            color: var(--text);
+            line-height: 1.65;
+            word-break: break-word;
+        }
+
+        .no-comments {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+            font-size: .85rem;
+        }
+
+            .no-comments i {
+                font-size: 2rem;
+                display: block;
+                margin-bottom: 10px;
+                color: var(--border);
+            }
+
+        /* ── sticky sidebar card ── */
+        .sidebar-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            position: sticky;
+            top: calc(var(--nav-height) + 16px);
+        }
+
+        .sidebar-card-title {
+            font-size: .82rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+        }
+
+        .author-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .author-card-ava {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .author-card-name {
+            font-weight: 700;
+            color: var(--text);
+            font-size: .9rem;
+        }
+
+        .author-card-email {
+            font-size: .75rem;
+            color: var(--text-muted);
+        }
+
+        .share-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .share-btn {
+            flex: 1;
+            padding: 9px 0;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--bg);
+            color: var(--text-muted);
+            font-size: .78rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            cursor: pointer;
+            transition: all var(--transition);
+            text-decoration: none;
+        }
+
+            .share-btn:hover {
+                border-color: var(--brand);
+                color: var(--brand-dark);
+                background: var(--brand-light);
+            }
+
+        @@media (max-width: 991px) {
+            .sidebar-card {
+                position: static;
+            }
+
+            .hero-content {
+                padding: 20px;
+            }
+
+            .info-chip {
+                min-width: 100px;
+            }
+        }
+
+        @@media (max-width: 576px) {
+            .ingredients-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .gallery-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .info-chips {
+                gap: 8px;
+            }
+
+            .info-chip {
+                min-width: calc(50% - 4px);
+                padding: 10px 14px;
+            }
+        }
+    </style>
+}
+@if (Model == null)
+{
+    <div class="alert alert-danger">
+        Không tìm thấy công thức.
     </div>
+    return;
+}
 
-    <div class="row">
-        <div class="col-lg-8">
-            @if (Model.Images != null && Model.Images.Any())
-            {
-                <div id="recipeCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
-                    <div class="carousel-inner rounded shadow">
-                        @for (int i = 0; i < Model.Images.Count; i++)
-                        {
-                            <div class="carousel-item @(i == 0 ? "active" : "")">
-                                <img src="@Model.Images[i]" class="d-block w-100" alt="@Model.Title" style="height: 450px; object-fit: cover;">
-                            </div>
-                        }
-                    </div>
-                    @if (Model.Images.Count > 1)
-                    {
-                        <button class="carousel-control-prev" type="button" data-bs-target="#recipeCarousel" data-bs-slide="prev">
-                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Previous</span>
-                        </button>
-                        <button class="carousel-control-next" type="button" data-bs-target="#recipeCarousel" data-bs-slide="next">
-                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Next</span>
-                        </button>
-                    }
-                </div>
-            }
-            else
-            {
-                <div class="bg-light d-flex align-items-center justify-content-center rounded shadow mb-4" style="height: 450px;">
-                    <i class="bi bi-card-image text-muted" style="font-size: 6rem;"></i>
-                </div>
-            }
+<div class="detail-page">
+    <div class="container">
 
-            <h1 class="display-4 fw-bold mb-3">@Model.Title</h1>
-            
-            <div class="d-flex align-items-center mb-4">
-                @if (Model.Author != null)
+        @* ── Hero ── *@
+        <div class="recipe-hero">
+            <div class="hero-image-strip">
+                @if (images.Any())
                 {
-                    <div class="me-4">
-                        <i class="bi bi-person-circle text-warning"></i>
-                        <span class="ms-2">@Model.Author.FullName</span>
-                    </div>
+                    @foreach (var img in images.Take(3))
+                    {
+                        <img src="@img" class="hero-img" alt="@Model!.Title" />
+                    }
                 }
-                <div class="me-4">
-                    <i class="bi bi-clock text-warning"></i>
-                    <span class="ms-2">@(Model.CookingTime ?? 0) mins</span>
-                </div>
-                <div class="me-4">
-                    <i class="bi bi-people text-warning"></i>
-                    <span class="ms-2">@(Model.Servings ?? 0) servings</span>
-                </div>
-                <div>
-                    <span class="badge bg-secondary">@Model.DifficultyLevel</span>
-                </div>
+                else
+                {
+                    <div class="hero-placeholder">🍳</div>
+                }
             </div>
-
-            <div class="card mb-4 shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title fw-bold mb-3">Description</h5>
-                    <p class="card-text">@Model.Description</p>
-                </div>
-            </div>
-
-            <div class="card mb-4 shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title fw-bold mb-3">
-                        <i class="bi bi-egg text-warning"></i> Ingredients
-                    </h5>
-                    @{
-                        var ingredients = ViewBag.Ingredients as List<RecipeMgt.Views.Models.Response.IngredientResponse>;
-                    }
-                    @if (ingredients == null || !ingredients.Any())
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <div class="hero-badges">
+                    @if (!string.IsNullOrEmpty(diffLabel))
                     {
-                        <div class="alert alert-info">
-                            <i class="bi bi-info-circle"></i> No ingredients available for this recipe yet.
-                        </div>
-                    }
-                    else
-                    {
-                        <ul class="list-group list-group-flush">
-                            @foreach (var ingredient in ingredients)
-                            {
-                                <li class="list-group-item d-flex justify-content-between align-items-center ingredient-item">
-                                    <span class="ingredient-name">
-                                        <i class="bi bi-check-circle text-success me-2"></i>
-                                        @ingredient.Name
-                                    </span>
-                                    <span class="badge bg-light text-dark ingredient-quantity">@ingredient.Quantity</span>
-                                </li>
-                            }
-                        </ul>
+                        <span class="hero-badge diff">@diffLabel</span>
                     }
                 </div>
-            </div>
-
-            <div class="card mb-4 shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title fw-bold mb-3">
-                        <i class="bi bi-list-ol text-warning"></i> Instructions
-                    </h5>
-                    @{
-                        var steps = ViewBag.Steps as List<RecipeMgt.Views.Models.Response.StepResponse>;
-                    }
-                    @if (steps == null || !steps.Any())
-                    {
-                        <div class="alert alert-info">
-                            <i class="bi bi-info-circle"></i> No instructions available for this recipe yet.
+                <h1 class="hero-title">@Model!.Title</h1>
+                <div class="hero-meta">
+                    <div class="hero-author">
+                        <div class="author-ava">
+                            @(string.IsNullOrWhiteSpace(Model.Author?.FullName) ? "?" :
+                                                        string.Concat(Model.Author.FullName.Split(' ',
+                                                        StringSplitOptions.RemoveEmptyEntries).Select(w => w[0])).ToUpper() is var i
+                                                        && i.Length > 2 ? i[..2] : i)
                         </div>
-                    }
-                    else
+                        <span class="author-name">@(Model.Author?.FullName ?? "Ẩn danh")</span>
+                    </div>
+                    @if (Model.CreatedAt.HasValue)
                     {
-                        <div class="steps-container">
-                            @foreach (var step in steps)
-                            {
-                                <div class="step-item mb-4 p-3 border rounded">
-                                    <div class="d-flex align-items-start">
-                                        <div class="step-number me-3">
-                                            <span class="badge bg-warning text-white rounded-circle" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
-                                                @step.StepNumber
-                                            </span>
-                                        </div>
-                                        <div class="step-content flex-grow-1">
-                                            <p class="mb-0">@step.Instruction</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            }
-                        </div>
+                        <span class="hero-date">
+                            <i class="bi bi-calendar3 me-1"></i>
+                            @Model.CreatedAt.Value.ToString("dd/MM/yyyy")
+                        </span>
                     }
+                    <span class="hero-date">
+                        <i class="bi bi-chat-dots me-1"></i>
+                        @comments.Count bình luận
+                    </span>
                 </div>
             </div>
         </div>
 
-        <div class="col-lg-4">
-            <div class="card shadow-sm sticky-top" style="top: 20px;">
-                <div class="card-body">
-                    <h5 class="card-title fw-bold mb-3">Recipe Info</h5>
-                    <ul class="list-unstyled">
-                        <li class="mb-2">
-                            <strong>Recipe ID:</strong> @Model.RecipeId
-                        </li>
-                        <li class="mb-2">
-                            <strong>Created:</strong> @Model.CreatedAt?.ToString("MMM dd, yyyy")
-                        </li>
-                        <li class="mb-2">
-                            <strong>Last Updated:</strong> @Model.UpdatedAt?.ToString("MMM dd, yyyy")
-                        </li>
-                    </ul>
-                    <hr>
-                    <div class="d-grid gap-2">
-                        <button class="btn btn-warning text-white fw-semibold bookmark-recipe-btn" data-recipe-id="@Model.RecipeId">
-                            <i class="bi bi-bookmark"></i> Save Recipe
-                        </button>
-                        <button class="btn btn-outline-warning fw-semibold">
-                            <i class="bi bi-share"></i> Share
+        <div class="row g-4">
+            @* ── Main column ── *@
+            <div class="col-12 col-lg-8">
+
+                @* Info chips *@
+                <div class="info-chips">
+                    @if (Model.CookingTime.HasValue)
+                    {
+                        <div class="info-chip">
+                            <div class="chip-icon"><i class="bi bi-clock"></i></div>
+                            <div>
+                                <div class="chip-val">@Model.CookingTime phút</div>
+                                <div class="chip-label">Thời gian nấu</div>
+                            </div>
+                        </div>
+                    }
+                    @if (Model.Servings.HasValue)
+                    {
+                        <div class="info-chip">
+                            <div class="chip-icon"><i class="bi bi-people"></i></div>
+                            <div>
+                                <div class="chip-val">@Model.Servings người</div>
+                                <div class="chip-label">Khẩu phần</div>
+                            </div>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(diffLabel))
+                    {
+                        <div class="info-chip">
+                            <div class="chip-icon"><i class="bi bi-bar-chart"></i></div>
+                            <div>
+                                <div class="chip-val" style="color:@diffColor">@diffLabel</div>
+                                <div class="chip-label">Độ khó</div>
+                            </div>
+                        </div>
+                    }
+                    <div class="info-chip">
+                        <div class="chip-icon"><i class="bi bi-list-ol"></i></div>
+                        <div>
+                            <div class="chip-val">@steps.Count bước</div>
+                            <div class="chip-label">Số bước thực hiện</div>
+                        </div>
+                    </div>
+                </div>
+
+                @* Description *@
+                @if (!string.IsNullOrWhiteSpace(Model.Description))
+                {
+                    <div class="recipe-desc">
+                        @Model.Description
+                    </div>
+                }
+
+                @* Ingredients *@
+                @if (ingredients.Any())
+                {
+                    <div class="section-title">
+                        <i class="bi bi-bag-heart"></i> Nguyên liệu
+                        <span class="section-count">@ingredients.Count món</span>
+                    </div>
+                    <div class="ingredients-grid">
+                        @foreach (var ing in ingredients)
+                        {
+                            <div class="ingredient-item">
+                                <div class="ingredient-dot"></div>
+                                <span class="ingredient-name">@ing.Name</span>
+                                <span class="ingredient-qty">@ing.Quantity</span>
+                            </div>
+                        }
+                    </div>
+                }
+
+                @* Steps *@
+                @if (steps.Any())
+                {
+                    <div class="section-title">
+                        <i class="bi bi-list-check"></i> Các bước thực hiện
+                        <span class="section-count">@steps.Count bước</span>
+                    </div>
+                    <div class="steps-list">
+                        @foreach (var step in steps.OrderBy(s => s.StepNumber))
+                        {
+                            <div class="step-item">
+                                <div class="step-num">@step.StepNumber</div>
+                                <div class="step-text">@step.Instruction</div>
+                            </div>
+                        }
+                    </div>
+                }
+
+                @* Gallery *@
+                @if (images.Count > 1)
+                {
+                    <div class="section-title">
+                        <i class="bi bi-images"></i> Hình ảnh
+                        <span class="section-count">@images.Count ảnh</span>
+                    </div>
+                    <div class="gallery-grid">
+                        @foreach (var img in images)
+                        {
+                            <img src="@img" class="gallery-img" alt="@Model.Title"
+                                 onclick="openLightbox('@img')" loading="lazy" />
+                        }
+                    </div>
+                }
+
+                @* Comments *@
+                <div class="section-title">
+                    <i class="bi bi-chat-dots"></i> Bình luận
+                    <span class="section-count">@comments.Count</span>
+                </div>
+
+                @* Comment form *@
+                <div class="comment-form-wrap" id="commentFormWrap">
+                    <div class="comment-input-row">
+                        <div class="comment-ava" id="myAva">
+                            @((HttpContextAccessor.HttpContext?.Session.GetString("UserName") ?? "?").First().ToString().ToUpper())
+                        </div>
+                        <textarea class="comment-textarea" id="commentInput"
+                                  placeholder="Chia sẻ cảm nhận của bạn về công thức này…"
+                                  maxlength="500" rows="3"></textarea>
+                    </div>
+                    <div class="comment-form-footer">
+                        <button class="btn-comment" id="commentSubmit" onclick="submitComment()">
+                            <i class="bi bi-send me-1"></i> Gửi bình luận
                         </button>
                     </div>
                 </div>
-            </div>
 
-            <div class="card shadow-sm mt-3">
-                <div class="card-body">
-                    <h5 class="card-title fw-bold mb-3">
-                        <i class="bi bi-chat-dots text-warning"></i> Comments
-                    </h5>
-                    @{
-                        var comments = ViewBag.Comments as List<RecipeMgt.Views.Models.Response.CommentResponseDTO>;
-                    }
-                    @if (comments == null || !comments.Any())
+                @* Comment list *@
+                <div class="comment-list" id="commentList">
+                    @if (comments.Any())
                     {
-                        <div class="alert alert-light border">
-                            <i class="bi bi-chat-left-text text-muted"></i>
-                            <span class="text-muted ms-2">No comments yet. Be the first to comment!</span>
-                        </div>
+                        @foreach (var c in comments.OrderByDescending(c => c.CreatedAt))
+                        {
+                            var initials = string.IsNullOrWhiteSpace(c.UserName) ? "?" :
+                            string.Concat(c.UserName.Split(' ',
+                            StringSplitOptions.RemoveEmptyEntries).Select(w => w[0])).ToUpper();
+                            initials = initials.Length > 2 ? initials[..2] : initials;
+
+                            <div class="comment-item">
+                                @if (!string.IsNullOrEmpty(c.UserAvatar))
+                                {
+                                    <img src="@c.UserAvatar" class="comment-user-ava" alt="@c.UserName" />
+                                }
+                                else
+                                {
+                                    <div class="comment-user-ava-placeholder">@initials</div>
+                                }
+                                <div class="comment-body">
+                                    <div class="comment-header">
+                                        <span class="comment-username">@c.UserName</span>
+                                        <span class="comment-date">
+                                            <i class="bi bi-clock me-1"></i>
+                                            @c.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                        </span>
+                                    </div>
+                                    <div class="comment-content">@c.Content</div>
+                                </div>
+                            </div>
+                        }
                     }
                     else
                     {
-                        <div class="comments-container" style="max-height: 500px; overflow-y: auto;">
-                            @foreach (var comment in comments)
-                            {
-                                <div class="comment-item mb-3 p-3 border rounded">
-                                    <div class="d-flex align-items-start">
-                                        <div class="comment-avatar me-3">
-                                            @if (!string.IsNullOrEmpty(comment.UserAvatar))
-                                            {
-                                                <img src="@comment.UserAvatar" alt="@comment.UserName" class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
-                                            }
-                                            else
-                                            {
-                                                <div class="rounded-circle bg-warning text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                                    <i class="bi bi-person-fill"></i>
-                                                </div>
-                                            }
-                                        </div>
-                                        <div class="comment-content flex-grow-1">
-                                            <div class="d-flex justify-content-between align-items-start mb-1">
-                                                <strong class="comment-author">@comment.UserName</strong>
-                                                <small class="text-muted">@comment.CreatedAt.ToString("MMM dd, yyyy")</small>
-                                            </div>
-                                            <p class="mb-0 comment-text">@comment.Content</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                        <div class="text-muted small mt-2">
-                            <i class="bi bi-info-circle"></i> @comments.Count comment@(comments.Count != 1 ? "s" : "")
+                        <div class="no-comments" id="noComments">
+                            <i class="bi bi-chat-square-dots"></i>
+                            Chưa có bình luận nào. Hãy là người đầu tiên!
                         </div>
                     }
                 </div>
+
+            </div>
+
+            @* ── Sidebar ── *@
+            <div class="col-12 col-lg-4">
+
+                @* Author card *@
+                <div class="sidebar-card">
+                    <div class="sidebar-card-title">Tác giả</div>
+                    <div class="author-card">
+                        <div class="author-card-ava">
+                            @{
+                                var authorName = Model.Author?.FullName ?? "";
+                                var authorInit = string.IsNullOrWhiteSpace(authorName) ? "?" :
+                                string.Concat(authorName.Split(' ',
+                                StringSplitOptions.RemoveEmptyEntries).Select(w => w[0])).ToUpper();
+                                authorInit = authorInit.Length > 2 ? authorInit[..2] : authorInit;
+                            }
+                            @authorInit
+                        </div>
+                        <div>
+                            <div class="author-card-name">@(Model.Author?.FullName ?? "Ẩn danh")</div>
+                            <div class="author-card-email">@Model.Author?.Email</div>
+                        </div>
+                    </div>
+                </div>
+
+                @* Share card *@
+                <div class="sidebar-card">
+                    <div class="sidebar-card-title">Chia sẻ</div>
+                    <div class="share-btns">
+                        <button class="share-btn" onclick="copyLink()">
+                            <i class="bi bi-link-45deg"></i> Sao chép
+                        </button>
+                        <a class="share-btn"
+                           href="https://www.facebook.com/sharer/sharer.php?u=@Uri.EscapeDataString(Context.Request.Path)"
+                           target="_blank">
+                            <i class="bi bi-facebook"></i> Facebook
+                        </a>
+                    </div>
+                    <div id="copyFeedback" style="font-size:.75rem;color:#22c55e;margin-top:8px;display:none;">
+                        <i class="bi bi-check-circle me-1"></i>Đã sao chép liên kết!
+                    </div>
+                </div>
+
+                @* Quick nav *@
+                <div class="sidebar-card">
+                    <div class="sidebar-card-title">Nội dung</div>
+                    <div style="display:flex;flex-direction:column;gap:4px;">
+                        @if (!string.IsNullOrWhiteSpace(Model.Description))
+                        {
+                            <a href="#desc-anchor" class="share-btn"><i class="bi bi-file-text"></i> Mô tả</a>
+                        }
+                        @if (ingredients.Any())
+                        {
+                            <a href="#ing-anchor" class="share-btn"><i class="bi bi-bag-heart"></i> Nguyên liệu</a>
+                        }
+                        @if (steps.Any())
+                        {
+                            <a href="#steps-anchor" class="share-btn"><i class="bi bi-list-check"></i> Các bước</a>
+                        }
+                        <a href="#comment-anchor" class="share-btn"><i class="bi bi-chat-dots"></i> Bình luận</a>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
 </div>
 
-@section Styles {
-    <style>
-        .sticky-top {
-            position: sticky;
-        }
-
-        .card {
-            border-radius: 12px;
-        }
-
-        .carousel-item img {
-            border-radius: 12px;
-        }
-
-        .step-item {
-            background-color: #f8f9fa;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .step-item:hover {
-            transform: translateX(5px);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .step-number .badge {
-            font-weight: 700;
-        }
-
-        .step-content {
-            line-height: 1.6;
-        }
-
-        .ingredient-item {
-            transition: background-color 0.2s ease;
-            border-left: 3px solid transparent;
-        }
-
-        .ingredient-item:hover {
-            background-color: #f8f9fa;
-            border-left-color: #ffc107;
-        }
-
-        .ingredient-name {
-            font-weight: 500;
-        }
-
-        .ingredient-quantity {
-            font-size: 0.9rem;
-            padding: 0.4rem 0.8rem;
-            border: 1px solid #dee2e6;
-        }
-
-        .comment-item {
-            background-color: #f8f9fa;
-            transition: box-shadow 0.2s ease;
-        }
-
-        .comment-item:hover {
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .comment-author {
-            color: #495057;
-            font-size: 0.95rem;
-        }
-
-        .comment-text {
-            color: #6c757d;
-            line-height: 1.6;
-        }
-
-        .comments-container {
-            scrollbar-width: thin;
-            scrollbar-color: #ffc107 #f8f9fa;
-        }
-
-        .comments-container::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .comments-container::-webkit-scrollbar-track {
-            background: #f8f9fa;
-        }
-
-        .comments-container::-webkit-scrollbar-thumb {
-            background: #ffc107;
-            border-radius: 3px;
-        }
-    </style>
-}
+@* ── Lightbox ── *@
+<div class="lightbox-overlay" id="lightbox" onclick="closeLightbox()">
+    <button class="lightbox-close" onclick="closeLightbox()"><i class="bi bi-x-lg"></i></button>
+    <img src="" class="lightbox-img" id="lightboxImg" alt="Preview" onclick="event.stopPropagation()" />
+</div>
 
 @section Scripts {
     <script>
-        $(document).ready(function() {
-            $('.bookmark-recipe-btn').on('click', function() {
-                const button = $(this);
-                const recipeId = button.data('recipe-id');
-                const icon = button.find('i');
-                
-                // Disable button during request
-                button.prop('disabled', true);
-                
-                $.ajax({
-                    url: '@Url.Action("AddBookmark", "Bookmark")',
-                    type: 'POST',
-                    data: { recipeId: recipeId },
-                    success: function(response) {
-                        if (response.success) {
-                            // Change button appearance
-                            icon.removeClass('bi-bookmark').addClass('bi-bookmark-fill');
-                            button.removeClass('btn-warning').addClass('btn-success');
-                            button.html('<i class="bi bi-bookmark-fill"></i> Recipe Saved');
-                            
-                            // Show success message
-                            alert('Recipe saved to your bookmarks!');
-                        } else {
-                            alert(response.message || 'Failed to save recipe');
-                            button.prop('disabled', false);
+        (function () {
+            const recipeId = @Model!.RecipeId;
+
+            /* ── Lightbox ── */
+            window.openLightbox = (src) => {
+                document.getElementById('lightboxImg').src = src;
+                document.getElementById('lightbox').classList.add('active');
+                document.body.style.overflow = 'hidden';
+            };
+            window.closeLightbox = () => {
+                document.getElementById('lightbox').classList.remove('active');
+                document.body.style.overflow = '';
+            };
+            document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+            /* ── Copy link ── */
+            window.copyLink = async () => {
+                try {
+                    await navigator.clipboard.writeText(location.href);
+                } catch {
+                    const ta = document.createElement('textarea');
+                    ta.value = location.href;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                }
+                const fb = document.getElementById('copyFeedback');
+                fb.style.display = 'block';
+                setTimeout(() => fb.style.display = 'none', 2500);
+            };
+
+            /* ── Submit comment ── */
+            window.submitComment = async () => {
+                const input   = document.getElementById('commentInput');
+                const content = input.value.trim();
+                if (!content) { input.focus(); return; }
+
+                const btn = document.getElementById('commentSubmit');
+                btn.disabled = true;
+                btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Đang gửi…';
+
+                        try {
+            const res = await fetch('/recipe/add-comment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ recipeId, content }).toString()
+            });
+
+            if (res.ok) {
+                // Hide empty state
+                const noComments = document.getElementById('noComments');
+                if (noComments) noComments.style.display = 'none';
+
+                    input.value = '';
+                    await loadComments(recipeId);
+            } else if (res.status === 401) {
+                alert('Bạn cần đăng nhập để bình luận.');
+            } else {
+                alert('Có lỗi xảy ra khi gửi bình luận. Vui lòng thử lại.');
+            }
+        } catch {
+            alert('Không thể kết nối đến server.');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-send me-1"></i> Gửi bình luận';
+        }
+            };
+
+            // Enter to submit (Shift+Enter = newline)
+            document.getElementById('commentInput')?.addEventListener('keydown', e => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    submitComment();
+                }
+            });
+
+            // Fade-in animation for new comments
+            const style = document.createElement('style');
+            style.textContent = `@@keyframes fadeSlideIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }`;
+            document.head.appendChild(style);
+
+                    async function loadComments(recipeId) {
+            try {
+                const res  = await fetch(`/recipe/${recipeId}/comments`);
+                const data = await res.json();
+                const comments = data.data ?? [];
+
+                const list = document.getElementById('commentList');
+                list.innerHTML = '';
+
+                if (!comments.length) {
+                    list.innerHTML = `
+                        <div class="no-comments" id="noComments">
+                            <i class="bi bi-chat-square-dots"></i>
+                            Chưa có bình luận nào. Hãy là người đầu tiên!
+                        </div>`;
+                    return;
+                }
+
+                comments.forEach(c => {
+                    const initials = (c.userName ?? '?')
+                        .split(' ')
+                        .map(w => w[0])
+                        .join('')
+                        .toUpperCase()
+                        .slice(0, 2);
+
+                    const date = new Date(c.createdAt);
+                    const dateStr = `${date.getDate().toString().padStart(2,'0')}/${(date.getMonth()+1).toString().padStart(2,'0')}/${date.getFullYear()} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
+
+                    const el = document.createElement('div');
+                    el.className = 'comment-item';
+                    el.innerHTML = `
+                        ${c.userAvatar
+                            ? `<img src="${c.userAvatar}" class="comment-user-ava" alt="${c.userName}" />`
+                            : `<div class="comment-user-ava-placeholder">${initials}</div>`
                         }
-                    },
-                    error: function() {
-                        alert('Error saving recipe. Please try again.');
-                        button.prop('disabled', false);
+                        <div class="comment-body">
+                            <div class="comment-header">
+                                <span class="comment-username">${c.userName ?? 'Ẩn danh'}</span>
+                                <span class="comment-date"><i class="bi bi-clock me-1"></i>${dateStr}</span>
+                            </div>
+                            <div class="comment-content">${c.content.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+                        </div>`;
+                    list.appendChild(el);
+                });
+
+                // Update counter badge
+                document.querySelectorAll('.section-title').forEach(title => {
+                    if (title.textContent.includes('Bình luận')) {
+                        const badge = title.querySelector('.section-count');
+                        if (badge) badge.textContent = comments.length;
                     }
                 });
-            });
-        });
+
+            } catch {
+                console.error('Không thể tải bình luận');
+            }
+        }
+
+        // Gọi khi trang load
+        loadComments(recipeId);
+        })();
     </script>
 }

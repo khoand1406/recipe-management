@@ -6,6 +6,7 @@ using RecipeMgt.Application.Constant;
 using RecipeMgt.Application.DTOs;
 using RecipeMgt.Application.DTOs.Request.Recipes;
 using RecipeMgt.Application.DTOs.Response.Recipe;
+using RecipeMgt.Application.Services.Auth;
 using RecipeMgt.Application.Services.Cloudiary;
 using RecipeMgt.Domain.Entities;
 using RecipentMgt.Infrastucture.Repository.Dishes;
@@ -40,7 +41,27 @@ namespace RecipeMgt.Application.Services.Recipes
         {
             var recipe = await _uow.Recipes.getRecipeById(id);
             if (recipe == null) return null;
-            var result = _mapper.Map<RecipeResponse>(recipe);
+            var listImage = await _uow.Recipes.getRecipeImages(recipe.RecipeId);
+            var result = new RecipeResponse
+            {
+                RecipeId = recipe.RecipeId,
+                Title = recipe.Title,
+                Description = recipe.Description,
+                AuthorId = recipe.AuthorId,
+
+                Author = recipe.Author == null ? null : new UserBasicResponse
+                {
+                    AuthorId = recipe.Author.UserId,
+                    FullName = recipe.Author.FullName,
+                    Email = recipe.Author.Email
+                },
+
+                CookingTime = recipe.CookingTime,
+                CreatedAt = recipe.CreatedAt,
+                UpdatedAt = recipe.UpdatedAt,
+                DifficultyLevel = recipe.DifficultyLevel,
+                Images = listImage.Select(x => x.ImageUrl).ToList()
+            };
             return result;
         }
 

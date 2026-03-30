@@ -12,7 +12,7 @@ namespace RecipeMgt.Application.Services.Comments
     public interface ICommentServices
     {
         Task<Result> AddCommentAsync(int userId, int recipeId, string content);
-        Task<Result<List<CommentResposneDTO>>> GetCommentsAsync(int recipeId);
+        Task<List<CommentResposneDTO>> GetCommentsAsync(int recipeId);
 
         Task<Result> RemoveAsync(int userId, int recipeId);
     }

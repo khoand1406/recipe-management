@@ -31,6 +31,7 @@ public partial class Dish
 
     public virtual ICollection<RelatedDish> RelatedDishes { get; set;}
 
+    
     public virtual DishStatistic Statistic { get; set; }
 
     public virtual User Author { get; set; }

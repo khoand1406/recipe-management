@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using NuGet.Common;
 using RecipeMgt.Views.Interface;
 using RecipeMgt.Views.Services;
 
@@ -109,6 +110,15 @@ namespace RecipeMgt.Views.Controllers
                 HttpContext.Session.SetString("JwtToken", result.Data?.Token?? "");
                 HttpContext.Session.SetString("UserName", result.Data?.User?.FullName?? "");
                 HttpContext.Session.SetString("UserEmail", result.Data?.User?.Email?? "");
+
+                var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+                var jwt = handler.ReadJwtToken(result.Data?.Token);
+
+                var role = jwt.Claims.FirstOrDefault(c => c.Type == "role")?.Value;
+
+                // ✅ redirect theo role
+                if (role == "Admin")
+                    return RedirectToAction("Dashboard", "Management", new { area = "Admin" });
 
                 return RedirectToAction("Index", "Home");
             }

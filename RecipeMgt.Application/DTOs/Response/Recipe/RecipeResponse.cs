@@ -28,7 +28,7 @@ namespace RecipeMgt.Application.DTOs.Response.Recipe
 
         public DateTime? UpdatedAt { get; set; }
 
-        public virtual RecipeMgt.Domain.Entities.User Author { get; set; } = new RecipeMgt.Domain.Entities.User();
+        public virtual UserBasicResponse Author { get; set; } = new UserBasicResponse();
 
         public List<string> Images { get; set; }
     }

@@ -1,4 +1,7 @@
-﻿using RecipeMgt.Views.Models.Response;
+﻿using RecipeMgt.Application.DTOs;
+using RecipeMgt.Application.DTOs.Response.Comments;
+using RecipeMgt.Views.Models.Response;
+
 
 namespace RecipeMgt.Views.Interface
 {
@@ -6,7 +9,7 @@ namespace RecipeMgt.Views.Interface
     {
         public void SetBearerToken(string token);   
 
-        public Task<List<CommentResponseDTO>> GetCommentsByRecipeIdAsync(int recipeId);
+        public Task<ApiResponse<List<CommentResposneDTO>>> GetCommentsByRecipeIdAsync(int recipeId);
         
         public Task<AddCommentResponse> AddCommentAsync(int recipeId, string content);
 

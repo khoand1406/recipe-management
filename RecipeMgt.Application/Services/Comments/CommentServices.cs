@@ -40,21 +40,19 @@ namespace RecipeMgt.Application.Services.Comments
 
         }
 
-        public async Task<Result<List<CommentResposneDTO>>> GetCommentsAsync(int recipeId)
+        public async Task<List<CommentResposneDTO>> GetCommentsAsync(int recipeId)
         {
             var comments = await _repository.GetCommentsByRecipeIdAsync(recipeId);
 
-            var listDTO=  comments.Select(c => new CommentResposneDTO
+            return comments.Select(c => new CommentResposneDTO
             {
-                CommentId = c.CommentId,
-                RecipeId = c.RecipeId,
-                UserId = c.UserId,
-                UserName = c.User?.FullName ?? "Unknown",
-               
-                Content = c.Content,
-                CreatedAt = c.CreatedAt
-            }).ToList();
-            return Result<List<CommentResposneDTO>>.Success(listDTO);
+        CommentId = c.CommentId,
+        RecipeId = c.RecipeId,
+        UserId = c.UserId,
+        UserName = c.User?.FullName ?? "Unknown",
+        Content = c.Content,
+        CreatedAt = c.CreatedAt
+    }).ToList();
         }
 
         public Task<Result> RemoveAsync(int userId, int recipeId)

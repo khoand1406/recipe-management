@@ -319,9 +319,9 @@
     <aside class="sidebar" id="sidebar">
 
         @* Brand *@
-        <a class="sidebar-brand" href="/admin/dashboard">
+        <a class="sidebar-brand" href="/Management/Dashboard">
             <div class="brand-icon"><i class="bi bi-egg-fried"></i></div>
-            <span class="brand-name">FoodAdmin</span>
+            <span class="brand-name">CookPad</span>
         </a>
 
         @* Nav *@
@@ -330,7 +330,7 @@
             <div class="nav-section-label">Main</div>
 
             <a class="nav-item-link @(ViewData["ActiveNav"]?.ToString() == "dashboard" ? "active" : "")"
-               href="/admin/dashboard" data-title="Dashboard">
+                   href="/Management/Dashboard" data-title="Dashboard">
                 <i class="bi bi-speedometer2 nav-icon"></i>
                 <span class="nav-label">Dashboard</span>
             </a>
@@ -339,12 +339,12 @@
             <div class="nav-section-label">Quản lý</div>
 
             <a class="nav-item-link @(ViewData["ActiveNav"]?.ToString() == "dishes" ? "active" : "")"
-               href="/admin/dishes" data-title="Món ăn">
+               href="/Management/DishManagement" data-title="Món ăn">
                 <i class="bi bi-cup-hot nav-icon"></i>
                 <span class="nav-label">Món ăn</span>
             </a>
 
-            <a class="nav-item-link @(ViewData["ActiveNav"]?.ToString() == "recipes" ? "active" : "")"
+            @* <a class="nav-item-link @(ViewData["ActiveNav"]?.ToString() == "recipes" ? "active" : "")"
                href="/admin/recipes" data-title="Công thức">
                 <i class="bi bi-journal-richtext nav-icon"></i>
                 <span class="nav-label">Công thức</span>
@@ -354,7 +354,7 @@
                href="/admin/categories" data-title="Danh mục">
                 <i class="bi bi-grid nav-icon"></i>
                 <span class="nav-label">Danh mục</span>
-            </a>
+            </a> *@
 
             <a class="nav-item-link @(ViewData["ActiveNav"]?.ToString() == "reviews" ? "active" : "")"
                href="/admin/reviews" data-title="Đánh giá">
@@ -364,7 +364,7 @@
             </a>
 
             <a class="nav-item-link @(ViewData["ActiveNav"]?.ToString() == "users" ? "active" : "")"
-               href="/admin/users" data-title="Người dùng">
+               href="/Management/UserManagement" data-title="Người dùng">
                 <i class="bi bi-people nav-icon"></i>
                 <span class="nav-label">Người dùng</span>
             </a>
@@ -390,7 +390,6 @@
             <div class="user-avatar">A</div>
             <div class="user-info">
                 <div class="user-name">Admin</div>
-                <div class="user-role">Super Admin</div>
             </div>
         </div>
 
@@ -412,7 +411,7 @@
             <nav class="topbar-breadcrumb" aria-label="breadcrumb">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item">
-                        <a href="/admin/dashboard"><i class="bi bi-house me-1"></i>Admin</a>
+                        <a href="/Management/Dashboard"><i class="bi bi-house me-1"></i>Admin</a>
                     </li>
                     @if (ViewData["BreadcrumbParent"] != null)
                     {

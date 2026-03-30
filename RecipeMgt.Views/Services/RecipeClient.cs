@@ -50,7 +50,7 @@ namespace RecipeMgt.Views.Services
 
         public async Task<ApiResponse<List<RecipeWithUserInfo>>> GetMineAsync()
         {
-            var resp = await _httpClient.GetAsync($"/api/recipe");
+            var resp = await _httpClient.GetAsync($"/api/Recipe/me");
             resp.EnsureSuccessStatusCode();
             var json = await resp.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<ApiResponse<List<RecipeWithUserInfo>>>(json,_options)

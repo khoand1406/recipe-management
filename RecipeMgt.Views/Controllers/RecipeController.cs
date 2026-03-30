@@ -37,7 +37,7 @@ namespace RecipeMgt.Views.Controllers
             return View(categories);
         }
 
-        [HttpGet]
+        [HttpGet()]
         public async Task<IActionResult> Detail(int id)
         {
             var recipe = await _recipeClient.GetByIdAsync(id);
@@ -52,7 +52,7 @@ namespace RecipeMgt.Views.Controllers
             var comments = await _commentClient.GetCommentsByRecipeIdAsync(id);
             ViewBag.Comments = comments;
             
-            return View(recipe);
+            return View(recipe.Data);
         }
 
         [HttpGet]
@@ -68,7 +68,14 @@ namespace RecipeMgt.Views.Controllers
             var token = HttpContext.Session.GetString("JwtToken");
             _recipeClient.SetBearerToken(token);
             var data = await _recipeClient.GetMineAsync();
-            return Json(data);
+            return View(data.Data ?? new List<RecipeWithUserInfo>());
+        }
+
+        [HttpGet("/recipe/{recipeId}/comments")]
+        public async Task<IActionResult> GetComments(int recipeId)
+        {
+            var comments = await _commentClient.GetCommentsByRecipeIdAsync(recipeId);
+            return Json(comments);
         }
 
         [HttpGet]
@@ -163,8 +170,8 @@ namespace RecipeMgt.Views.Controllers
             return Json(resp);
         }
 
-        [HttpPost]
-        public async Task<IActionResult> AddComment(int recipeId, string content)
+        [HttpPost("/recipe/add-comment")]
+        public async Task<IActionResult> AddComment([FromForm] int recipeId, [FromForm] string content)
         {
             var token = HttpContext.Session.GetString("JwtToken");
             _recipeClient.SetBearerToken(token);

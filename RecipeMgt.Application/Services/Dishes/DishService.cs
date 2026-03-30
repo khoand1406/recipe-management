@@ -182,7 +182,12 @@ namespace RecipeMgt.Application.Services.Dishes
                         Title = x.Title,
                         DifficultyLevel = x.DifficultyLevel,
                         AuthorId = x.AuthorId,
-                        Author = x.Author,
+                        Author = new UserBasicResponse
+                        {
+                            AuthorId= x.AuthorId,
+                            FullName= x.Author?.FullName ?? "",
+                            Email= x.Author?.Email ?? ""
+                        },
                         Description = x.Description,
                         CookingTime = x.CookingTime,
                         CreatedAt = x.CreatedAt,
@@ -220,7 +225,12 @@ namespace RecipeMgt.Application.Services.Dishes
                         Title = x.Title,
                         DifficultyLevel = x.DifficultyLevel,
                         AuthorId = x.AuthorId,
-                        Author = x.Author,
+                        Author = new UserBasicResponse
+                        {
+                            AuthorId = x.AuthorId,
+                            FullName = x.Author?.FullName ?? "",
+                            Email = x.Author?.Email ?? ""
+                        },
                         Description = x.Description,
                         CookingTime = x.CookingTime,
                         CreatedAt = x.CreatedAt,

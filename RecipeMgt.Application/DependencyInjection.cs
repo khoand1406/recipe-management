@@ -49,7 +49,7 @@ namespace RecipeMgt.Application
             services.AddScoped<IUserStatisticService, UserStatisticService>();
             services.AddScoped<IOAuthService,  OAuthService>();
             services.AddScoped<IIngredientService, IngredientService>();
-
+            
             services.AddScoped<IUserManagementService, UserManagementService>();
             
             services.AddAutoMapper(cfg => cfg.LicenseKey = configuration["AutoMapper:Key"], typeof(DishProfile));
